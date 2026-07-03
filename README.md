@@ -1,18 +1,39 @@
-# TengeGuard Web
+# TengeGuard
 
-TengeGuard is a Next.js web dashboard for finding subscriptions from uploaded bank statements and helping users manage upcoming charges.
+TengeGuard - веб-сервис для поиска и контроля подписок пользователя.
 
-## Step 1
+Проект подключается к Gmail в режиме read-only, анализирует реальные письма с чеками, оплатами, trial-периодами и продлениями, показывает понятный дашборд подписок, историю отмененных сервисов и уведомляет о важных датах через Telegram-бота.
 
-- Next.js App Router + TypeScript
+Основная цель - помочь пользователю видеть все платные, бесплатные и пробные подписки в одном месте, заранее узнавать о списаниях и проще управлять регулярными расходами.
+
+## Возможности
+
+- Подключение Gmail через OAuth в режиме только чтения.
+- Поиск реальных подписок по письмам, чекам и подтверждениям.
+- Разделы дашборда: обзор, подписки, доказательства, доступ, история, ИИ-чат и аккаунт.
+- Отображение платных, бесплатных и trial-подписок.
+- История текущих и отмененных подписок.
+- Telegram-бот для уведомлений о сроках и важных событиях.
+- Светлый SaaS-дизайн с адаптацией под телефон и ноутбук.
+
+## Технологии
+
+- Next.js App Router
+- TypeScript
 - Tailwind CSS
-- Light and dark themes
-- React Query provider
-- Dashboard-first UI scaffold with Russian interface copy kept in constants
+- React Query
+- Gmail OAuth
+- Telegram Bot API
 
-## Local Development
+## Локальный запуск
 
 ```bash
 npm install
 npm run dev
+```
+
+После запуска сайт будет доступен по адресу:
+
+```text
+http://localhost:3000
 ```
