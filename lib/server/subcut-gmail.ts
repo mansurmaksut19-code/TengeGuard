@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getGoogleOAuthConfig } from "@/lib/server/google-oauth-config";
+import { storagePath } from "@/lib/server/storage-root";
 import { parseEmailReceipts, type Subscription } from "@/lib/subcut-automation";
 
 type GoogleTokenResponse = {
@@ -68,7 +69,7 @@ export type SessionUser = {
   avatar_url?: string;
 };
 
-const rootPath = path.join(process.cwd(), ".tengeguard", "users");
+const rootPath = storagePath("users");
 const defaultMaxMessagesPerQuery = 250;
 const defaultMaxMessagesPerSync = 3000;
   const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 10);

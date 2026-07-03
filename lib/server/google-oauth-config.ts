@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { storagePath } from "@/lib/server/storage-root";
 
 type StoredGoogleOAuthConfig = {
   clientId: string;
@@ -25,7 +26,7 @@ type SaveGoogleOAuthConfigInput = {
   redirectUri?: string;
 };
 
-const configPath = path.join(process.cwd(), ".tengeguard", "config", "google-oauth.json");
+const configPath = storagePath("config", "google-oauth.json");
 
 function trim(value?: string) {
   return value?.trim() || "";

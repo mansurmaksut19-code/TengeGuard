@@ -9,5 +9,8 @@ export async function POST(request: Request) {
   response.cookies.set("tg_user_id", "", {
     ...secureCookieOptions(request, 0)
   });
+  response.cookies.set("tg_gmail_connected", "", {
+    ...secureCookieOptions(request, 0)
+  });
   return response;
 }

@@ -20,6 +20,9 @@ export async function GET(request: Request) {
     response.cookies.set("tg_user_id", user.id, {
       ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
+    response.cookies.set("tg_gmail_connected", "1", {
+      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
+    });
     return response;
   } catch (error) {
     console.error("[TengeGuard Gmail OAuth] Callback failed:", error instanceof Error ? error.message : error);

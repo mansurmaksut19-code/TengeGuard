@@ -10,7 +10,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   const userId = cookieStore.get("tg_user_id")?.value;
   const tokens = await readTokens(userId);
-  if (!tokens) redirect("/auth/gmail");
+  const gmailConnected = cookieStore.get("tg_gmail_connected")?.value === "1";
+  if (!tokens && !gmailConnected) redirect("/auth/gmail");
 
   return children;
 }

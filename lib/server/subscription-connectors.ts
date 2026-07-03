@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseSubscriptionImport } from "@/lib/server/subscription-import";
+import { storagePath } from "@/lib/server/storage-root";
 import { readTokens, saveImportedSubscriptions, type SessionUser } from "@/lib/server/subcut-gmail";
 
 type ConnectorStatus = "connected" | "ready" | "setup_required" | "not_available";
@@ -44,7 +45,7 @@ type SaltEdgeState = {
   updated_at: string;
 };
 
-const bankStateRoot = path.join(process.cwd(), ".tengeguard", "bank");
+const bankStateRoot = storagePath("bank");
 
 function statePath(userId: string) {
   return path.join(bankStateRoot, `${userId}.json`);

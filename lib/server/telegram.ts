@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { mkdir, readdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { deleteRealGmailSubscription, readRealGmailSubscriptions, readSyncReport, type SessionUser } from "@/lib/server/subcut-gmail";
+import { storagePath } from "@/lib/server/storage-root";
 import type { Subscription } from "@/lib/subcut-automation";
 
 type TelegramChat = {
@@ -31,8 +32,8 @@ type TelegramLink = {
   expires_at: number;
 };
 
-const telegramRootPath = path.join(process.cwd(), ".tengeguard", "telegram");
-const usersRootPath = path.join(process.cwd(), ".tengeguard", "users");
+const telegramRootPath = storagePath("telegram");
+const usersRootPath = storagePath("users");
 const telegramStartPayloadPattern = /^[A-Za-z0-9_-]{16,64}$/;
 
 function botToken() {

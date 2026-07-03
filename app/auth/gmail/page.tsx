@@ -35,9 +35,11 @@ export default async function GmailAuthPage() {
   const mode = await readDeviceMode();
   if (!mode) redirect("/");
 
-  const userId = (await cookies()).get("tg_user_id")?.value;
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("tg_user_id")?.value;
   const tokens = await readTokens(userId);
-  if (tokens) redirect("/dashboard");
+  const gmailConnected = cookieStore.get("tg_gmail_connected")?.value === "1";
+  if (tokens || gmailConnected) redirect("/dashboard");
 
   const ModeIcon = mode === "mobile" ? Smartphone : Laptop;
   const modeLabel = mode === "mobile" ? "режим телефона" : "режим ноутбука";
