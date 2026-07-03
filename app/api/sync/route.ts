@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, getUserIdFromRequest, syncRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
+import { getSessionUserFromRequest, getUserIdFromRequest, readTokensFromRequest, syncRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
 
 export async function POST(request: Request) {
@@ -7,13 +7,13 @@ export async function POST(request: Request) {
   if (blocked) return blocked;
 
   const userId = getUserIdFromRequest(request);
-  const user = await getSessionUser(userId);
+  const user = await getSessionUserFromRequest(request, userId);
   if (!user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    await syncRealGmailSubscriptions(user.id);
+    await syncRealGmailSubscriptions(user.id, await readTokensFromRequest(request, user.id));
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(

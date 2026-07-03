@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getGoogleOAuthConfig } from "@/lib/server/google-oauth-config";
@@ -70,6 +71,7 @@ export type SessionUser = {
 };
 
 const rootPath = storagePath("users");
+const gmailSessionCookieName = "tg_gmail_session";
 const defaultMaxMessagesPerQuery = 250;
 const defaultMaxMessagesPerSync = 3000;
   const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 10);
@@ -138,6 +140,59 @@ function getAppUrl(origin?: string) {
 
 function getRedirectUri(origin?: string) {
   return getGoogleOAuthConfig(origin).redirectUri;
+}
+
+function gmailSessionSecret() {
+  return (
+    process.env.TENGEGUARD_SESSION_SECRET ||
+    process.env.TENGEGUARD_ADMIN_SECRET ||
+    process.env.GOOGLE_CLIENT_SECRET ||
+    "tengeguard-local-session-secret"
+  );
+}
+
+function base64UrlEncode(value: Buffer) {
+  return value.toString("base64url");
+}
+
+function encryptGmailSession(tokens: StoredTokens) {
+  const key = crypto.createHash("sha256").update(gmailSessionSecret()).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(JSON.stringify(tokens), "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `v1.${base64UrlEncode(iv)}.${base64UrlEncode(tag)}.${base64UrlEncode(encrypted)}`;
+}
+
+function decryptGmailSession(value?: string): StoredTokens | null {
+  if (!value) return null;
+  const [version, ivValue, tagValue, encryptedValue] = value.split(".");
+  if (version !== "v1" || !ivValue || !tagValue || !encryptedValue) return null;
+
+  try {
+    const key = crypto.createHash("sha256").update(gmailSessionSecret()).digest();
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(ivValue, "base64url"));
+    decipher.setAuthTag(Buffer.from(tagValue, "base64url"));
+    const decrypted = Buffer.concat([
+      decipher.update(Buffer.from(encryptedValue, "base64url")),
+      decipher.final()
+    ]).toString("utf8");
+    return JSON.parse(decrypted) as StoredTokens;
+  } catch {
+    return null;
+  }
+}
+
+function requestCookie(request: Request, name: string) {
+  return request.headers.get("cookie")?.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))?.[1];
+}
+
+export function getGmailSessionCookieName() {
+  return gmailSessionCookieName;
+}
+
+export function createEncryptedGmailSession(tokens: StoredTokens) {
+  return encryptGmailSession(tokens);
 }
 
 export function getGmailRedirectUri(origin?: string) {
@@ -397,8 +452,18 @@ export async function readTokens(userId?: string): Promise<StoredTokens | null> 
   }
 }
 
-async function getAccessToken(userId: string) {
-  const tokens = await readTokens(userId);
+export async function readTokensFromRequest(request: Request, userId?: string): Promise<StoredTokens | null> {
+  const stored = await readTokens(userId);
+  if (stored) return stored;
+
+  const encrypted = requestCookie(request, gmailSessionCookieName);
+  const tokens = decryptGmailSession(encrypted ? decodeURIComponent(encrypted) : undefined);
+  if (!tokens || !userId || userIdFromEmail(tokens.email) !== userId) return null;
+  return tokens;
+}
+
+async function getAccessToken(userId: string, tokenOverride?: StoredTokens | null) {
+  const tokens = tokenOverride || (await readTokens(userId));
   if (!tokens) throw new Error("Gmail account is not connected");
 
   if (tokens.expires_at > Date.now() + 60_000) return tokens.access_token;
@@ -540,9 +605,9 @@ function mergeSubscriptionType(existing: Subscription["type"], incoming: Subscri
   return priority[incoming] > priority[existing] ? incoming : existing;
 }
 
-export async function syncRealGmailSubscriptions(userId: string) {
-  const accessToken = await getAccessToken(userId);
-  const tokens = await readTokens(userId);
+export async function syncRealGmailSubscriptions(userId: string, tokenOverride?: StoredTokens | null) {
+  const accessToken = await getAccessToken(userId, tokenOverride);
+  const tokens = tokenOverride || (await readTokens(userId));
   const messageIds = new Set<string>();
 
   for (const query of gmailQueries) {
@@ -615,6 +680,18 @@ export async function readSyncReport(userId?: string): Promise<SyncReport | null
 
 export async function getSessionUser(userId?: string) {
   const tokens = await readTokens(userId);
+  if (!userId) return null;
+  if (tokens) return toSessionUser(userId, tokens);
+
+  try {
+    return JSON.parse(await readFile(profilePath(userId), "utf8")) as SessionUser;
+  } catch {
+    return null;
+  }
+}
+
+export async function getSessionUserFromRequest(request: Request, userId?: string) {
+  const tokens = await readTokensFromRequest(request, userId);
   if (!userId) return null;
   if (tokens) return toSessionUser(userId, tokens);
 

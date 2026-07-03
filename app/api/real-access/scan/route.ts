@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, getUserIdFromRequest, readRealGmailSubscriptions, syncRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
+import {
+  getSessionUserFromRequest,
+  getUserIdFromRequest,
+  readRealGmailSubscriptions,
+  readTokensFromRequest,
+  syncRealGmailSubscriptions
+} from "@/lib/server/subcut-gmail";
 import { sendTelegramDigest } from "@/lib/server/telegram";
 import { protectMutation } from "@/lib/server/security";
 
 export async function GET(request: Request) {
-  const user = await getSessionUser(getUserIdFromRequest(request));
+  const user = await getSessionUserFromRequest(request, getUserIdFromRequest(request));
   if (!user) {
     return NextResponse.json({ ok: false, subscriptions: [] }, { status: 401 });
   }
@@ -19,13 +25,13 @@ export async function POST(request: Request) {
   const blocked = protectMutation(request, { key: "real-access-scan", limit: 6, windowMs: 60_000 });
   if (blocked) return blocked;
 
-  const user = await getSessionUser(getUserIdFromRequest(request));
+  const user = await getSessionUserFromRequest(request, getUserIdFromRequest(request));
   if (!user) {
     return NextResponse.json({ ok: false, error: "Unauthorized", subscriptions: [] }, { status: 401 });
   }
 
   try {
-    const subscriptions = await syncRealGmailSubscriptions(user.id);
+    const subscriptions = await syncRealGmailSubscriptions(user.id, await readTokensFromRequest(request, user.id));
     await sendTelegramDigest(user.id).catch(() => null);
     return NextResponse.json({
       ok: true,

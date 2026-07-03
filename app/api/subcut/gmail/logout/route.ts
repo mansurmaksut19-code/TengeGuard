@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getGmailSessionCookieName } from "@/lib/server/subcut-gmail";
 import { protectMutation, secureCookieOptions } from "@/lib/server/security";
 
 export async function POST(request: Request) {
@@ -10,6 +11,9 @@ export async function POST(request: Request) {
     ...secureCookieOptions(request, 0)
   });
   response.cookies.set("tg_gmail_connected", "", {
+    ...secureCookieOptions(request, 0)
+  });
+  response.cookies.set(getGmailSessionCookieName(), "", {
     ...secureCookieOptions(request, 0)
   });
   return response;

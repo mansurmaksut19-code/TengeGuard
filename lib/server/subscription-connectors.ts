@@ -266,17 +266,21 @@ export async function syncBankSubscriptions(user: SessionUser) {
   };
 }
 
-export async function automaticConnectors(user?: SessionUser | null): Promise<AutomaticConnector[]> {
+export async function automaticConnectors(
+  user?: SessionUser | null,
+  options?: { gmailConnected?: boolean }
+): Promise<AutomaticConnector[]> {
   const gmailTokens = await readTokens(user?.id);
+  const gmailConnected = options?.gmailConnected || Boolean(gmailTokens);
   const ready = bankReady() || Boolean(process.env.TENGEGUARD_BANK_CONNECT_URL);
 
   return [
     {
       id: "gmail",
       name: "Gmail read-only",
-      status: gmailTokens ? "connected" : "ready",
+      status: gmailConnected ? "connected" : "ready",
       coverage: "Receipts, trials, free plans, Google Play emails, renewal notices.",
-      action: gmailTokens ? "Connected" : "Connect Google"
+      action: gmailConnected ? "Connected" : "Connect Google"
     },
     {
       id: "bank",

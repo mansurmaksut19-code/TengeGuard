@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { exchangeGmailCode } from "@/lib/server/subcut-gmail";
+import {
+  createEncryptedGmailSession,
+  exchangeGmailCode,
+  getGmailSessionCookieName,
+  readTokens
+} from "@/lib/server/subcut-gmail";
 import { secureCookieOptions } from "@/lib/server/security";
 
 export async function GET(request: Request) {
@@ -23,6 +28,12 @@ export async function GET(request: Request) {
     response.cookies.set("tg_gmail_connected", "1", {
       ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
+    const tokens = await readTokens(user.id);
+    if (tokens) {
+      response.cookies.set(getGmailSessionCookieName(), createEncryptedGmailSession(tokens), {
+        ...secureCookieOptions(request, 60 * 60 * 24 * 30)
+      });
+    }
     return response;
   } catch (error) {
     console.error("[TengeGuard Gmail OAuth] Callback failed:", error instanceof Error ? error.message : error);
