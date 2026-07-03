@@ -1,0 +1,134 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: 210 40% 98%;
+  --foreground: 260 8% 12%;
+  --surface: 0 0% 100%;
+  --surface-container-lowest: 0 0% 100%;
+  --surface-container-low: 285 33% 97%;
+  --surface-container: 276 22% 94%;
+  --surface-container-high: 276 18% 90%;
+  --surface-variant: 276 18% 90%;
+  --on-surface: 260 8% 12%;
+  --on-surface-variant: 263 8% 29%;
+  --inverse-surface: 270 6% 20%;
+  --inverse-on-surface: 285 30% 95%;
+  --outline-variant: 267 14% 80%;
+  --border: 214 32% 91%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 263 8% 35%;
+  --primary: 259 43% 38%;
+  --primary-foreground: 0 0% 100%;
+  --on-primary: 0 0% 100%;
+  --accent: 199 89% 48%;
+  --accent-foreground: 0 0% 100%;
+  --success: 160 84% 32%;
+  --warning: 38 92% 48%;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: 220 42% 8%;
+  --foreground: 210 32% 96%;
+  --surface: 219 32% 13%;
+  --border: 218 24% 23%;
+  --muted: 219 28% 17%;
+  --muted-foreground: 215 18% 72%;
+  --primary: 214 60% 72%;
+  --primary-foreground: 220 42% 8%;
+  --accent: 14 90% 64%;
+  --accent-foreground: 220 42% 8%;
+  --success: 160 72% 45%;
+  --warning: 40 95% 58%;
+}
+
+* {
+  border-color: hsl(var(--border));
+  min-width: 0;
+}
+
+html {
+  min-height: 100%;
+  background: hsl(var(--background));
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 12% -10%, rgb(233 221 255 / 0.55), transparent 28rem),
+    radial-gradient(circle at 92% 0%, rgb(224 242 254 / 0.58), transparent 30rem),
+    linear-gradient(180deg, #f8fafc 0%, hsl(var(--background)) 100%);
+  color: hsl(var(--foreground));
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-feature-settings:
+    "cv02" 1,
+    "cv03" 1,
+    "cv04" 1,
+    "tnum" 1;
+}
+
+.tg-shell-grid {
+  background-image:
+    linear-gradient(rgb(148 163 184 / 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(148 163 184 / 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: rgb(59 130 246 / 0.22);
+  color: hsl(var(--foreground));
+}
+
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.45);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139 / 0.55);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
