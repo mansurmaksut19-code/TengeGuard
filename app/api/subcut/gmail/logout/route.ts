@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
+import { protectMutation, secureCookieOptions } from "@/lib/server/security";
 
 export async function POST(request: Request) {
-  const url = new URL(request.url);
+  const blocked = protectMutation(request, { key: "gmail-logout", limit: 20, windowMs: 60_000 });
+  if (blocked) return blocked;
+
   const response = NextResponse.json({ ok: true });
   response.cookies.set("tg_user_id", "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: url.protocol === "https:",
-    path: "/",
-    maxAge: 0
+    ...secureCookieOptions(request, 0)
   });
   return response;
 }

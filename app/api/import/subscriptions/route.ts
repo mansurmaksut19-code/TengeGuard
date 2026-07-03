@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, getUserIdFromRequest, saveImportedSubscriptions } from "@/lib/server/subcut-gmail";
 import { parseSubscriptionImport } from "@/lib/server/subscription-import";
+import { protectMutation } from "@/lib/server/security";
 
 export async function POST(request: Request) {
+  const blocked = protectMutation(request, { key: "subscription-import", limit: 10, windowMs: 60_000 });
+  if (blocked) return blocked;
+
   const userId = getUserIdFromRequest(request);
   const user = await getSessionUser(userId);
   if (!user) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, getUserIdFromRequest, readRealGmailSubscriptions, syncRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
 import { sendTelegramDigest } from "@/lib/server/telegram";
+import { protectMutation } from "@/lib/server/security";
 
 export async function GET(request: Request) {
   const userId = getUserIdFromRequest(request);
@@ -16,6 +17,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const blocked = protectMutation(request, { key: "gmail-sync", limit: 6, windowMs: 60_000 });
+  if (blocked) return blocked;
+
   const userId = getUserIdFromRequest(request);
   const user = await getSessionUser(userId);
   if (!user) {

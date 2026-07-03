@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { saveGoogleOAuthConfig, toPublicGoogleOAuthStatus } from "@/lib/server/google-oauth-config";
+import { protectMutation, requireAdminSecret } from "@/lib/server/security";
 
 type GoogleOAuthSetupRequest = {
   clientId?: string;
@@ -23,16 +24,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const origin = new URL(request.url).origin;
+  const blocked = protectMutation(request, { key: "google-oauth-setup", limit: 5, windowMs: 60_000 });
+  if (blocked) return blocked;
 
-  if (!isLocalSetupRequest(request)) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "Setup is available only from the local founder machine"
-      },
-      { status: 403 }
-    );
-  }
+  const adminBlocked = isLocalSetupRequest(request) ? null : requireAdminSecret(request);
+  if (adminBlocked) return adminBlocked;
 
   try {
     const body = (await request.json().catch(() => ({}))) as GoogleOAuthSetupRequest;

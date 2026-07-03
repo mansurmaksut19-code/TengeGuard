@@ -6,8 +6,9 @@ import { readTokens } from "@/lib/server/subcut-gmail";
 
 type DeviceMode = "mobile" | "desktop";
 
-function readDeviceMode(): DeviceMode | null {
-  const value = cookies().get("tg_device_mode")?.value;
+async function readDeviceMode(): Promise<DeviceMode | null> {
+  const cookieStore = await cookies();
+  const value = cookieStore.get("tg_device_mode")?.value;
   if (value === "mobile" || value === "desktop") return value;
   return null;
 }
@@ -31,10 +32,10 @@ function TengeGuardMark() {
 }
 
 export default async function GmailAuthPage() {
-  const mode = readDeviceMode();
+  const mode = await readDeviceMode();
   if (!mode) redirect("/");
 
-  const userId = cookies().get("tg_user_id")?.value;
+  const userId = (await cookies()).get("tg_user_id")?.value;
   const tokens = await readTokens(userId);
   if (tokens) redirect("/dashboard");
 

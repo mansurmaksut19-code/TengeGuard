@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { exchangeGmailCode } from "@/lib/server/subcut-gmail";
+import { secureCookieOptions } from "@/lib/server/security";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -17,11 +18,7 @@ export async function GET(request: Request) {
     url.search = "?gmail=connected";
     const response = NextResponse.redirect(url);
     response.cookies.set("tg_user_id", user.id, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: url.protocol === "https:",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30
+      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
     return response;
   } catch (error) {

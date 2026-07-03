@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserIdFromRequest, readRealGmailSubscriptions, readSyncReport } from "@/lib/server/subcut-gmail";
+import { protectMutation } from "@/lib/server/security";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -46,6 +47,9 @@ function extractResponseText(data: unknown) {
 }
 
 export async function POST(request: Request) {
+  const blocked = protectMutation(request, { key: "ai-chat", limit: 20, windowMs: 60_000 });
+  if (blocked) return blocked;
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(

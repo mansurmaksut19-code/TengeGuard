@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import { getGoogleOAuthConfig } from "@/lib/server/google-oauth-config";
 import { readTokens, saveSessionUser, userIdFromEmail } from "@/lib/server/subcut-gmail";
+import { protectMutation, secureCookieOptions } from "@/lib/server/security";
 
 type GoogleCredentialRequest = {
   credential?: string;
@@ -13,6 +14,9 @@ function getGoogleIdentityClientId() {
 
 export async function POST(request: Request) {
   try {
+    const blocked = protectMutation(request, { key: "google-credential", limit: 20, windowMs: 60_000 });
+    if (blocked) return blocked;
+
     const clientId = getGoogleIdentityClientId();
     if (!clientId) {
       return NextResponse.json(
@@ -70,13 +74,8 @@ export async function POST(request: Request) {
       gmailConnected: Boolean(tokens)
     });
 
-    const url = new URL(request.url);
     response.cookies.set("tg_user_id", userId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: url.protocol === "https:",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30
+      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
 
     return response;

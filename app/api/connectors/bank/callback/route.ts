@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { saveBankConnection } from "@/lib/server/subscription-connectors";
 import { getSessionUser, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
+import { protectMutation } from "@/lib/server/security";
 
 function extractConnectionId(value: unknown): string {
   if (!value || typeof value !== "object") return "";
@@ -11,7 +12,7 @@ function extractConnectionId(value: unknown): string {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const userId = getUserIdFromRequest(request) || url.searchParams.get("user_id") || "";
+  const userId = getUserIdFromRequest(request);
   const user = await getSessionUser(userId);
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
@@ -22,6 +23,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const blocked = protectMutation(request, { key: "bank-callback", limit: 20, windowMs: 60_000 });
+  if (blocked) return blocked;
+
   const userId = getUserIdFromRequest(request);
   const user = await getSessionUser(userId);
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { readTokens } from "@/lib/server/subcut-gmail";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const mode = cookieStore.get("tg_device_mode")?.value;
   if (mode !== "mobile" && mode !== "desktop") redirect("/");
 
