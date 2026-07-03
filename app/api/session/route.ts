@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
+import { getSessionUserFromRequest, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
 
 export async function GET(request: Request) {
   return NextResponse.json({
-    user: await getSessionUser(getUserIdFromRequest(request))
+    user: await getSessionUserFromRequest(request, getUserIdFromRequest(request))
   });
 }

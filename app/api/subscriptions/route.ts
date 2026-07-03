@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, getUserIdFromRequest, readRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
+import { getSessionUserFromRequest, getUserIdFromRequest, readRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
 
 export async function GET(request: Request) {
   const userId = getUserIdFromRequest(request);
-  const user = await getSessionUser(userId);
+  const user = await getSessionUserFromRequest(request, userId);
   if (!user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

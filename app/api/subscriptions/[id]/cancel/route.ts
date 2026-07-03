@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prepareSubscriptionCancellation } from "@/lib/server/subscription-cancel";
-import { getSessionUser, getUserIdFromRequest, readRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
+import { getSessionUserFromRequest, getUserIdFromRequest, readRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,7 +9,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const userId = getUserIdFromRequest(request);
-  const user = await getSessionUser(userId);
+  const user = await getSessionUserFromRequest(request, userId);
   if (!user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

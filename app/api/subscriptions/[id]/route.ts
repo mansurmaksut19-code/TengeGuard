@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { deleteRealGmailSubscription, getSessionUser, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
+import { deleteRealGmailSubscription, getSessionUserFromRequest, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -8,7 +8,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
   const { id } = await params;
   const userId = getUserIdFromRequest(request);
-  const user = await getSessionUser(userId);
+  const user = await getSessionUserFromRequest(request, userId);
   if (!user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

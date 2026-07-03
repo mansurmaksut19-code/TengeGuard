@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createBankConnectUrl } from "@/lib/server/subscription-connectors";
-import { getSessionUser, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
+import { getSessionUserFromRequest, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
 
 export async function GET(request: Request) {
   const userId = getUserIdFromRequest(request);
-  const user = await getSessionUser(userId);
+  const user = await getSessionUserFromRequest(request, userId);
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const url = await createBankConnectUrl(user);
