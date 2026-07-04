@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSessionUserFromRequest, getUserIdFromRequest, readTokensFromRequest, syncRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
+import {
+  getSessionUserFromRequest,
+  getUserIdFromRequest,
+  readTokensFromRequest,
+  syncRealGmailSubscriptions
+} from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
 
 export async function POST(request: Request) {
@@ -13,8 +18,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    await syncRealGmailSubscriptions(user.id, await readTokensFromRequest(request, user.id));
-    return NextResponse.json({ ok: true });
+    const subscriptions = await syncRealGmailSubscriptions(user.id, await readTokensFromRequest(request, user.id));
+    return NextResponse.json({ ok: true, subscriptions });
   } catch (error) {
     return NextResponse.json(
       {

@@ -374,7 +374,7 @@ function hasReviewCandidateEvidence(text: string, signals: string[], type: Subsc
 function hasFreeTierEvidence(text: string, signals: string[]) {
   return (
     signals.includes("free_plan") &&
-    /(?:free tier|starter plan|basic plan|hobby plan|developer plan|community plan|you are on the free|included in your plan)/i.test(text)
+    /(?:free tier|starter plan|basic plan|hobby plan|developer plan|community plan|you are on the free|included in your plan|included in your free plan|free account|free plan|free subscription|you now have access|your account is ready|welcome to)/i.test(text)
   );
 }
 

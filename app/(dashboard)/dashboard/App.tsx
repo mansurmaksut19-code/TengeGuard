@@ -593,6 +593,29 @@ async function readJson<T>(url: string, options?: RequestInit) {
   return data as T;
 }
 
+function subscriptionCacheKey(user?: SessionUser | null) {
+  const owner = user?.id || user?.email;
+  return owner ? `tengeguard:subscriptions:${owner}` : null;
+}
+
+function readCachedSubscriptions(user?: SessionUser | null) {
+  const key = subscriptionCacheKey(user);
+  if (!key || typeof window === "undefined") return [];
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) || "[]") as Subscription[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedSubscriptions(user: SessionUser | null | undefined, nextSubscriptions: Subscription[]) {
+  const key = subscriptionCacheKey(user);
+  if (!key || typeof window === "undefined") return;
+  window.localStorage.setItem(key, JSON.stringify(nextSubscriptions));
+}
+
 export default function App({
   initialDeviceMode = "desktop",
   initialView = "dashboard"
@@ -644,11 +667,20 @@ export default function App({
     setTelegramStatus(telegram);
 
     if (gmailStatus.connected) {
-      const [subscriptionData, connectorData] = await Promise.all([
-        readJson<{ subscriptions: Subscription[] }>("/api/subscriptions"),
-        readJson<{ connectors: ConnectorStatus[] }>("/api/connectors/status")
-      ]);
-      setSubscriptions(subscriptionData.subscriptions);
+      const cachedSubscriptions = readCachedSubscriptions(gmailStatus.user);
+      if (cachedSubscriptions.length > 0) setSubscriptions(cachedSubscriptions);
+
+      const connectorData = await readJson<{ connectors: ConnectorStatus[] }>("/api/connectors/status");
+      const subscriptionData = await readJson<{ subscriptions: Subscription[] }>("/api/subscriptions").catch(() => ({
+        subscriptions: cachedSubscriptions
+      }));
+      const nextSubscriptions =
+        subscriptionData.subscriptions.length > 0 || cachedSubscriptions.length === 0
+          ? subscriptionData.subscriptions
+          : cachedSubscriptions;
+
+      setSubscriptions(nextSubscriptions);
+      if (nextSubscriptions.length > 0) writeCachedSubscriptions(gmailStatus.user, nextSubscriptions);
       setConnectors(connectorData.connectors);
     } else {
       setSubscriptions([]);
@@ -688,7 +720,11 @@ export default function App({
     setNotice(null);
 
     try {
-      await readJson<{ ok: true }>("/api/sync", { method: "POST" });
+      const syncResult = await readJson<{ ok: true; subscriptions?: Subscription[] }>("/api/sync", { method: "POST" });
+      if (syncResult.subscriptions) {
+        setSubscriptions(syncResult.subscriptions);
+        writeCachedSubscriptions(status?.user, syncResult.subscriptions);
+      }
       await load();
     } catch {
       setError("Не удалось завершить сканирование Gmail. Проверьте доступ Gmail readonly и попробуйте еще раз.");
@@ -696,7 +732,7 @@ export default function App({
       setSyncing(false);
       setAuthStage("idle");
     }
-  }, [load]);
+  }, [load, status?.user]);
 
   useEffect(() => {
     if (loading || !status?.connected || callbackSyncStartedRef.current) return;

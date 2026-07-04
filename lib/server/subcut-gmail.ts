@@ -302,9 +302,10 @@ function hasRealGmailEvidence(subscription: Subscription) {
   const hasExternalEvidence = subscription.evidence.some((evidence) => evidence.source !== "gmail");
   const signals = new Set(subscription.evidence.flatMap((evidence) => evidence.matched_signals || []));
 
-  if (subscription.status === "review" || subscription.type === "unknown") return false;
-  if (subscription.confidence < 0.68) return false;
-  if (!hasExternalEvidence && subscription.cancellation_path.includes("google.com/search")) return false;
+  if (subscription.type === "unknown") return false;
+  if (subscription.status === "review" && subscription.type === "paid") return false;
+  if (subscription.confidence < (subscription.type === "paid" ? 0.68 : 0.55)) return false;
+  if (!hasExternalEvidence && subscription.type === "paid" && subscription.cancellation_path.includes("google.com/search")) return false;
 
   if (hasExternalEvidence) {
     return (
@@ -323,8 +324,8 @@ function hasRealGmailEvidence(subscription: Subscription) {
       signals.has("trial") &&
       Boolean(subscription.trial_ends_at || subscription.next_billing_date)) ||
     (subscription.type === "free" &&
-      subscription.confidence >= 0.78 &&
-      signals.has("membership") &&
+      subscription.confidence >= 0.55 &&
+      (signals.has("membership") || signals.has("free_plan")) &&
       !signals.has("cycle_estimate"));
 
   if (!hasConfirmedShape) return false;
@@ -338,7 +339,7 @@ function hasRealGmailEvidence(subscription: Subscription) {
     }
 
     const strongSignals = evidence.matched_signals.filter((signal) =>
-      ["receipt", "invoice", "renewal", "billing_date", "trial", "payment", "membership", "cycle_estimate"].includes(signal)
+      ["receipt", "invoice", "renewal", "billing_date", "trial", "payment", "membership", "free_plan", "cycle_estimate"].includes(signal)
     );
 
     return Boolean(evidence.message_id || evidence.subject || evidence.from || evidence.snippet) && strongSignals.length > 0;
@@ -435,7 +436,7 @@ export function buildGmailConnectUrl(origin?: string) {
     response_type: "code",
     scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly",
     access_type: "offline",
-    prompt: "consent",
+    prompt: "consent select_account",
     include_granted_scopes: "true",
     state: "tengeguard:gmail"
   });
