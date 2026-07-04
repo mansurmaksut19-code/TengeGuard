@@ -165,14 +165,14 @@ const copy = {
     activeProtection: "Активная защита",
     totalMonthlySpend: "Сумма в месяц",
     nextBilling: "Следующее списание",
-    googleConnected: "Google подключен",
-    googleDisconnected: "Google не подключен",
+    googleConnected: "Gmail-сканирование подключено",
+    googleDisconnected: "Gmail-сканирование не подключено",
     activeConnection: "Активное подключение",
     lastScan: "Последний scan",
     scanNow: "Сканировать Gmail",
     scanning: "Идет анализ Gmail",
-    continueGoogle: "Продолжить через Google",
-    reconnectGoogle: "Переподключить Google",
+    continueGoogle: "Подключить Gmail",
+    reconnectGoogle: "Переподключить Gmail",
     serverMissing: "Google OAuth не настроен",
     activeSubscriptions: "Активные подписки",
     endingSoon: "Скоро заканчивается",
@@ -255,14 +255,14 @@ const copy = {
     activeProtection: "Active Protection",
     totalMonthlySpend: "Total Monthly Spend",
     nextBilling: "Next Billing",
-    googleConnected: "Google connected",
-    googleDisconnected: "Google not connected",
+    googleConnected: "Gmail scanning connected",
+    googleDisconnected: "Gmail scanning not connected",
     activeConnection: "Active connection",
     lastScan: "Last scan",
     scanNow: "Scan Gmail",
     scanning: "Analyzing Gmail",
-    continueGoogle: "Continue with Google",
-    reconnectGoogle: "Reconnect Google",
+    continueGoogle: "Connect Gmail",
+    reconnectGoogle: "Reconnect Gmail",
     serverMissing: "Google OAuth is not configured",
     activeSubscriptions: "Active subscriptions",
     endingSoon: "Ending soon",
@@ -345,14 +345,14 @@ const copy = {
     activeProtection: "Белсенді қорғаныс",
     totalMonthlySpend: "Айлық шығын",
     nextBilling: "Келесі төлем",
-    googleConnected: "Google қосылды",
-    googleDisconnected: "Google қосылмаған",
+    googleConnected: "Gmail сканері қосылды",
+    googleDisconnected: "Gmail сканері қосылмаған",
     activeConnection: "Белсенді қосылым",
     lastScan: "Соңғы scan",
     scanNow: "Gmail сканерлеу",
     scanning: "Gmail талдануда",
-    continueGoogle: "Google арқылы жалғастыру",
-    reconnectGoogle: "Google қайта қосу",
+    continueGoogle: "Gmail қосу",
+    reconnectGoogle: "Gmail қайта қосу",
     serverMissing: "Google OAuth бапталмаған",
     activeSubscriptions: "Белсенді жазылымдар",
     endingSoon: "Жақында аяқталады",
@@ -1324,8 +1324,8 @@ export default function App({
                     icon={UserCircle2}
                     meta={status?.user?.email || "gmail.readonly"}
                     onAction={handleConnect}
-                    status={status?.connected ? t.googleConnected : t.googleDisconnected}
-                    title="Google Gmail"
+                    status={status?.user ? "Google-аккаунт подключен" : "Google-аккаунт не найден"}
+                    title="Google Account"
                     tone={status?.connected ? "emerald" : "amber"}
                   />
                   <AccessCard
