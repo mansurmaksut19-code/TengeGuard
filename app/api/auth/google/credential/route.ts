@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import { getGoogleOAuthConfig } from "@/lib/server/google-oauth-config";
-import { readTokens, saveSessionUser, userIdFromEmail } from "@/lib/server/subcut-gmail";
+import {
+  createEncryptedUserSession,
+  getUserSessionCookieName,
+  readTokens,
+  saveSessionUser,
+  userIdFromEmail
+} from "@/lib/server/subcut-gmail";
 import { protectMutation, secureCookieOptions } from "@/lib/server/security";
 
 type GoogleCredentialRequest = {
@@ -75,6 +81,9 @@ export async function POST(request: Request) {
     });
 
     response.cookies.set("tg_user_id", userId, {
+      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
+    });
+    response.cookies.set(getUserSessionCookieName(), createEncryptedUserSession(user), {
       ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
 

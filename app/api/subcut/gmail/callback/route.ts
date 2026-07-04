@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   createEncryptedGmailSession,
+  createEncryptedUserSession,
   exchangeGmailCode,
+  exchangeGoogleSignInCode,
   getGmailSessionCookieName,
+  getUserSessionCookieName,
   readTokens
 } from "@/lib/server/subcut-gmail";
 import { secureCookieOptions } from "@/lib/server/security";
@@ -10,6 +13,7 @@ import { secureCookieOptions } from "@/lib/server/security";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
 
   if (!code) {
     url.pathname = "/dashboard";
@@ -18,11 +22,28 @@ export async function GET(request: Request) {
   }
 
   try {
+    if (state === "tengeguard:signin") {
+      const user = await exchangeGoogleSignInCode(code, url.origin);
+      url.pathname = "/dashboard";
+      url.search = "?signin=connected";
+      const response = NextResponse.redirect(url);
+      response.cookies.set("tg_user_id", user.id, {
+        ...secureCookieOptions(request, 60 * 60 * 24 * 30)
+      });
+      response.cookies.set(getUserSessionCookieName(), createEncryptedUserSession(user), {
+        ...secureCookieOptions(request, 60 * 60 * 24 * 30)
+      });
+      return response;
+    }
+
     const user = await exchangeGmailCode(code, url.origin);
     url.pathname = "/dashboard";
     url.search = "?gmail=connected";
     const response = NextResponse.redirect(url);
     response.cookies.set("tg_user_id", user.id, {
+      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
+    });
+    response.cookies.set(getUserSessionCookieName(), createEncryptedUserSession(user), {
       ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
     response.cookies.set("tg_gmail_connected", "1", {

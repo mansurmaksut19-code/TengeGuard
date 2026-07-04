@@ -72,6 +72,7 @@ export type SessionUser = {
 
 const rootPath = storagePath("users");
 const gmailSessionCookieName = "tg_gmail_session";
+const userSessionCookieName = "tg_user_session";
 const defaultMaxMessagesPerQuery = 250;
 const defaultMaxMessagesPerSync = 3000;
   const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 10);
@@ -155,16 +156,16 @@ function base64UrlEncode(value: Buffer) {
   return value.toString("base64url");
 }
 
-function encryptGmailSession(tokens: StoredTokens) {
+function encryptSessionPayload(payload: unknown) {
   const key = crypto.createHash("sha256").update(gmailSessionSecret()).digest();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  const encrypted = Buffer.concat([cipher.update(JSON.stringify(tokens), "utf8"), cipher.final()]);
+  const encrypted = Buffer.concat([cipher.update(JSON.stringify(payload), "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   return `v1.${base64UrlEncode(iv)}.${base64UrlEncode(tag)}.${base64UrlEncode(encrypted)}`;
 }
 
-function decryptGmailSession(value?: string): StoredTokens | null {
+function decryptSessionPayload<T>(value?: string): T | null {
   if (!value) return null;
   const [version, ivValue, tagValue, encryptedValue] = value.split(".");
   if (version !== "v1" || !ivValue || !tagValue || !encryptedValue) return null;
@@ -177,7 +178,7 @@ function decryptGmailSession(value?: string): StoredTokens | null {
       decipher.update(Buffer.from(encryptedValue, "base64url")),
       decipher.final()
     ]).toString("utf8");
-    return JSON.parse(decrypted) as StoredTokens;
+    return JSON.parse(decrypted) as T;
   } catch {
     return null;
   }
@@ -191,8 +192,23 @@ export function getGmailSessionCookieName() {
   return gmailSessionCookieName;
 }
 
+export function getUserSessionCookieName() {
+  return userSessionCookieName;
+}
+
 export function createEncryptedGmailSession(tokens: StoredTokens) {
-  return encryptGmailSession(tokens);
+  return encryptSessionPayload(tokens);
+}
+
+export function createEncryptedUserSession(user: SessionUser) {
+  return encryptSessionPayload(user);
+}
+
+function readEncryptedUserSession(request: Request, userId?: string) {
+  const encrypted = requestCookie(request, userSessionCookieName);
+  const user = decryptSessionPayload<SessionUser>(encrypted ? decodeURIComponent(encrypted) : undefined);
+  if (!user || (userId && user.id !== userId)) return null;
+  return user;
 }
 
 export function getGmailRedirectUri(origin?: string) {
@@ -444,6 +460,20 @@ export function buildGmailConnectUrl(origin?: string) {
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
 
+export function buildGoogleSignInUrl(origin?: string) {
+  const clientId = getGoogleClientId(origin);
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: getRedirectUri(origin),
+    response_type: "code",
+    scope: "openid email profile",
+    prompt: "select_account",
+    state: "tengeguard:signin"
+  });
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
 export async function readTokens(userId?: string): Promise<StoredTokens | null> {
   if (!userId) return null;
   try {
@@ -458,7 +488,7 @@ export async function readTokensFromRequest(request: Request, userId?: string): 
   if (stored) return stored;
 
   const encrypted = requestCookie(request, gmailSessionCookieName);
-  const tokens = decryptGmailSession(encrypted ? decodeURIComponent(encrypted) : undefined);
+  const tokens = decryptSessionPayload<StoredTokens>(encrypted ? decodeURIComponent(encrypted) : undefined);
   if (!tokens || !userId || userIdFromEmail(tokens.email) !== userId) return null;
   return tokens;
 }
@@ -529,7 +559,40 @@ export async function exchangeGmailCode(code: string, origin?: string) {
   };
 
   await saveTokens(userId, storedTokens);
+  await saveSessionUser(toSessionUser(userId, storedTokens));
   return toSessionUser(userId, storedTokens);
+}
+
+export async function exchangeGoogleSignInCode(code: string, origin?: string) {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: getGoogleClientId(origin),
+      client_secret: getGoogleClientSecret(origin),
+      redirect_uri: getRedirectUri(origin),
+      grant_type: "authorization_code"
+    })
+  });
+
+  if (!response.ok) throw new Error("Failed to exchange Google sign-in code");
+  const tokens = (await response.json()) as GoogleTokenResponse;
+  const userInfoResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    headers: { Authorization: `Bearer ${tokens.access_token}` }
+  });
+  const userInfo = userInfoResponse.ok ? ((await userInfoResponse.json()) as GoogleUserInfo) : {};
+  if (!userInfo.email) throw new Error("Google did not return account email");
+
+  const userId = userIdFromEmail(userInfo.email);
+  const user: SessionUser = {
+    id: userId,
+    email: userInfo.email,
+    name: userInfo.name || userInfo.email,
+    avatar_url: userInfo.picture
+  };
+  await saveSessionUser(user);
+  return user;
 }
 
 function toSessionUser(userId: string, tokens: StoredTokens): SessionUser {
@@ -695,6 +758,9 @@ export async function getSessionUserFromRequest(request: Request, userId?: strin
   const tokens = await readTokensFromRequest(request, userId);
   if (!userId) return null;
   if (tokens) return toSessionUser(userId, tokens);
+
+  const encryptedUser = readEncryptedUserSession(request, userId);
+  if (encryptedUser) return encryptedUser;
 
   try {
     return JSON.parse(await readFile(profilePath(userId), "utf8")) as SessionUser;
