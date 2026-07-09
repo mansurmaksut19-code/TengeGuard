@@ -365,8 +365,8 @@ function hasReviewCandidateEvidence(text: string, signals: string[], type: Subsc
   const hardPromotion = /(?:get \$?\d+ off|get \d+\s+months? of|extend your trial|sign up to|sign up for|try (?:it|for|now)|offer ends|limited time|pricing ends|current pricing|start using it today)/i.test(text);
   if (hardPromotion) return false;
 
-  const hasRelevantSignal = signals.some((signal) => ["trial", "free_plan", "membership"].includes(signal));
-  const hasAccountEvidence = /(?:welcome to|your account is ready|you now have access|your free account|your free plan|free tier|starter plan|basic plan|hobby plan|developer plan|community plan|you are on the free|included in your plan|included in your free plan|free account|free plan|free subscription|subscription confirmed|membership active|plan is active|account is active|you are subscribed|complimentary access|access expires|valid until|trial (?:has )?(?:started|activated|is active|is ending|will end|expires))/i.test(text);
+  const hasRelevantSignal = signals.some((signal) => ["trial", "free_plan", "membership", "payment", "receipt", "invoice", "billing_date"].includes(signal));
+  const hasAccountEvidence = /(?:welcome to|account created|your account is ready|you now have access|your free account|your free plan|free tier|starter plan|basic plan|hobby plan|developer plan|community plan|you are on the free|included in your plan|included in your free plan|free account|free plan|free subscription|subscription confirmed|membership active|plan is active|account is active|you are subscribed|complimentary access|access expires|valid until|trial (?:has )?(?:started|activated|is active|is ending|will end|expires)|добро пожаловать|аккаунт создан|аккаунт готов|доступ открыт|доступ активен|тариф активен|подписка подтверждена|подписка активна|бесплатный тариф|бесплатный план|пробный период|оплата прошла|чек|квитанция|счет|счёт)/i.test(text);
 
   return hasRelevantSignal && hasAccountEvidence && (type === "free" || type === "free_trial" || type === "unknown");
 }

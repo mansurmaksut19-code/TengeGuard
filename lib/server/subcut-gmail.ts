@@ -73,11 +73,16 @@ export type SessionUser = {
 const rootPath = storagePath("users");
 const gmailSessionCookieName = "tg_gmail_session";
 const userSessionCookieName = "tg_user_session";
-const defaultMaxMessagesPerQuery = 500;
-const defaultMaxMessagesPerSync = 6000;
+const defaultMaxMessagesPerQuery = 160;
+const defaultMaxMessagesPerSync = 1600;
   const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 10);
 const gmailFetchRetryCount = readPositiveIntegerEnv("TENGEGUARD_GMAIL_RETRIES", 4);
 const gmailQueries = [
+  'category:purchases newer_than:10y',
+  '(newer_than:24m)',
+  '(subject:payment OR subject:receipt OR subject:invoice OR subject:order OR subject:purchase OR subject:subscription OR subject:trial OR subject:billing) newer_than:10y',
+  '("welcome to" OR "account created" OR "account is ready" OR "plan is active" OR "subscription confirmed" OR "payment successful" OR "order confirmation") newer_than:10y',
+  '("добро пожаловать" OR "аккаунт создан" OR "аккаунт готов" OR "тариф активен" OR "подписка подтверждена" OR "оплата прошла" OR "подтверждение заказа") newer_than:10y',
   '("следующее списание" OR "следующая оплата" OR "следующий платеж" OR "следующий платёж" OR "дата списания" OR "дата продления" OR "подписка заканчивается" OR "пробный период закончится" OR "бесплатно до" OR "действует до") newer_than:10y',
   '("бесплатная подписка" OR "бесплатный план" OR "бесплатный тариф" OR "пробный период" OR "триал" OR "временно бесплатный" OR "бесплатный доступ" OR "подписка активна" OR "тариф активен") newer_than:10y',
   '(subject:чек OR subject:квитанция OR subject:счет OR subject:счёт OR subject:подписка OR subject:продление OR subject:оплата OR subject:платеж OR subject:платёж) newer_than:10y',

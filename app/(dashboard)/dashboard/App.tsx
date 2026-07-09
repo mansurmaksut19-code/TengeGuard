@@ -2173,12 +2173,26 @@ function EmptyState({
   body: string;
 }) {
   return (
-    <div className="rounded-xl border border-outline-variant bg-white p-8 text-center shadow-stitch lg:col-span-2">
-      <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-emerald-200 bg-emerald-soft">
+    <div className="rounded-2xl border border-outline-variant bg-white p-8 text-center shadow-stitch lg:col-span-2">
+      <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-emerald-200 bg-emerald-soft">
         <Icon className="h-6 w-6 text-emerald-dark" />
       </div>
-      <h3 className="mt-3 font-headline-md text-headline-md">{title}</h3>
-      <p className="mx-auto mt-2 max-w-2xl text-body-md text-on-surface-variant">{body}</p>
+      <h3 className="mt-4 font-display text-headline-md font-extrabold">{title}</h3>
+      <p className="mx-auto mt-2 max-w-2xl text-body-md leading-6 text-on-surface-variant">{body}</p>
+      <div className="mx-auto mt-5 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
+        <div className="rounded-xl bg-surface-container-low p-3">
+          <p className="text-[11px] font-black uppercase text-on-surface-variant">Источник</p>
+          <p className="mt-1 text-label-sm font-bold text-on-surface">Gmail read-only</p>
+        </div>
+        <div className="rounded-xl bg-surface-container-low p-3">
+          <p className="text-[11px] font-black uppercase text-on-surface-variant">Типы</p>
+          <p className="mt-1 text-label-sm font-bold text-on-surface">Paid / Free / Trial</p>
+        </div>
+        <div className="rounded-xl bg-surface-container-low p-3">
+          <p className="text-[11px] font-black uppercase text-on-surface-variant">Режим</p>
+          <p className="mt-1 text-label-sm font-bold text-on-surface">Deep scan</p>
+        </div>
+      </div>
     </div>
   );
 }
