@@ -8,7 +8,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (mode !== "mobile" && mode !== "desktop") redirect("/");
 
   const userId = cookieStore.get("tg_user_id")?.value;
-  if (!userId) redirect("/api/auth/google");
+  const gmailConnected = cookieStore.get("tg_gmail_connected")?.value === "1";
+  if (!userId || !gmailConnected) redirect("/api/subcut/gmail/start");
 
   return children;
 }
