@@ -40,7 +40,7 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Inter Tight", "Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
         "body-md": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
         "label-sm": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
         "mono-data": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"]

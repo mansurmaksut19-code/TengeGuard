@@ -73,8 +73,8 @@ export type SessionUser = {
 const rootPath = storagePath("users");
 const gmailSessionCookieName = "tg_gmail_session";
 const userSessionCookieName = "tg_user_session";
-const defaultMaxMessagesPerQuery = 250;
-const defaultMaxMessagesPerSync = 3000;
+const defaultMaxMessagesPerQuery = 500;
+const defaultMaxMessagesPerSync = 6000;
   const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 10);
 const gmailFetchRetryCount = readPositiveIntegerEnv("TENGEGUARD_GMAIL_RETRIES", 4);
 const gmailQueries = [
@@ -321,11 +321,26 @@ function subscriptionKey(subscription: Pick<Subscription, "provider_name" | "can
 function hasRealGmailEvidence(subscription: Subscription) {
   const hasExternalEvidence = subscription.evidence.some((evidence) => evidence.source !== "gmail");
   const signals = new Set(subscription.evidence.flatMap((evidence) => evidence.matched_signals || []));
+  const hasStrongGmailEvidence = subscription.evidence.some((evidence) => {
+    const strongSignals = evidence.matched_signals.filter((signal) =>
+      ["receipt", "invoice", "renewal", "billing_date", "trial", "payment", "membership", "free_plan", "cycle_estimate"].includes(signal)
+    );
+    return Boolean(evidence.message_id || evidence.subject || evidence.from || evidence.snippet) && strongSignals.length > 0;
+  });
 
   if (subscription.type === "unknown") return false;
-  if (subscription.status === "review" && subscription.type === "paid") return false;
+  if (subscription.status === "review") {
+    return subscription.provider_name !== "Unknown service" && subscription.confidence >= 0.55 && hasStrongGmailEvidence;
+  }
   if (subscription.confidence < (subscription.type === "paid" ? 0.68 : 0.55)) return false;
-  if (!hasExternalEvidence && subscription.type === "paid" && subscription.cancellation_path.includes("google.com/search")) return false;
+  if (
+    !hasExternalEvidence &&
+    subscription.type === "paid" &&
+    subscription.cancellation_path.includes("google.com/search") &&
+    !(subscription.cost > 0 && (signals.has("receipt") || signals.has("invoice")) && (signals.has("payment") || signals.has("renewal") || signals.has("billing_date")))
+  ) {
+    return false;
+  }
 
   if (hasExternalEvidence) {
     return (
