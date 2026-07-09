@@ -1051,8 +1051,8 @@ export default function App({
     <main className={`${isMobileMode ? "bg-slate-100" : "tg-shell-grid bg-background"} min-h-screen text-on-surface antialiased`}>
       <div className={isMobileMode ? "mx-auto min-h-screen max-w-md border-x border-outline-variant bg-background pb-24 shadow-2xl shadow-slate-200/70" : "min-h-screen pb-24 lg:flex lg:pb-0"}>
         {!isMobileMode ? (
-          <aside className="hidden min-h-screen w-72 shrink-0 flex-col border-r border-outline-variant bg-surface-container-low/95 px-4 py-6 backdrop-blur-xl lg:flex">
-            <button className="mb-8 flex min-w-0 items-center gap-3 rounded-xl border border-outline-variant bg-white p-3 text-left shadow-stitch" onClick={() => navigateView("dashboard")} type="button">
+          <aside className="hidden min-h-screen w-72 shrink-0 flex-col border-r border-outline-variant bg-white/95 px-4 py-6 shadow-[12px_0_40px_-36px_rgb(15_23_42_/_0.55)] backdrop-blur-xl lg:flex">
+            <button className="mb-8 flex min-w-0 items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-3 text-left shadow-stitch transition hover:border-primary/35 hover:shadow-soft" onClick={() => navigateView("dashboard")} type="button">
               <BrandMark />
               <div className="min-w-0">
                 <h1 className="whitespace-nowrap font-display text-headline-md font-extrabold leading-7 text-on-surface">TengeGuard</h1>
@@ -1062,19 +1062,19 @@ export default function App({
             <nav className="flex-1 space-y-1">
               {navItems.map((item) => (
                 <button
-                  className={`flex w-full min-w-0 items-center gap-3 rounded-lg px-4 py-3 text-left text-label-sm font-bold leading-5 transition active:scale-[0.98] ${
-                    activeView === item.view ? "bg-primary text-on-primary shadow-stitch" : "text-on-surface-variant hover:bg-surface-variant hover:text-on-surface"
+                  className={`flex w-full min-w-0 items-center gap-3 rounded-xl px-4 py-3 text-left text-label-sm font-bold leading-5 transition active:scale-[0.98] ${
+                    activeView === item.view ? "bg-primary text-on-primary shadow-stitch" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
                   }`}
                   key={item.view}
                   onClick={() => navigateView(item.view)}
                   type="button"
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
-                  <span className="min-w-0 whitespace-nowrap">{item.label}</span>
+                  <span className="min-w-0 truncate">{item.label}</span>
                 </button>
               ))}
             </nav>
-            <div className="mt-6 rounded-xl border border-outline-variant bg-white p-4 shadow-stitch">
+            <div className="mt-6 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4 shadow-stitch">
               <div className="flex items-center gap-3 text-label-sm font-bold text-on-surface">
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10">
                   <Laptop className="h-4 w-4 text-primary" />
@@ -1188,6 +1188,20 @@ export default function App({
                     messagesScanned={status?.report?.messages_scanned || 0}
                     t={t}
                   />
+
+                  {!activeSubscriptions.length ? (
+                    <DashboardActivationPanel
+                      bankReady={connectors.some((connector) => connector.id === "bank" && connector.status === "ready")}
+                      connected={Boolean(status?.connected)}
+                      disabled={loading || syncing || googleSigningIn}
+                      onConnect={handleConnect}
+                      onConnectBank={handleConnectBank}
+                      onScan={handleSync}
+                      onTelegram={handleTelegramConnect}
+                      scanning={syncing}
+                      telegramReady={Boolean(telegramStatus?.configured)}
+                    />
+                  ) : null}
                 </div>
 
                 <div className="space-y-6">
@@ -2165,6 +2179,144 @@ function EmptyState({
       </div>
       <h3 className="mt-3 font-headline-md text-headline-md">{title}</h3>
       <p className="mx-auto mt-2 max-w-2xl text-body-md text-on-surface-variant">{body}</p>
+    </div>
+  );
+}
+
+function DashboardActivationPanel({
+  bankReady,
+  connected,
+  disabled,
+  onConnect,
+  onConnectBank,
+  onScan,
+  onTelegram,
+  scanning,
+  telegramReady
+}: {
+  bankReady: boolean;
+  connected: boolean;
+  disabled: boolean;
+  onConnect: () => void;
+  onConnectBank: () => void;
+  onScan: () => void;
+  onTelegram: () => void;
+  scanning: boolean;
+  telegramReady: boolean;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-primary/15 bg-white shadow-stitch">
+      <div className="border-b border-outline-variant bg-[linear-gradient(135deg,#ffffff_0%,#eefcf7_100%)] p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-label-sm font-black uppercase text-primary">Автоматический поиск подписок</p>
+            <h3 className="mt-2 font-display text-headline-md font-extrabold text-on-surface">
+              Подключаем источники и сразу собираем реальные данные
+            </h3>
+            <p className="mt-2 max-w-2xl text-body-md leading-6 text-on-surface-variant">
+              После Gmail-доступа TengeGuard сам сканирует письма, находит платные подписки, free-тарифы, trial-периоды и даты окончания.
+            </p>
+          </div>
+          <span className="w-fit rounded-full border border-emerald-200 bg-emerald-soft px-3 py-1 text-[11px] font-black uppercase text-emerald-dark">
+            Real data only
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-3 p-5 md:grid-cols-2">
+        <ActivationStep
+          action={connected ? (scanning ? "Сканируем..." : "Сканировать Gmail") : "Подключить Gmail"}
+          body="Основной источник: письма о чеках, продлениях, пробных периодах и free-тарифах."
+          disabled={disabled}
+          icon={MailCheck}
+          onClick={connected ? onScan : onConnect}
+          state={connected ? "подключено" : "нужно подключить"}
+          title="Gmail read-only"
+          tone={connected ? "emerald" : "primary"}
+        />
+        <ActivationStep
+          action={bankReady ? "Подключить банк" : "Ожидает API"}
+          body="Для подписок без email: регулярные списания, карты и банковская история."
+          disabled={!bankReady}
+          icon={WalletCards}
+          onClick={onConnectBank}
+          state={bankReady ? "готово" : "нужны ключи провайдера"}
+          title="Банковская интеграция"
+          tone="primary"
+        />
+        <ActivationStep
+          action={telegramReady ? "Подключить Telegram" : "Бот не настроен"}
+          body="Напоминания перед списанием и окончанием пробного периода."
+          disabled={!telegramReady}
+          icon={MessageCircle}
+          onClick={onTelegram}
+          state={telegramReady ? "готово" : "нужен webhook/token"}
+          title="Telegram уведомления"
+          tone="emerald"
+        />
+        <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-soft text-amber-dark">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="font-bold text-on-surface">Полный охват</h4>
+              <p className="mt-1 text-body-md leading-6 text-on-surface-variant">
+                Для максимального результата система использует Gmail сейчас, а банковские транзакции подключаются через провайдера API после выдачи ключей.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ActivationStep({
+  action,
+  body,
+  disabled,
+  icon: Icon,
+  onClick,
+  state,
+  title,
+  tone
+}: {
+  action: string;
+  body: string;
+  disabled: boolean;
+  icon: React.ElementType;
+  onClick: () => void;
+  state: string;
+  title: string;
+  tone: "primary" | "emerald";
+}) {
+  const toneClass = tone === "emerald" ? "bg-emerald-soft text-emerald-dark" : "bg-primary/10 text-primary";
+
+  return (
+    <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-stitch">
+      <div className="flex items-start gap-3">
+        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneClass}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h4 className="break-words font-bold text-on-surface">{title}</h4>
+              <p className="mt-1 text-[11px] font-black uppercase text-on-surface-variant">{state}</p>
+            </div>
+            <button
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-3 py-2 text-label-sm font-bold text-on-primary transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-45"
+              disabled={disabled}
+              onClick={onClick}
+              type="button"
+            >
+              {action}
+            </button>
+          </div>
+          <p className="mt-3 text-body-md leading-6 text-on-surface-variant">{body}</p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -40,9 +40,9 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        "body-md": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        "label-sm": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        "body-md": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        "label-sm": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
         "mono-data": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"]
       },
       fontSize: {

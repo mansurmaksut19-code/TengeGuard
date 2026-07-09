@@ -626,6 +626,9 @@ function detectNextBillingDate(text: string, anchorDate: string | undefined, cyc
 }
 
 function detectBillingCycle(text: string): BillingCycle {
+  if (/годов|ежегод|per year|yearly|annual|annually/i.test(text)) return "yearly";
+  if (/недел|per week|weekly/i.test(text)) return "weekly";
+  if (/месяц|ежемесяч|ай сайын|per month|monthly/i.test(text)) return "monthly";
   if (/yearly|annual|annually|per year|годов|ежегод/i.test(text)) return "yearly";
   if (/weekly|per week|недел/i.test(text)) return "weekly";
   if (/monthly|per month|month|месяц|ежемесяч|ай сайын/i.test(text)) return "monthly";
@@ -633,6 +636,9 @@ function detectBillingCycle(text: string): BillingCycle {
 }
 
 function detectType(text: string, cost: number): SubscriptionType {
+  if (/пробн|триал|временно бесплатн|доступ действует до|free trial|trial period|temporary access|free until|valid until/i.test(text)) return "free_trial";
+  if (cost > 0 || /чек|квитанц|счет|счёт|оплачено|списано|продлен|продлён|оплата прошла|receipt|invoice|charged|paid|payment|renewed/i.test(text)) return "paid";
+  if (/бесплатн(?:ый|ая|ое|о|ую) (?:тариф|план|подписк)|тегін жоспар|подписка активна|тариф активен|free plan|free account|free subscription|no charge|without charge/i.test(text)) return "free";
   if (/free trial|trial (?:started|starts|is active|activated|ends|ending|will end)|trial period|temporary access|temporary free|free access until|free until|access expires|valid until|пробн|триал|временно бесплатн|доступ действует до/i.test(text)) return "free_trial";
   if (cost > 0 || /receipt|invoice|charged|paid|payment|renewed|оплачено|списано|продлен|оплата прошла/i.test(text)) return "paid";
   if (/free plan|free account|free subscription|no charge|without charge|0[.,]00|бесплатн(?:ый|ая|ое|о|ую) (?:тариф|план|подписк)|тегін жоспар|subscription confirmed|membership active|plan is active/i.test(text)) return "free";
@@ -681,6 +687,19 @@ export function parseEmailReceipts(input: string | EmailReceiptInput): ParsedRec
   const body = cleanText(source.body);
   const text = `${source.subject || ""}\n${source.from || ""}\n${body}`;
   const signals: string[] = matchedSignals(text);
+  const russianSignals = [
+    ["receipt", /чек|квитанц/i],
+    ["invoice", /счет|счёт/i],
+    ["renewal", /продлен|продлён|продление/i],
+    ["billing_date", /следующее списание|следующая оплата|следующий платеж|следующий платёж|дата списания|дата продления/i],
+    ["trial", /пробн|триал/i],
+    ["payment", /оплачено|списано|оплата получена|оплата прошла/i],
+    ["free_plan", /бесплатн|тегін/i],
+    ["membership", /подписка активна|подписка подтверждена|тариф активен/i]
+  ] as const;
+  russianSignals.forEach(([signal, pattern]) => {
+    if (pattern.test(text) && !signals.includes(signal)) signals.push(signal);
+  });
   if (
     /(?:free tier|starter plan|basic plan|hobby plan|developer plan|community plan|you are on the free|included in your plan)/i.test(text) &&
     !signals.includes("free_plan")

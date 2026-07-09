@@ -78,6 +78,10 @@ const defaultMaxMessagesPerSync = 3000;
   const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 10);
 const gmailFetchRetryCount = readPositiveIntegerEnv("TENGEGUARD_GMAIL_RETRIES", 4);
 const gmailQueries = [
+  '("следующее списание" OR "следующая оплата" OR "следующий платеж" OR "следующий платёж" OR "дата списания" OR "дата продления" OR "подписка заканчивается" OR "пробный период закончится" OR "бесплатно до" OR "действует до") newer_than:10y',
+  '("бесплатная подписка" OR "бесплатный план" OR "бесплатный тариф" OR "пробный период" OR "триал" OR "временно бесплатный" OR "бесплатный доступ" OR "подписка активна" OR "тариф активен") newer_than:10y',
+  '(subject:чек OR subject:квитанция OR subject:счет OR subject:счёт OR subject:подписка OR subject:продление OR subject:оплата OR subject:платеж OR subject:платёж) newer_than:10y',
+  '(from:yandex OR from:kinopoisk.ru OR from:plus.yandex.ru OR from:ivi.ru OR from:okko.tv OR from:start.ru OR from:kion.ru OR from:premier.one OR from:more.tv OR from:wink.ru OR from:litres.ru OR from:bookmate.com) newer_than:10y',
   '(receipt OR invoice OR subscription OR renewal OR renewed OR trial OR "free plan" OR "free account" OR billing OR charged OR paid OR order) newer_than:10y',
   '("Google Play Order Receipt" OR "Apple Receipt" OR "Your receipt from Apple" OR "subscription from Google Commerce" OR "Manage your subscriptions") newer_than:10y',
   '("automatic payment" OR "recurring payment" OR "preapproved payment" OR "billing agreement" OR "subscription payment" OR "merchant of record") newer_than:10y',

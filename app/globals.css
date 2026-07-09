@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -7,25 +7,25 @@
 :root {
   color-scheme: light;
   --background: 210 40% 98%;
-  --foreground: 260 8% 12%;
+  --foreground: 220 18% 12%;
   --surface: 0 0% 100%;
   --surface-container-lowest: 0 0% 100%;
-  --surface-container-low: 285 33% 97%;
-  --surface-container: 276 22% 94%;
-  --surface-container-high: 276 18% 90%;
-  --surface-variant: 276 18% 90%;
-  --on-surface: 260 8% 12%;
-  --on-surface-variant: 263 8% 29%;
+  --surface-container-low: 210 40% 97%;
+  --surface-container: 210 32% 94%;
+  --surface-container-high: 214 24% 90%;
+  --surface-variant: 214 24% 90%;
+  --on-surface: 220 18% 12%;
+  --on-surface-variant: 218 12% 36%;
   --inverse-surface: 270 6% 20%;
   --inverse-on-surface: 285 30% 95%;
-  --outline-variant: 267 14% 80%;
+  --outline-variant: 214 24% 84%;
   --border: 214 32% 91%;
   --muted: 210 40% 96%;
   --muted-foreground: 263 8% 35%;
-  --primary: 259 43% 38%;
+  --primary: 221 47% 28%;
   --primary-foreground: 0 0% 100%;
   --on-primary: 0 0% 100%;
-  --accent: 199 89% 48%;
+  --accent: 162 72% 42%;
   --accent-foreground: 0 0% 100%;
   --success: 160 84% 32%;
   --warning: 38 92% 48%;
@@ -63,12 +63,12 @@ html {
 body {
   min-height: 100%;
   background:
-    radial-gradient(circle at 12% -10%, rgb(233 221 255 / 0.55), transparent 28rem),
-    radial-gradient(circle at 92% 0%, rgb(224 242 254 / 0.58), transparent 30rem),
+    radial-gradient(circle at 12% -10%, rgb(219 234 254 / 0.72), transparent 28rem),
+    radial-gradient(circle at 92% 0%, rgb(209 250 229 / 0.62), transparent 30rem),
     linear-gradient(180deg, #f8fafc 0%, hsl(var(--background)) 100%);
   color: hsl(var(--foreground));
   font-family:
-    Inter,
+    Manrope,
     ui-sans-serif,
     system-ui,
     -apple-system,
