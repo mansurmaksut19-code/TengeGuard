@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseSubscriptionImport } from "@/lib/server/subscription-import";
@@ -46,16 +47,72 @@ type SaltEdgeState = {
 };
 
 const bankStateRoot = storagePath("bank");
+const bankSessionCookieName = "tg_bank_session";
+
+function bankSessionSecret() {
+  return (
+    process.env.TENGEGUARD_SESSION_SECRET ||
+    process.env.TENGEGUARD_ADMIN_SECRET ||
+    process.env.TENGEGUARD_BANK_PROVIDER_SECRET ||
+    process.env.SALTEDGE_SECRET ||
+    "tengeguard-local-bank-session-secret"
+  );
+}
+
+function requestCookie(request: Request | undefined, name: string) {
+  return request?.headers.get("cookie")?.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))?.[1];
+}
+
+function encryptBankSession(userId: string, state: SaltEdgeState) {
+  const key = crypto.createHash("sha256").update(bankSessionSecret()).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(JSON.stringify({ user_id: userId, ...state }), "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `v1.${iv.toString("base64url")}.${tag.toString("base64url")}.${encrypted.toString("base64url")}`;
+}
+
+function decryptBankSession(request: Request | undefined, userId: string): SaltEdgeState | null {
+  const value = requestCookie(request, bankSessionCookieName);
+  if (!value) return null;
+  const [version, ivValue, tagValue, encryptedValue] = decodeURIComponent(value).split(".");
+  if (version !== "v1" || !ivValue || !tagValue || !encryptedValue) return null;
+
+  try {
+    const key = crypto.createHash("sha256").update(bankSessionSecret()).digest();
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(ivValue, "base64url"));
+    decipher.setAuthTag(Buffer.from(tagValue, "base64url"));
+    const payload = JSON.parse(
+      Buffer.concat([decipher.update(Buffer.from(encryptedValue, "base64url")), decipher.final()]).toString("utf8")
+    ) as SaltEdgeState & { user_id?: string };
+    if (payload.user_id !== userId) return null;
+    return {
+      customer_id: payload.customer_id,
+      connections: Array.isArray(payload.connections) ? payload.connections : [],
+      updated_at: payload.updated_at || new Date().toISOString()
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function getBankSessionCookieName() {
+  return bankSessionCookieName;
+}
+
+export function createEncryptedBankSession(userId: string, state: SaltEdgeState) {
+  return encryptBankSession(userId, state);
+}
 
 function statePath(userId: string) {
   return path.join(bankStateRoot, `${userId}.json`);
 }
 
-async function readBankState(userId: string): Promise<SaltEdgeState> {
+async function readBankState(userId: string, request?: Request): Promise<SaltEdgeState> {
   try {
     return JSON.parse(await readFile(statePath(userId), "utf8")) as SaltEdgeState;
   } catch {
-    return { connections: [], updated_at: new Date().toISOString() };
+    return decryptBankSession(request, userId) || { connections: [], updated_at: new Date().toISOString() };
   }
 }
 
@@ -127,8 +184,8 @@ type SaltEdgeTransaction = {
   };
 };
 
-async function ensureSaltEdgeCustomer(user: SessionUser) {
-  const state = await readBankState(user.id);
+async function ensureSaltEdgeCustomer(user: SessionUser, request?: Request) {
+  const state = await readBankState(user.id, request);
   if (state.customer_id) return state.customer_id;
 
   const response = await saltedgeFetch<SaltEdgeCustomerResponse>("/customers", {
@@ -155,8 +212,12 @@ export function bankConnectUrl(user: SessionUser) {
 }
 
 export async function createBankConnectUrl(user: SessionUser) {
-  if (!bankReady()) return bankConnectUrl(user);
-  const customerId = await ensureSaltEdgeCustomer(user);
+  return (await createBankConnectSession(user)).connectUrl;
+}
+
+export async function createBankConnectSession(user: SessionUser, request?: Request) {
+  if (!bankReady()) return { connectUrl: bankConnectUrl(user), state: await readBankState(user.id, request) };
+  const customerId = await ensureSaltEdgeCustomer(user, request);
   const today = new Date();
   const from = new Date(today);
   from.setFullYear(today.getFullYear() - 2);
@@ -202,17 +263,23 @@ export async function createBankConnectUrl(user: SessionUser) {
     })
   });
 
-  await writeBankState(user.id, { ...(await readBankState(user.id)), customer_id: response.data.customer_id });
-  return response.data.connect_url;
+  const state = { ...(await readBankState(user.id, request)), customer_id: response.data.customer_id || customerId };
+  await writeBankState(user.id, state);
+  return {
+    connectUrl: response.data.connect_url,
+    state
+  };
 }
 
-export async function saveBankConnection(userId: string, connectionId: string) {
-  if (!connectionId) return;
-  const state = await readBankState(userId);
-  await writeBankState(userId, {
+export async function saveBankConnection(userId: string, connectionId: string, request?: Request) {
+  const state = await readBankState(userId, request);
+  if (!connectionId) return state;
+  const next = {
     ...state,
     connections: Array.from(new Set([...state.connections, connectionId]))
-  });
+  };
+  await writeBankState(userId, next);
+  return next;
 }
 
 async function saltedgeConnections(customerId: string) {
@@ -232,12 +299,13 @@ async function saltedgeTransactions(connectionId: string, accountId: string) {
   return response.data;
 }
 
-export async function syncBankSubscriptions(user: SessionUser) {
+export async function syncBankSubscriptions(user: SessionUser, request?: Request) {
   if (!bankReady()) return { imported: 0, subscriptions_imported: 0 };
-  const customerId = await ensureSaltEdgeCustomer(user);
-  const state = await readBankState(user.id);
+  const customerId = await ensureSaltEdgeCustomer(user, request);
+  const state = await readBankState(user.id, request);
   const connectionIds = Array.from(new Set([...state.connections, ...(await saltedgeConnections(customerId))]));
-  await writeBankState(user.id, { ...state, customer_id: customerId, connections: connectionIds });
+  const nextState = { ...state, customer_id: customerId, connections: connectionIds };
+  await writeBankState(user.id, nextState);
 
   const rows: string[] = ["date,description,amount,currency"];
   for (const connectionId of connectionIds) {
@@ -262,17 +330,20 @@ export async function syncBankSubscriptions(user: SessionUser) {
   await saveImportedSubscriptions(user.id, result.subscriptions);
   return {
     imported: result.imported,
-    subscriptions_imported: result.subscriptions.length
+    subscriptions_imported: result.subscriptions.length,
+    bank_session: createEncryptedBankSession(user.id, nextState)
   };
 }
 
 export async function automaticConnectors(
   user?: SessionUser | null,
-  options?: { gmailConnected?: boolean }
+  options?: { gmailConnected?: boolean; request?: Request }
 ): Promise<AutomaticConnector[]> {
   const gmailTokens = await readTokens(user?.id);
   const gmailConnected = options?.gmailConnected || Boolean(gmailTokens);
   const ready = bankReady() || Boolean(process.env.TENGEGUARD_BANK_CONNECT_URL);
+  const bankState = user ? await readBankState(user.id, options?.request) : { connections: [], updated_at: new Date().toISOString() };
+  const bankConnected = bankState.connections.length > 0;
 
   return [
     {
@@ -285,9 +356,9 @@ export async function automaticConnectors(
     {
       id: "bank",
       name: bankProviderName(),
-      status: ready ? "ready" : "setup_required",
+      status: bankConnected ? "connected" : ready ? "ready" : "setup_required",
       coverage: "Card and account transactions, recurring payments, subscriptions without emails.",
-      action: ready ? "Connect bank" : "Founder setup required",
+      action: bankConnected ? "Connected" : ready ? "Connect bank" : "Founder setup required",
       setup: ready
         ? undefined
         : "Set Salt Edge App-id and Secret in TENGEGUARD_BANK_PROVIDER_KEY / TENGEGUARD_BANK_PROVIDER_SECRET."

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { saveBankConnection } from "@/lib/server/subscription-connectors";
+import {
+  createEncryptedBankSession,
+  getBankSessionCookieName,
+  saveBankConnection
+} from "@/lib/server/subscription-connectors";
+import { protectMutation, secureCookieOptions } from "@/lib/server/security";
 import { getSessionUserFromRequest, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
-import { protectMutation } from "@/lib/server/security";
 
 function extractConnectionId(value: unknown): string {
   if (!value || typeof value !== "object") return "";
@@ -17,9 +21,13 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const connectionId = url.searchParams.get("connection_id") || url.searchParams.get("id") || "";
-  if (connectionId) await saveBankConnection(user.id, connectionId);
+  const state = await saveBankConnection(user.id, connectionId, request);
 
-  return NextResponse.redirect(new URL("/dashboard/subscriptions", request.url));
+  const response = NextResponse.redirect(new URL("/dashboard/subscriptions", request.url));
+  response.cookies.set(getBankSessionCookieName(), createEncryptedBankSession(user.id, state), {
+    ...secureCookieOptions(request, 60 * 60 * 24 * 90)
+  });
+  return response;
 }
 
 export async function POST(request: Request) {

@@ -8,6 +8,9 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   return NextResponse.json({
-    connectors: await automaticConnectors(user, { gmailConnected: Boolean(await readTokensFromRequest(request, user.id)) })
+    connectors: await automaticConnectors(user, {
+      gmailConnected: Boolean(await readTokensFromRequest(request, user.id)),
+      request
+    })
   });
 }
