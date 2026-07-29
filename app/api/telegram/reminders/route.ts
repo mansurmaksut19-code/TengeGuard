@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 import { ensureTelegramReminderSchedulerStarted, pollTelegramUpdates, sendDueTelegramReminders, sendDueTelegramRemindersForAll } from "@/lib/server/telegram";
 import { protectMutation, requireAdminSecret } from "@/lib/server/security";
 
+export async function GET(request: Request) {
+  const adminBlocked = requireAdminSecret(request);
+  if (adminBlocked) return adminBlocked;
+
+  ensureTelegramReminderSchedulerStarted();
+  await pollTelegramUpdates().catch(() => null);
+
+  const result = await sendDueTelegramRemindersForAll(3);
+  return NextResponse.json({ ok: true, ...result });
+}
+
 export async function POST(request: Request) {
   const blocked = protectMutation(request, { key: "telegram-reminders", limit: 10, windowMs: 60_000 });
   if (blocked) return blocked;

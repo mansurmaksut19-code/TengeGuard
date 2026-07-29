@@ -87,14 +87,17 @@ export function protectMutation(request: Request, options?: { key?: string; limi
 }
 
 export function requireAdminSecret(request: Request) {
-  const configuredSecret = process.env.TENGEGUARD_ADMIN_SECRET || process.env.TENGEGUARD_CRON_SECRET;
+  const configuredSecret = process.env.TENGEGUARD_ADMIN_SECRET || process.env.TENGEGUARD_CRON_SECRET || process.env.CRON_SECRET;
   const isLocal = ["localhost", "127.0.0.1", "::1"].includes(new URL(request.url).hostname);
 
   if (!configuredSecret) {
     return isLocal ? null : securityError("Admin endpoint is disabled until TENGEGUARD_ADMIN_SECRET is configured", 503);
   }
 
-  const providedSecret = request.headers.get("x-tengeguard-admin-secret") || request.headers.get("x-tengeguard-cron-secret");
+  const authorization = request.headers.get("authorization") || "";
+  const bearerSecret = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
+  const providedSecret =
+    request.headers.get("x-tengeguard-admin-secret") || request.headers.get("x-tengeguard-cron-secret") || bearerSecret;
   if (providedSecret !== configuredSecret) return securityError("Unauthorized", 401);
   return null;
 }
