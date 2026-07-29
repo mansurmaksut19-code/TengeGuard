@@ -153,7 +153,133 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <section className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-label-sm font-black uppercase text-primary">Тарифы TengeGuard</p>
+            <h2 className="mt-3 font-display text-[36px] font-extrabold leading-tight text-[#111827] sm:text-[48px]">
+              Начните бесплатно, затем подключите полный контроль
+            </h2>
+            <p className="mt-4 text-body-lg leading-7 text-on-surface-variant">
+              Бесплатный доступ на 14 дней помогает проверить, какие подписки найдутся. Полный план открывает постоянный мониторинг, историю, уведомления и обслуживание подписок.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-5xl gap-5 lg:grid-cols-2">
+            <PricingCard
+              badge="14 дней"
+              description="Пробный период для проверки Gmail-скана, бесплатных тарифов, trial-периодов и дат списаний."
+              features={[
+                "Gmail read-only подключение",
+                "Поиск платных, free и trial-подписок",
+                "Даты окончания пробных периодов",
+                "Доказательства из писем"
+              ]}
+              price="0 ₸"
+              title="Бесплатный старт"
+            />
+            <PricingCard
+              badge="Полный доступ"
+              description="Для постоянного контроля подписок, уведомлений и полного обслуживания аккаунта."
+              features={[
+                "Все из бесплатного плана",
+                "Telegram-уведомления о списаниях",
+                "История текущих и отмененных подписок",
+                "Подготовка к банковским интеграциям",
+                "Приоритетный deep scan"
+              ]}
+              highlighted
+              price="200 ₸ / месяц"
+              secondaryPrice="2000 ₸ / год"
+              title="TengeGuard Full"
+            />
+          </div>
+        </div>
+      </section>
     </main>
+  );
+}
+
+function PricingCard({
+  badge,
+  description,
+  features,
+  highlighted = false,
+  price,
+  secondaryPrice,
+  title
+}: {
+  badge: string;
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+  price: string;
+  secondaryPrice?: string;
+  title: string;
+}) {
+  return (
+    <article
+      className={`flex min-h-[460px] flex-col rounded-[28px] border p-6 shadow-stitch ${
+        highlighted
+          ? "border-primary bg-primary text-on-primary shadow-float"
+          : "border-outline-variant bg-surface-container-lowest text-on-surface"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <span
+            className={`inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase ${
+              highlighted ? "bg-white/15 text-on-primary" : "bg-emerald-soft text-emerald-dark"
+            }`}
+          >
+            {badge}
+          </span>
+          <h3 className="mt-5 font-display text-[28px] font-extrabold">{title}</h3>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <p className="font-display text-[34px] font-extrabold leading-tight">{price}</p>
+        {secondaryPrice ? (
+          <p className={`mt-1 text-body-md font-bold ${highlighted ? "text-on-primary/70" : "text-on-surface-variant"}`}>
+            или {secondaryPrice}
+          </p>
+        ) : null}
+      </div>
+
+      <p className={`mt-5 text-body-md leading-7 ${highlighted ? "text-on-primary/78" : "text-on-surface-variant"}`}>
+        {description}
+      </p>
+
+      <ul className="mt-6 space-y-3">
+        {features.map((feature) => (
+          <li className="flex items-start gap-3 text-body-md font-semibold leading-6" key={feature}>
+            <span
+              className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${
+                highlighted ? "bg-white text-primary" : "bg-emerald-soft text-emerald-dark"
+              }`}
+            >
+              <Check className="h-3.5 w-3.5" />
+            </span>
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
+
+      <form action="/api/device-mode" className="mt-auto pt-8" method="GET">
+        <input name="mode" type="hidden" value="desktop" />
+        <button
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-label-sm font-black transition hover:-translate-y-0.5 active:scale-[0.99] ${
+            highlighted ? "bg-white text-primary hover:bg-surface-container" : "bg-primary text-on-primary hover:bg-primary/90"
+          }`}
+          type="submit"
+        >
+          Начать
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </form>
+    </article>
   );
 }
 
