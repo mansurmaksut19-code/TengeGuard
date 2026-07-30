@@ -2,11 +2,19 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { appContent } from "@/lib/content";
 
 export const metadata: Metadata = {
-  title: appContent.metadata.title,
-  description: appContent.metadata.description
+  title: "TengeGuard",
+  description:
+    "TengeGuard helps users find paid subscriptions, free plans, trial periods, renewal dates, and billing evidence from user-approved sources such as Google Sign-In and optional Gmail read-only access.",
+  applicationName: "TengeGuard",
+  openGraph: {
+    title: "TengeGuard",
+    description:
+      "Subscription discovery and reminder dashboard for paid, free, and trial subscriptions.",
+    siteName: "TengeGuard",
+    url: "https://www.tengeguard.online"
+  }
 };
 
 export default function RootLayout({
@@ -15,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
       </body>
