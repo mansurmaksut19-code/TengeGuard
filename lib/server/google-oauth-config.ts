@@ -54,6 +54,7 @@ export function getGoogleOAuthConfig(origin?: string): GoogleOAuthConfig {
   const clientSecret = envClientSecret || storedClientSecret;
   const appUrl = defaultAppUrl(origin || stored?.appUrl);
   const redirectUri =
+    (origin ? `${origin.replace(/\/$/, "")}/api/subcut/gmail/callback` : "") ||
     trim(process.env.GOOGLE_REDIRECT_URI) ||
     trim(stored?.redirectUri) ||
     `${appUrl.replace(/\/$/, "")}/api/subcut/gmail/callback`;
