@@ -226,6 +226,8 @@ const copy = {
     refunding: "Проверяем возврат...",
     refundNeedsUserAction: "Открыл официальный путь возврата",
     refundUnsupported: "Автовозврат невозможен",
+    paymentPendingTitle: "Оплата почти готова",
+    paymentPendingText: "Freedom Pay ещё не выдал merchant-ключи. Как только добавим MERCHANT_ID и SECRET_KEY в Vercel, кнопка Pro начнёт открывать настоящую страницу оплаты.",
     trialActiveTitle: "Free Trial активен",
     trialExpiredTitle: "Free Trial закончился",
     trialActiveText: "У вас есть 14 дней, чтобы проверить реальные подписки, trial и free-периоды.",
@@ -328,6 +330,8 @@ const copy = {
     refunding: "Checking refund...",
     refundNeedsUserAction: "Official refund path opened",
     refundUnsupported: "Automatic refund is unavailable",
+    paymentPendingTitle: "Payment is almost ready",
+    paymentPendingText: "Freedom Pay merchant keys are not configured yet. Once MERCHANT_ID and SECRET_KEY are added in Vercel, the Pro button will open the real checkout page.",
     trialActiveTitle: "Free Trial active",
     trialExpiredTitle: "Free Trial ended",
     trialActiveText: "You have 14 days to test real subscriptions, trials, and free periods.",
@@ -430,6 +434,8 @@ const copy = {
     refunding: "Қайтару тексерілуде...",
     refundNeedsUserAction: "Ресми қайтару жолы ашылды",
     refundUnsupported: "Автоқайтару мүмкін емес",
+    paymentPendingTitle: "Төлем дерлік дайын",
+    paymentPendingText: "Freedom Pay merchant кілттері әлі қосылмаған. MERCHANT_ID және SECRET_KEY Vercel-ге енгізілгеннен кейін Pro батырмасы нақты төлем бетіне апарады.",
     trialActiveTitle: "Free Trial белсенді",
     trialExpiredTitle: "Free Trial аяқталды",
     trialActiveText: "Нақты жазылымдарды, trial және free кезеңдерін тексеруге 14 күн бар.",
@@ -710,6 +716,7 @@ export default function App({
   const [googleSigningIn, setGoogleSigningIn] = useState(false);
   const [authStage, setAuthStage] = useState<AuthStage>("idle");
   const [progressStep, setProgressStep] = useState(0);
+  const [paymentSetupNeeded, setPaymentSetupNeeded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const callbackSyncStartedRef = useRef(false);
@@ -777,6 +784,15 @@ export default function App({
 
     return () => window.clearInterval(timer);
   }, [isPreparingDashboard]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "not_configured") {
+      setPaymentSetupNeeded(true);
+      setNotice(t.paymentPendingText);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [t.paymentPendingText]);
 
   const runDashboardSync = useCallback(async () => {
     setSyncing(true);
@@ -1125,11 +1141,8 @@ export default function App({
   const navItems: Array<{ view: DashboardView; label: string; icon: React.ElementType }> = [
     { view: "dashboard", label: t.overview, icon: Radar },
     { view: "subscriptions", label: t.subscriptionsNav, icon: Database },
-    { view: "evidence", label: t.evidenceNav, icon: MailCheck },
     { view: "access", label: t.accessNav, icon: KeyRound },
-    { view: "history", label: t.historyNav, icon: CalendarDays },
-    { view: "ai", label: t.aiNav, icon: Bot },
-    { view: "account", label: t.accountNav, icon: UserCog }
+    { view: "history", label: t.historyNav, icon: CalendarDays }
   ];
 
   return (
@@ -1243,6 +1256,7 @@ export default function App({
         {notice ? (
           <NoticeCard tone="success" title="TengeGuard" body={notice} />
         ) : null}
+        {paymentSetupNeeded ? <PaymentSetupCard t={t} /> : null}
         <TrialAccessCard billingPlan={initialBillingPlan} daysLeft={trialDaysLeft} expired={trialExpired} t={t} />
 
         {isPreparingDashboard ? (
@@ -1267,12 +1281,6 @@ export default function App({
                     scanLabel={syncing ? t.scanning : t.scanNow}
                     t={t}
                     unavailable={googleSignInUnavailable}
-                  />
-
-                  <TrustCard
-                    evidenceCount={evidenceCount}
-                    messagesScanned={status?.report?.messages_scanned || 0}
-                    t={t}
                   />
 
                   {!activeSubscriptions.length ? (
@@ -1725,6 +1733,32 @@ function AccountStatus({ label, tone, value }: { label: string; tone: "primary" 
       <span className="min-w-0 break-words text-label-sm font-bold leading-5 text-on-surface-variant">{label}</span>
       <span className={`shrink-0 rounded-full px-3 py-1 text-label-sm font-bold leading-5 ${tones[tone]}`}>{value}</span>
     </div>
+  );
+}
+
+function PaymentSetupCard({ t }: { t: (typeof copy)["ru"] }) {
+  return (
+    <section className="mb-6 rounded-xl border border-amber-200 bg-white p-5 shadow-stitch">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-soft text-amber-dark">
+            <WalletCards className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="break-words font-display text-xl font-extrabold text-on-surface">{t.paymentPendingTitle}</h3>
+            <p className="mt-1 max-w-2xl break-words text-body-md leading-6 text-on-surface-variant">{t.paymentPendingText}</p>
+          </div>
+        </div>
+        <a
+          className="inline-flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container"
+          href="https://my.freedompay.kz"
+          rel="noreferrer"
+          target="_blank"
+        >
+          Freedom Pay
+        </a>
+      </div>
+    </section>
   );
 }
 
