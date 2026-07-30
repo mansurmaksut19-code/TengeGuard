@@ -50,6 +50,11 @@ export default function HomePage() {
                 <p className="text-[12px] font-bold text-on-surface-variant">Subscription discovery and reminders</p>
               </div>
             </div>
+            <nav className="hidden items-center gap-6 text-[13px] font-extrabold text-on-surface-variant lg:flex">
+              <a className="transition hover:text-primary" href="#about-tengeguard">Product</a>
+              <a className="transition hover:text-primary" href="#privacy-and-control">Data use</a>
+              <a className="transition hover:text-primary" href="#pricing">Pricing</a>
+            </nav>
             <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-soft px-3 py-2 text-[12px] font-extrabold text-emerald-dark sm:flex">
               <LockKeyhole className="h-4 w-4" />
               Gmail read-only, user controlled
@@ -76,6 +81,12 @@ export default function HomePage() {
               <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-2">
                 <ModeButton mode="desktop" primary title="Continue on desktop" icon={Laptop} />
                 <ModeButton mode="mobile" title="Continue on phone" icon={Smartphone} />
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-4 text-[13px] font-bold text-on-surface-variant">
+                <Link className="text-primary hover:underline" href="/privacy">Privacy Policy</Link>
+                <span className="h-1 w-1 rounded-full bg-outline-variant" />
+                <span>No fake subscriptions. Empty result if there is no evidence.</span>
               </div>
 
               <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
@@ -155,6 +166,12 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          <div className="grid gap-3 pb-8 sm:grid-cols-3">
+            <TrustMetric label="Google data use" value="Optional Gmail read-only" />
+            <TrustMetric label="Evidence policy" value="No mock subscriptions" />
+            <TrustMetric label="Reminders" value="Telegram before renewals" />
+          </div>
         </div>
       </section>
 
@@ -191,7 +208,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
+      <section id="privacy-and-control" className="relative border-t border-outline-variant bg-[#f8fafc] px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
+          <DataUseCard
+            title="User-controlled access"
+            text="Users can sign in with Google first and connect Gmail only if they want subscription scanning from email evidence."
+          />
+          <DataUseCard
+            title="Read-only scanning"
+            text="TengeGuard uses Gmail read-only only for subscription receipts, invoices, trial messages, free-plan notices, and renewal evidence."
+          />
+          <DataUseCard
+            title="Clear boundaries"
+            text="TengeGuard does not send, change, delete, label, sell, or advertise with Gmail data."
+          />
+        </div>
+      </section>
+
+      <section id="pricing" className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-label-sm font-black uppercase text-primary">TengeGuard plans</p>
@@ -240,7 +274,53 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <section className="border-t border-outline-variant bg-primary px-4 py-14 text-on-primary sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[12px] font-black uppercase text-on-primary/70">Ready to review subscriptions</p>
+            <h2 className="mt-2 font-display text-[34px] font-extrabold leading-tight sm:text-[44px]">
+              Start with Google Sign-In, then connect the sources you trust.
+            </h2>
+            <p className="mt-3 max-w-2xl text-body-lg leading-7 text-on-primary/78">
+              TengeGuard keeps the product honest: if there is no real evidence, the dashboard stays empty instead of inventing results.
+            </p>
+          </div>
+          <form action="/api/device-mode" method="GET">
+            <input name="mode" type="hidden" value="desktop" />
+            <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-4 text-label-sm font-black text-primary transition hover:-translate-y-0.5 hover:bg-surface-container active:scale-[0.99] sm:w-auto" type="submit">
+              Open TengeGuard
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <footer className="border-t border-outline-variant bg-white px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 text-[13px] font-semibold text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 overflow-hidden rounded-xl border border-outline-variant bg-white">
+              <LogoMark />
+            </div>
+            <span>TengeGuard</span>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Link className="hover:text-primary hover:underline" href="/privacy">Privacy</Link>
+            <Link className="hover:text-primary hover:underline" href="/terms">Terms</Link>
+            <a className="hover:text-primary hover:underline" href="mailto:mansurmaksut19@gmail.com">Contact</a>
+          </div>
+        </div>
+      </footer>
     </main>
+  );
+}
+
+function TrustMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/80 bg-white/74 p-4 shadow-stitch backdrop-blur">
+      <p className="text-[11px] font-black uppercase text-on-surface-variant">{label}</p>
+      <p className="mt-1 text-[15px] font-extrabold text-[#111827]">{value}</p>
+    </div>
   );
 }
 
@@ -248,6 +328,18 @@ function ReviewCard({ text, title }: { text: string; title: string }) {
   return (
     <article className="rounded-[24px] border border-outline-variant bg-surface-container-lowest p-5 shadow-stitch">
       <h3 className="font-display text-[20px] font-extrabold text-[#111827]">{title}</h3>
+      <p className="mt-3 text-body-md leading-7 text-on-surface-variant">{text}</p>
+    </article>
+  );
+}
+
+function DataUseCard({ text, title }: { text: string; title: string }) {
+  return (
+    <article className="rounded-[24px] border border-outline-variant bg-white p-6 shadow-stitch">
+      <div className="mb-5 grid h-11 w-11 place-items-center rounded-2xl bg-emerald-soft text-emerald-dark">
+        <ShieldCheck className="h-5 w-5" />
+      </div>
+      <h3 className="font-display text-[22px] font-extrabold text-[#111827]">{title}</h3>
       <p className="mt-3 text-body-md leading-7 text-on-surface-variant">{text}</p>
     </article>
   );
