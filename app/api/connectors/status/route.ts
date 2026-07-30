@@ -12,5 +12,9 @@ export async function GET(request: Request) {
       gmailConnected: Boolean(await readTokensFromRequest(request, user.id)),
       request
     })
+  }, {
+    headers: {
+      "Cache-Control": "no-store, max-age=0"
+    }
   });
 }
