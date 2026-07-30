@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         message:
-          "Bank auto-connect is not configured. Set Salt Edge App-id and Secret in TENGEGUARD_BANK_PROVIDER_KEY / TENGEGUARD_BANK_PROVIDER_SECRET."
+          "Salt Edge keys are missing in this deployment. Add TENGEGUARD_BANK_PROVIDER_KEY and TENGEGUARD_BANK_PROVIDER_SECRET in Vercel Environment Variables, then redeploy."
       },
       { status: 501 }
     );

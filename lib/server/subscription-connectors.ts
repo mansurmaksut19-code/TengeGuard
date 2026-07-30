@@ -17,7 +17,7 @@ export type AutomaticConnector = {
 };
 
 function bankProviderName() {
-  return process.env.TENGEGUARD_BANK_PROVIDER || "Open Banking provider";
+  return process.env.TENGEGUARD_BANK_PROVIDER || "Salt Edge Open Banking";
 }
 
 function saltedgeAppId() {
@@ -361,7 +361,7 @@ export async function automaticConnectors(
       action: bankConnected ? "Connected" : ready ? "Connect bank" : "Founder setup required",
       setup: ready
         ? undefined
-        : "Set Salt Edge App-id and Secret in TENGEGUARD_BANK_PROVIDER_KEY / TENGEGUARD_BANK_PROVIDER_SECRET."
+        : "Salt Edge keys are missing in this deployment. Add TENGEGUARD_BANK_PROVIDER_KEY and TENGEGUARD_BANK_PROVIDER_SECRET in Vercel Environment Variables, then redeploy."
     },
     {
       id: "google_account",

@@ -58,3 +58,19 @@ FREEDOMPAY_API_URL=https://api.freedompay.kz
 FREEDOMPAY_TESTING_MODE=0
 NEXT_PUBLIC_APP_URL=https://www.tengeguard.online
 ```
+
+## Банковская интеграция
+
+TengeGuard поддерживает банковскую интеграцию через Salt Edge Open Banking. Ключи нельзя хранить в коде или коммитить в GitHub. Их нужно добавлять только в Vercel Environment Variables.
+
+Для production добавьте:
+
+```text
+TENGEGUARD_BANK_PROVIDER=saltedge
+TENGEGUARD_BANK_PROVIDER_KEY=ваш_Salt_Edge_App_ID
+TENGEGUARD_BANK_PROVIDER_SECRET=ваш_Salt_Edge_Secret
+TENGEGUARD_BANK_PROVIDER_URL=https://www.saltedge.com/api/v6
+NEXT_PUBLIC_APP_URL=https://www.tengeguard.online
+```
+
+После сохранения переменных в Vercel нужно сделать `Redeploy`. Только после этого кнопка подключения банка увидит ключи.
