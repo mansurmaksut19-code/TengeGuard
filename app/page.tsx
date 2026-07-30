@@ -158,6 +158,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section aria-labelledby="about-tengeguard" className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="text-label-sm font-black uppercase text-primary">App homepage</p>
+            <h2 id="about-tengeguard" className="mt-3 font-display text-[34px] font-extrabold leading-tight text-[#111827] sm:text-[44px]">
+              What TengeGuard does
+            </h2>
+            <p className="mt-4 text-body-lg leading-8 text-on-surface-variant">
+              TengeGuard is a subscription discovery and reminder application. It helps users understand which subscriptions they have,
+              when paid plans renew, when trial periods end, and which free plans are active.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <ReviewCard
+              title="Why TengeGuard requests Google user data"
+              text="TengeGuard uses Google Sign-In for account login. Gmail read-only access is optional and is requested only when a user wants TengeGuard to scan subscription-related emails."
+            />
+            <ReviewCard
+              title="How Gmail read-only data is used"
+              text="TengeGuard scans receipts, invoices, billing notices, renewal notices, trial emails, free-plan emails, and cancellation confirmations to show subscription evidence in the user's dashboard."
+            />
+            <ReviewCard
+              title="What TengeGuard does not do"
+              text="TengeGuard does not send emails, modify Gmail messages, delete emails, create labels, sell Google user data, or use Gmail data for advertising."
+            />
+            <ReviewCard
+              title="User control"
+              text="Users choose whether to connect Gmail, can review the results in the dashboard, and can revoke Google access from their Google Account at any time."
+            />
+          </div>
+        </div>
+      </section>
+
       <section className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
@@ -208,6 +241,15 @@ export default function HomePage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function ReviewCard({ text, title }: { text: string; title: string }) {
+  return (
+    <article className="rounded-[24px] border border-outline-variant bg-surface-container-lowest p-5 shadow-stitch">
+      <h3 className="font-display text-[20px] font-extrabold text-[#111827]">{title}</h3>
+      <p className="mt-3 text-body-md leading-7 text-on-surface-variant">{text}</p>
+    </article>
   );
 }
 

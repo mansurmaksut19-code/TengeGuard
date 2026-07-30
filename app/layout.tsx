@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   description:
     "TengeGuard helps users find paid subscriptions, free plans, trial periods, renewal dates, and billing evidence from user-approved sources such as Google Sign-In and optional Gmail read-only access.",
   applicationName: "TengeGuard",
+  icons: {
+    icon: "/tengeguard-mark.jpg",
+    apple: "/tengeguard-mark.jpg"
+  },
   openGraph: {
     title: "TengeGuard",
     description:
