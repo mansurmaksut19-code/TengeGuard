@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   ensureTelegramReminderSchedulerStarted();
   await pollTelegramUpdates().catch(() => null);
 
-  const result = await sendDueTelegramRemindersForAll(3);
+  const result = await sendDueTelegramRemindersForAll(7);
   return NextResponse.json({ ok: true, ...result });
 }
 
@@ -25,10 +25,10 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => ({}))) as { userId?: string; daysAhead?: number };
   if (!body.userId) {
-    const result = await sendDueTelegramRemindersForAll(body.daysAhead ?? 3);
+    const result = await sendDueTelegramRemindersForAll(body.daysAhead ?? 7);
     return NextResponse.json({ ok: true, ...result });
   }
 
-  const result = await sendDueTelegramReminders(body.userId, body.daysAhead ?? 3);
+  const result = await sendDueTelegramReminders(body.userId, body.daysAhead ?? 7);
   return NextResponse.json({ ok: true, ...result });
 }

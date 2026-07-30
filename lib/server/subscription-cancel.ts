@@ -10,6 +10,14 @@ export type CancellationResult = {
   reason: string;
 };
 
+export type RefundResult = {
+  id: string;
+  provider_name: string;
+  status: "needs_user_action" | "unsupported";
+  refund_path: string;
+  reason: string;
+};
+
 function hasVerifiedCancellationPath(subscription: Subscription) {
   return Boolean(subscription.cancellation_path) && !subscription.cancellation_path.includes("google.com/search");
 }
@@ -55,5 +63,39 @@ export function prepareSubscriptionCancellation(subscription: Subscription): Can
     status: "needs_user_action",
     cancellation_path: subscription.cancellation_path,
     reason: "This provider requires the user's official account session, confirmation, or 2FA before cancellation."
+  };
+}
+
+export function prepareSubscriptionRefund(subscription: Subscription): RefundResult {
+  const refundPath = hasVerifiedCancellationPath(subscription)
+    ? subscription.cancellation_path
+    : `https://www.google.com/search?q=${encodeURIComponent(`${subscription.provider_name} refund support`)}`;
+
+  if (subscription.cost <= 0 && subscription.type !== "free_trial") {
+    return {
+      id: subscription.id,
+      provider_name: subscription.provider_name,
+      status: "unsupported",
+      refund_path: refundPath,
+      reason: "This looks like a free plan, so there is no confirmed paid charge to refund."
+    };
+  }
+
+  if (subscription.evidence.length === 0 || subscription.confidence < 0.72) {
+    return {
+      id: subscription.id,
+      provider_name: subscription.provider_name,
+      status: "unsupported",
+      refund_path: refundPath,
+      reason: "TengeGuard needs stronger billing evidence before it can prepare a refund attempt."
+    };
+  }
+
+  return {
+    id: subscription.id,
+    provider_name: subscription.provider_name,
+    status: "needs_user_action",
+    refund_path: refundPath,
+    reason: "Refunds are decided by the provider or bank. TengeGuard opens the official path and uses the detected evidence to explain the request."
   };
 }

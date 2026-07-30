@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -68,7 +68,7 @@ body {
     linear-gradient(180deg, #f8fafc 0%, hsl(var(--background)) 100%);
   color: hsl(var(--foreground));
   font-family:
-    Manrope,
+    "Plus Jakarta Sans",
     ui-sans-serif,
     system-ui,
     -apple-system,

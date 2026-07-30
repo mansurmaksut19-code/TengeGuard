@@ -78,9 +78,25 @@ export default function HomePage() {
                 evidence to build a clear dashboard of paid, free, and trial subscriptions.
               </p>
 
-              <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-2">
-                <ModeButton mode="desktop" primary title="Continue on desktop" icon={Laptop} />
-                <ModeButton mode="mobile" title="Continue on phone" icon={Smartphone} />
+              <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
+                <PlanButton
+                  badge="14 days"
+                  description="Real Gmail scan, paid/free/trial detection, clear end dates."
+                  plan="free"
+                  primary
+                  title="Start Free Trial"
+                />
+                <PlanButton
+                  badge="200 KZT/mo or 2000 KZT/yr"
+                  description="Full monitoring, Telegram reminders, history, cancellation help."
+                  plan="pro_monthly"
+                  title="Choose Pro"
+                />
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2 text-[12px] font-bold text-on-surface-variant">
+                <ModeButton mode="desktop" title="Desktop mode" icon={Laptop} />
+                <ModeButton mode="mobile" title="Phone mode" icon={Smartphone} />
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-4 text-[13px] font-bold text-on-surface-variant">
@@ -249,6 +265,7 @@ export default function HomePage() {
                 "Evidence from receipts and billing notices"
               ]}
               price="0 KZT"
+              plan="free"
               title="Free start"
             />
             <PricingCard
@@ -263,6 +280,7 @@ export default function HomePage() {
               ]}
               highlighted
               price="200 KZT / month"
+              plan="pro_monthly"
               secondaryPrice="2000 KZT / year"
               title="TengeGuard Full"
             />
@@ -288,6 +306,7 @@ export default function HomePage() {
           </div>
           <form action="/api/device-mode" method="GET">
             <input name="mode" type="hidden" value="desktop" />
+            <input name="plan" type="hidden" value="pro_monthly" />
             <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-4 text-label-sm font-black text-primary transition hover:-translate-y-0.5 hover:bg-surface-container active:scale-[0.99] sm:w-auto" type="submit">
               Open TengeGuard
               <ArrowRight className="h-4 w-4" />
@@ -351,6 +370,7 @@ function PricingCard({
   features,
   highlighted = false,
   price,
+  plan,
   secondaryPrice,
   title
 }: {
@@ -359,6 +379,7 @@ function PricingCard({
   features: string[];
   highlighted?: boolean;
   price: string;
+  plan: "free" | "pro_monthly" | "pro_yearly";
   secondaryPrice?: string;
   title: string;
 }) {
@@ -413,6 +434,7 @@ function PricingCard({
 
       <form action="/api/device-mode" className="mt-auto pt-8" method="GET">
         <input name="mode" type="hidden" value="desktop" />
+        <input name="plan" type="hidden" value={plan} />
         <button
           className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-label-sm font-black transition hover:-translate-y-0.5 active:scale-[0.99] ${
             highlighted ? "bg-white text-primary hover:bg-surface-container" : "bg-primary text-on-primary hover:bg-primary/90"
@@ -427,33 +449,62 @@ function PricingCard({
   );
 }
 
-function ModeButton({
-  icon: Icon,
-  mode,
+function PlanButton({
+  badge,
+  description,
+  plan,
   primary = false,
   title
 }: {
-  icon: typeof Laptop;
-  mode: "desktop" | "mobile";
+  badge: string;
+  description: string;
+  plan: "free" | "pro_monthly";
   primary?: boolean;
   title: string;
 }) {
   return (
     <form action="/api/device-mode" method="GET">
-      <input name="mode" type="hidden" value={mode} />
+      <input name="mode" type="hidden" value="desktop" />
+      <input name="plan" type="hidden" value={plan} />
       <button
-        className={`group flex w-full items-center justify-between gap-3 rounded-2xl border px-5 py-4 text-left text-[14px] font-extrabold shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft active:scale-[0.99] ${
+        className={`group flex h-full w-full flex-col items-start rounded-[24px] border p-5 text-left shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft active:scale-[0.99] ${
           primary ? "border-primary bg-primary text-on-primary" : "border-outline-variant bg-white text-on-surface"
         }`}
         type="submit"
       >
-        <span className="flex min-w-0 items-center gap-3">
-          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${primary ? "bg-white/15" : "bg-surface-container"}`}>
-            <Icon className="h-5 w-5" />
-          </span>
-          <span className="min-w-0 break-words">{title}</span>
+        <span className={`rounded-full px-3 py-1 text-[11px] font-black uppercase ${primary ? "bg-white/15" : "bg-emerald-soft text-emerald-dark"}`}>
+          {badge}
         </span>
-        <ArrowRight className="h-5 w-5 shrink-0 transition group-hover:translate-x-0.5" />
+        <span className="mt-4 font-display text-[24px] font-extrabold leading-tight">{title}</span>
+        <span className={`mt-2 text-[13px] font-semibold leading-6 ${primary ? "text-on-primary/75" : "text-on-surface-variant"}`}>{description}</span>
+        <span className="mt-5 inline-flex items-center gap-2 text-[13px] font-black">
+          Continue
+          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+        </span>
+      </button>
+    </form>
+  );
+}
+
+function ModeButton({
+  icon: Icon,
+  mode,
+  title
+}: {
+  icon: typeof Laptop;
+  mode: "desktop" | "mobile";
+  title: string;
+}) {
+  return (
+    <form action="/api/device-mode" method="GET">
+      <input name="mode" type="hidden" value={mode} />
+      <input name="plan" type="hidden" value="free" />
+      <button
+        className="group inline-flex items-center gap-2 rounded-full border border-outline-variant bg-white px-3 py-2 text-left text-[12px] font-extrabold text-on-surface shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft active:scale-[0.99]"
+        type="submit"
+      >
+        <Icon className="h-4 w-4" />
+        {title}
       </button>
     </form>
   );

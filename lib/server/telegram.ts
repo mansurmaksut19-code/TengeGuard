@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { mkdir, readdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { deleteRealGmailSubscription, readRealGmailSubscriptions, readSyncReport, type SessionUser } from "@/lib/server/subcut-gmail";
+import { markRealGmailSubscriptionCancelled, readRealGmailSubscriptions, readSyncReport, type SessionUser } from "@/lib/server/subcut-gmail";
 import { storagePath } from "@/lib/server/storage-root";
 import type { Subscription } from "@/lib/subcut-automation";
 
@@ -288,7 +288,7 @@ function subscriptionMessage(subscription: Subscription) {
     evidence?.date ? `Дата письма: ${evidence.date}` : null,
     !date ? "Важно: точная дата окончания в письмах не найдена, уведомление по сроку не ставится." : null,
     "",
-    "Отменить или оставить?"
+    "Что сделать?"
   ]
     .filter(Boolean)
     .join("\n");
@@ -297,10 +297,9 @@ function subscriptionMessage(subscription: Subscription) {
 function reminderKeyboard(subscription: Subscription) {
   return {
     inline_keyboard: [
-      [{ text: "Открыть отмену", url: subscription.cancellation_path }],
       [
-        { text: "Оставить", callback_data: `keep:${subscription.id}` },
-        { text: "Уже отменил", callback_data: `done:${subscription.id}` }
+        { text: "Завершить подписку", callback_data: `end:${subscription.id}` },
+        { text: "Продлить", callback_data: `renew:${subscription.id}` }
       ],
       [{ text: "Все подписки", url: `${appUrl()}/dashboard/subscriptions` }]
     ]
@@ -334,7 +333,8 @@ export async function sendDueTelegramReminders(userId: string, daysAhead = 3) {
   const today = new Date().toISOString().slice(0, 10);
   const due = subscriptions.filter((subscription) => {
     const diff = daysUntil(endDate(subscription));
-    if (diff === null || diff < 0 || diff > daysAhead) return false;
+    const exactReminderDay = diff === 7 || diff === 1 || diff === 0 || diff === daysAhead;
+    if (diff === null || diff < 0 || !exactReminderDay) return false;
     return !reminderLog.sent[reminderKey(subscription, today)];
   });
 
@@ -462,18 +462,30 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
 
   const callback = update.callback_query;
   if (callback?.id && callback.data) {
-    if (callback.data.startsWith("keep:")) {
-      await answerCallbackQuery(callback.id, "Ок, оставляем.");
-      return { ok: true, action: "keep" };
+    if (callback.data.startsWith("renew:")) {
+      await answerCallbackQuery(callback.id, "Ок, оставляем подписку активной.");
+      return { ok: true, action: "renew" };
     }
 
-    if (callback.data.startsWith("done:")) {
+    if (callback.data.startsWith("end:")) {
       const chatId = callback.message?.chat.id;
       const userId = chatId ? await readChatOwner(chatId) : null;
-      const subscriptionId = callback.data.replace("done:", "");
-      if (userId) await deleteRealGmailSubscription(userId, subscriptionId);
-      await answerCallbackQuery(callback.id, "Отмечено как отменённое и убрано из TengeGuard.");
-      return { ok: true, action: "done" };
+      const subscriptionId = callback.data.replace("end:", "");
+      const updatedSubscription = userId ? await markRealGmailSubscriptionCancelled(userId, subscriptionId) : null;
+      const providerName = updatedSubscription?.provider_name;
+      await answerCallbackQuery(callback.id, updatedSubscription ? "Подписка перенесена в историю отмененных." : "Не удалось найти подписку.");
+      if (chatId && providerName) {
+        await sendTelegramMessage(
+          chatId,
+          [
+            `TengeGuard отметил ${providerName} как завершенную.`,
+            "",
+            "Если сервис требует подтверждение, 2FA или вход в официальный аккаунт, откройте карточку подписки на сайте и завершите отмену у провайдера."
+          ].join("\n"),
+          { inline_keyboard: [[{ text: "Открыть TengeGuard", url: `${appUrl()}/dashboard/history` }]] }
+        );
+      }
+      return { ok: true, action: "end" };
     }
   }
 

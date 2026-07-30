@@ -37,6 +37,7 @@ type SubscriptionType = "paid" | "free_trial" | "free" | "unknown";
 type DashboardFilter = "all" | "paid" | "free" | "trial" | "review";
 type DashboardView = "dashboard" | "subscriptions" | "evidence" | "access" | "history" | "ai" | "account";
 type DeviceMode = "mobile" | "desktop";
+type BillingPlan = "free" | "pro_monthly" | "pro_yearly";
 
 type AiMessage = {
   role: "user" | "assistant";
@@ -135,6 +136,19 @@ type CancelSubscriptionResponse = {
   result: CancellationResult;
 };
 
+type RefundResult = {
+  id: string;
+  provider_name: string;
+  status: "needs_user_action" | "unsupported";
+  refund_path: string;
+  reason: string;
+};
+
+type RefundSubscriptionResponse = {
+  ok: boolean;
+  result: RefundResult;
+};
+
 type AiChatResponse = {
   ok: boolean;
   answer: string;
@@ -208,6 +222,18 @@ const copy = {
     unsupportedCancel: "Нет канала отмены",
     autoCancelled: "Автоотменено",
     systemCancelNote: "TengeGuard не будет фейково помечать подписку отмененной. Если сервис требует вход, 2FA или подтверждение, система покажет официальный путь.",
+    refund: "Попробовать вернуть деньги",
+    refunding: "Проверяем возврат...",
+    refundNeedsUserAction: "Открыл официальный путь возврата",
+    refundUnsupported: "Автовозврат невозможен",
+    trialActiveTitle: "Free Trial активен",
+    trialExpiredTitle: "Free Trial закончился",
+    trialActiveText: "У вас есть 14 дней, чтобы проверить реальные подписки, trial и free-периоды.",
+    trialExpiredText: "Чтобы продолжить мониторинг подписок, подключите Pro: 200 тг в месяц или 2000 тг в год.",
+    upgradeMonthly: "Pro за 200 тг/мес",
+    upgradeYearly: "Pro за 2000 тг/год",
+    proActiveTitle: "Pro активен",
+    proActiveText: "Полный доступ: мониторинг, Telegram-напоминания, история и помощь с отменой.",
     remove: "Убрать",
     noSubsTitle: "Реальные подписки пока не найдены",
     noSubsText: "Подключите Google и запустите сканирование Gmail. Если доказательств нет, TengeGuard честно покажет пусто.",
@@ -298,6 +324,18 @@ const copy = {
     unsupportedCancel: "No cancellation channel",
     autoCancelled: "Auto-cancelled",
     systemCancelNote: "TengeGuard will not falsely mark a subscription as cancelled. If a provider requires sign-in, 2FA, or confirmation, the system shows the official path.",
+    refund: "Try to get a refund",
+    refunding: "Checking refund...",
+    refundNeedsUserAction: "Official refund path opened",
+    refundUnsupported: "Automatic refund is unavailable",
+    trialActiveTitle: "Free Trial active",
+    trialExpiredTitle: "Free Trial ended",
+    trialActiveText: "You have 14 days to test real subscriptions, trials, and free periods.",
+    trialExpiredText: "To keep monitoring subscriptions, upgrade to Pro: 200 KZT monthly or 2000 KZT yearly.",
+    upgradeMonthly: "Pro for 200 KZT/mo",
+    upgradeYearly: "Pro for 2000 KZT/yr",
+    proActiveTitle: "Pro active",
+    proActiveText: "Full access: monitoring, Telegram reminders, history, and cancellation assistance.",
     remove: "Remove",
     noSubsTitle: "No real subscriptions found yet",
     noSubsText: "Connect Google and run a Gmail scan. If there is no evidence, TengeGuard shows empty results.",
@@ -388,6 +426,18 @@ const copy = {
     unsupportedCancel: "Тоқтату арнасы жоқ",
     autoCancelled: "Автоматты тоқтатылды",
     systemCancelNote: "TengeGuard жазылымды жалған түрде тоқтатылды деп белгілемейді. Егер сервис кіруді, 2FA немесе растауды талап етсе, жүйе ресми жолды көрсетеді.",
+    refund: "Ақшаны қайтаруға тырысу",
+    refunding: "Қайтару тексерілуде...",
+    refundNeedsUserAction: "Ресми қайтару жолы ашылды",
+    refundUnsupported: "Автоқайтару мүмкін емес",
+    trialActiveTitle: "Free Trial белсенді",
+    trialExpiredTitle: "Free Trial аяқталды",
+    trialActiveText: "Нақты жазылымдарды, trial және free кезеңдерін тексеруге 14 күн бар.",
+    trialExpiredText: "Жазылым мониторингін жалғастыру үшін Pro қосыңыз: айына 200 тг немесе жылына 2000 тг.",
+    upgradeMonthly: "Pro 200 тг/ай",
+    upgradeYearly: "Pro 2000 тг/жыл",
+    proActiveTitle: "Pro белсенді",
+    proActiveText: "Толық қолжетімділік: мониторинг, Telegram ескертулері, тарих және тоқтатуға көмек.",
     remove: "Өшіру",
     noSubsTitle: "Әзірге нақты жазылым табылмады",
     noSubsText: "Google қосып, Gmail сканерлеуді бастаңыз. Дәлел болмаса, TengeGuard бос нәтиже көрсетеді.",
@@ -529,6 +579,13 @@ function daysUntil(date: string | null | undefined) {
   return Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
+function daysUntilPast(date: string | null | undefined) {
+  if (!date) return 0;
+  const started = new Date(date).getTime();
+  if (Number.isNaN(started)) return 0;
+  return Math.floor((Date.now() - started) / (1000 * 60 * 60 * 24));
+}
+
 function isDueSoon(subscription: Subscription) {
   const due = daysUntil(subscription.trial_ends_at || subscription.next_billing_date);
   return due !== null && due >= 0 && due <= 14;
@@ -617,10 +674,14 @@ function writeCachedSubscriptions(user: SessionUser | null | undefined, nextSubs
 }
 
 export default function App({
+  initialBillingPlan = "free",
   initialDeviceMode = "desktop",
+  initialTrialStartedAt = null,
   initialView = "dashboard"
 }: {
+  initialBillingPlan?: BillingPlan;
   initialDeviceMode?: DeviceMode;
+  initialTrialStartedAt?: string | null;
   initialView?: DashboardView;
 } = {}) {
   const [locale, setLocale] = useState<Locale>("ru");
@@ -645,6 +706,7 @@ export default function App({
   const [aiSending, setAiSending] = useState(false);
   const [cancellingSubscriptionId, setCancellingSubscriptionId] = useState<string | null>(null);
   const [markingCancelledId, setMarkingCancelledId] = useState<string | null>(null);
+  const [refundingSubscriptionId, setRefundingSubscriptionId] = useState<string | null>(null);
   const [googleSigningIn, setGoogleSigningIn] = useState(false);
   const [authStage, setAuthStage] = useState<AuthStage>("idle");
   const [progressStep, setProgressStep] = useState(0);
@@ -654,6 +716,9 @@ export default function App({
   const telegramPollTimerRef = useRef<number | null>(null);
   const t = copy[locale];
   const isMobileMode = initialDeviceMode === "mobile";
+  const trialStartedAt = initialTrialStartedAt || new Date().toISOString();
+  const trialDaysLeft = initialBillingPlan === "free" ? Math.max(0, 14 - Math.max(0, daysUntilPast(trialStartedAt))) : null;
+  const trialExpired = initialBillingPlan === "free" && trialDaysLeft === 0;
   const isPreparingDashboard = loading || googleSigningIn || syncing || authStage !== "idle";
   const canStartGoogleOAuth = Boolean(status?.connectUrl || status?.configured);
   const googleSignInUnavailable = !loading && !canStartGoogleOAuth;
@@ -898,6 +963,26 @@ export default function App({
       setError(requestError instanceof Error ? requestError.message : t.error);
     } finally {
       setMarkingCancelledId(null);
+    }
+  }
+
+  async function handleRefundSubscription(subscription: Subscription) {
+    setRefundingSubscriptionId(subscription.id);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await readJson<RefundSubscriptionResponse>(`/api/subscriptions/${subscription.id}/refund`, { method: "POST" });
+      if (response.result.status === "needs_user_action") {
+        window.open(response.result.refund_path, "_blank", "noopener,noreferrer");
+        setNotice(`${subscription.provider_name}: ${t.refundNeedsUserAction}. ${response.result.reason}`);
+      } else {
+        setNotice(`${subscription.provider_name}: ${t.refundUnsupported}. ${response.result.reason}`);
+      }
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t.error);
+    } finally {
+      setRefundingSubscriptionId(null);
     }
   }
 
@@ -1158,6 +1243,7 @@ export default function App({
         {notice ? (
           <NoticeCard tone="success" title="TengeGuard" body={notice} />
         ) : null}
+        <TrialAccessCard billingPlan={initialBillingPlan} daysLeft={trialDaysLeft} expired={trialExpired} t={t} />
 
         {isPreparingDashboard ? (
           <MagicProgress locale={locale} stepIndex={progressStep} />
@@ -1286,6 +1372,8 @@ export default function App({
                         onCancel={() => handleCancelSubscription(item)}
                         onDelete={() => handleDelete(item.id)}
                         onMarkCancelled={() => handleMarkCancelled(item)}
+                        onRefund={() => handleRefundSubscription(item)}
+                        refunding={refundingSubscriptionId === item.id}
                         t={t}
                       />
                     ))
@@ -1640,6 +1728,49 @@ function AccountStatus({ label, tone, value }: { label: string; tone: "primary" 
   );
 }
 
+function TrialAccessCard({
+  billingPlan,
+  daysLeft,
+  expired,
+  t
+}: {
+  billingPlan: BillingPlan;
+  daysLeft: number | null;
+  expired: boolean;
+  t: (typeof copy)["ru"];
+}) {
+  const proActive = billingPlan !== "free";
+  const title = proActive ? t.proActiveTitle : expired ? t.trialExpiredTitle : t.trialActiveTitle;
+  const body = proActive ? t.proActiveText : expired ? t.trialExpiredText : t.trialActiveText;
+
+  return (
+    <section className={`mb-6 overflow-hidden rounded-xl border p-5 shadow-stitch ${expired ? "border-amber-200 bg-amber-soft" : "border-emerald-200 bg-white"}`}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${expired ? "bg-white text-amber-dark" : "bg-emerald-soft text-emerald-dark"}`}>
+            {expired ? <AlertTriangle className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
+          </div>
+          <div className="min-w-0">
+            <h3 className="break-words font-display text-xl font-extrabold text-on-surface">{title}</h3>
+            <p className="mt-1 max-w-2xl break-words text-body-md leading-6 text-on-surface-variant">
+              {body}
+              {!proActive && !expired && daysLeft !== null ? ` Осталось: ${daysLeft} дн.` : ""}
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <a className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90" href="/api/device-mode?mode=desktop&plan=pro_monthly">
+            {t.upgradeMonthly}
+          </a>
+          <a className="inline-flex items-center justify-center rounded-lg border border-outline-variant bg-white px-4 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container" href="/api/device-mode?mode=desktop&plan=pro_yearly">
+            {t.upgradeYearly}
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PageHeading({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
   return (
     <section className="min-w-0 space-y-3">
@@ -1889,6 +2020,8 @@ function SubscriptionCard({
   onCancel,
   onDelete,
   onMarkCancelled,
+  onRefund,
+  refunding,
   t
 }: {
   cancelling: boolean;
@@ -1898,6 +2031,8 @@ function SubscriptionCard({
   onCancel: () => void;
   onDelete: () => void;
   onMarkCancelled: () => void;
+  onRefund: () => void;
+  refunding: boolean;
   t: (typeof copy)["ru"];
 }) {
   const confidence = Math.round(item.confidence * 100);
@@ -1954,7 +2089,7 @@ function SubscriptionCard({
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <button
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2.5 text-label-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={cancelling}
@@ -1972,6 +2107,15 @@ function SubscriptionCard({
         >
           {markingCancelled ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
           {markingCancelled ? t.markingCancelled : t.markCancelled}
+        </button>
+        <button
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-200 px-3 py-2.5 text-label-sm font-bold text-amber-dark transition hover:bg-amber-soft disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={refunding}
+          onClick={onRefund}
+          type="button"
+        >
+          {refunding ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          {refunding ? t.refunding : t.refund}
         </button>
         <button
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant px-3 py-2.5 text-label-sm font-bold text-on-surface-variant transition hover:bg-surface-container"

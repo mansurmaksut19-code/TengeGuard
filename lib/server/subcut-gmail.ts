@@ -800,7 +800,7 @@ export async function deleteRealGmailSubscription(userId: string, id: string) {
   return next;
 }
 
-export async function markRealGmailSubscriptionCancelled(userId: string, id: string) {
+export async function markRealGmailSubscriptionCancelled(userId: string, id: string): Promise<Subscription | null> {
   const subscriptions = await readRealGmailSubscriptions(userId);
   let updated: Subscription | null = null;
   const next = subscriptions.map((subscription) => {
