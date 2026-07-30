@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
@@ -46,12 +47,12 @@ export default function HomePage() {
               </div>
               <div>
                 <h1 className="font-display text-[18px] font-extrabold leading-5 text-primary">TengeGuard</h1>
-                <p className="text-[12px] font-bold text-on-surface-variant">Subscription control center</p>
+                <p className="text-[12px] font-bold text-on-surface-variant">Subscription discovery and reminders</p>
               </div>
             </div>
             <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-soft px-3 py-2 text-[12px] font-extrabold text-emerald-dark sm:flex">
               <LockKeyhole className="h-4 w-4" />
-              Read-only access
+              Gmail read-only, user controlled
             </div>
           </header>
 
@@ -59,26 +60,28 @@ export default function HomePage() {
             <div className="min-w-0">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-3 py-2 text-[12px] font-extrabold uppercase text-primary shadow-stitch">
                 <Sparkles className="h-4 w-4" />
-                Только реальные данные, без моков
+                Real subscription data from user-approved sources
               </div>
 
               <h2 className="max-w-3xl font-display text-[44px] font-extrabold leading-[0.98] tracking-[-0.02em] text-[#111827] sm:text-[64px]">
-                Найдите все подписки до следующего списания
+                TengeGuard helps users find subscriptions before the next charge
               </h2>
 
               <p className="mt-6 max-w-2xl text-[17px] font-medium leading-8 text-on-surface-variant">
-                Подключите Google, выберите режим интерфейса и откройте личный дашборд: платные подписки, бесплатные тарифы, trial-периоды, доказательства из Gmail и напоминания через Telegram.
+                TengeGuard is a subscription control center. Users sign in with Google, optionally connect Gmail in read-only mode,
+                and TengeGuard scans subscription-related receipts, renewal notices, trial emails, free-plan messages, and billing
+                evidence to build a clear dashboard of paid, free, and trial subscriptions.
               </p>
 
               <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-2">
-                <ModeButton mode="desktop" primary title="Открыть с ноутбука" icon={Laptop} />
-                <ModeButton mode="mobile" title="Открыть с телефона" icon={Smartphone} />
+                <ModeButton mode="desktop" primary title="Continue on desktop" icon={Laptop} />
+                <ModeButton mode="mobile" title="Continue on phone" icon={Smartphone} />
               </div>
 
               <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-                <TrustItem icon={GoogleMark} title="Google OAuth" text="официальный вход" />
-                <TrustItem icon={MailCheck} title="Gmail proofs" text="письма и чеки" />
-                <TrustItem icon={ShieldCheck} title="No fake data" text="только доказательства" />
+                <TrustItem icon={GoogleMark} title="Google Sign-In" text="official account login" />
+                <TrustItem icon={MailCheck} title="Gmail evidence" text="receipts and renewal notices" />
+                <TrustItem icon={ShieldCheck} title="No fake data" text="only user-owned evidence" />
               </div>
             </div>
 
@@ -93,12 +96,12 @@ export default function HomePage() {
                       </div>
                       <div>
                         <p className="text-[12px] font-extrabold uppercase text-on-surface-variant">Dashboard preview</p>
-                        <h3 className="font-display text-[22px] font-extrabold text-[#111827]">TengeGuard Intelligence</h3>
+                        <h3 className="font-display text-[22px] font-extrabold text-[#111827]">TengeGuard</h3>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-soft px-3 py-2 text-[12px] font-extrabold text-emerald-dark">
                       <CheckCircle2 className="h-4 w-4" />
-                      verified
+                      user approved
                     </div>
                   </div>
                 </div>
@@ -115,7 +118,7 @@ export default function HomePage() {
                       <div className="mb-4 flex items-center justify-between">
                         <div>
                           <p className="text-[12px] font-extrabold uppercase text-on-surface-variant">Subscription graph</p>
-                          <h4 className="font-display text-[20px] font-extrabold">Платные, free и trial</h4>
+                          <h4 className="font-display text-[20px] font-extrabold">Paid, free, and trial plans</h4>
                         </div>
                         <span className="rounded-full bg-surface-container px-3 py-1 text-[12px] font-bold text-on-surface-variant">auto scan</span>
                       </div>
@@ -130,18 +133,19 @@ export default function HomePage() {
                     </div>
 
                     <div className="space-y-3">
-                      <PreviewRow title="Дата окончания найдена" meta="trial / free period" tone="emerald" />
-                      <PreviewRow title="Есть Gmail-доказательство" meta="receipt or renewal email" tone="primary" />
-                      <PreviewRow title="Telegram напоминание готово" meta="before charge date" tone="amber" />
+                      <PreviewRow title="End date detected" meta="trial or free period" tone="emerald" />
+                      <PreviewRow title="Gmail evidence attached" meta="receipt or renewal email" tone="primary" />
+                      <PreviewRow title="Telegram reminder ready" meta="before charge date" tone="amber" />
                     </div>
                   </div>
 
                   <div className="rounded-[24px] border border-primary/10 bg-primary px-5 py-4 text-on-primary shadow-stitch">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-[12px] font-extrabold uppercase text-on-primary/70">Next step</p>
+                        <p className="text-[12px] font-extrabold uppercase text-on-primary/70">Purpose of TengeGuard</p>
                         <p className="mt-1 max-w-xl text-[15px] font-semibold leading-6 text-on-primary/90">
-                          Выберите режим, затем TengeGuard откроет официальный Google-вход и начнет искать реальные подписки.
+                          TengeGuard helps users monitor subscriptions, understand upcoming renewals, and receive reminders before
+                          trials or paid plans renew. Gmail access is optional, read-only, and used only for this subscription tracking feature.
                         </p>
                       </div>
                       <Check className="h-8 w-8 shrink-0 text-emerald-accent" />
@@ -157,43 +161,49 @@ export default function HomePage() {
       <section className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-label-sm font-black uppercase text-primary">Тарифы TengeGuard</p>
+            <p className="text-label-sm font-black uppercase text-primary">TengeGuard plans</p>
             <h2 className="mt-3 font-display text-[36px] font-extrabold leading-tight text-[#111827] sm:text-[48px]">
-              Начните бесплатно, затем подключите полный контроль
+              Start free, then unlock full subscription monitoring
             </h2>
             <p className="mt-4 text-body-lg leading-7 text-on-surface-variant">
-              Бесплатный доступ на 14 дней помогает проверить, какие подписки найдутся. Полный план открывает постоянный мониторинг, историю, уведомления и обслуживание подписок.
+              The 14-day trial lets users test real subscription discovery. The full plan enables ongoing monitoring, history,
+              Telegram reminders, and deeper subscription review.
             </p>
           </div>
 
           <div className="mx-auto mt-10 grid max-w-5xl gap-5 lg:grid-cols-2">
             <PricingCard
-              badge="14 дней"
-              description="Пробный период для проверки Gmail-скана, бесплатных тарифов, trial-периодов и дат списаний."
+              badge="14 days"
+              description="A trial period for checking Gmail scanning, free plans, trial periods, and renewal dates."
               features={[
-                "Gmail read-only подключение",
-                "Поиск платных, free и trial-подписок",
-                "Даты окончания пробных периодов",
-                "Доказательства из писем"
+                "Google Sign-In",
+                "Optional Gmail read-only connection",
+                "Paid, free, and trial subscription discovery",
+                "Evidence from receipts and billing notices"
               ]}
-              price="0 ₸"
-              title="Бесплатный старт"
+              price="0 KZT"
+              title="Free start"
             />
             <PricingCard
-              badge="Полный доступ"
-              description="Для постоянного контроля подписок, уведомлений и полного обслуживания аккаунта."
+              badge="Full access"
+              description="For ongoing subscription monitoring, reminders, history, and account-level subscription control."
               features={[
-                "Все из бесплатного плана",
-                "Telegram-уведомления о списаниях",
-                "История текущих и отмененных подписок",
-                "Подготовка к банковским интеграциям",
-                "Приоритетный deep scan"
+                "Everything in the free start",
+                "Telegram renewal reminders",
+                "Current and cancelled subscription history",
+                "Prepared bank integration flow",
+                "Priority deep scan"
               ]}
               highlighted
-              price="200 ₸ / месяц"
-              secondaryPrice="2000 ₸ / год"
+              price="200 KZT / month"
+              secondaryPrice="2000 KZT / year"
               title="TengeGuard Full"
             />
+          </div>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-4 text-label-sm font-bold text-primary">
+            <Link className="hover:underline" href="/privacy">Privacy Policy</Link>
+            <Link className="hover:underline" href="/terms">Terms of Service</Link>
           </div>
         </div>
       </section>
@@ -243,7 +253,7 @@ function PricingCard({
         <p className="font-display text-[34px] font-extrabold leading-tight">{price}</p>
         {secondaryPrice ? (
           <p className={`mt-1 text-body-md font-bold ${highlighted ? "text-on-primary/70" : "text-on-surface-variant"}`}>
-            или {secondaryPrice}
+            or {secondaryPrice}
           </p>
         ) : null}
       </div>
@@ -275,7 +285,7 @@ function PricingCard({
           }`}
           type="submit"
         >
-          Начать
+          Start
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
