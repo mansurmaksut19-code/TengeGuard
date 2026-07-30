@@ -53,6 +53,7 @@ export default function HomePage() {
             <nav className="hidden items-center gap-6 text-[13px] font-extrabold text-on-surface-variant lg:flex">
               <a className="transition hover:text-primary" href="#about-tengeguard">Product</a>
               <a className="transition hover:text-primary" href="#privacy-and-control">Data use</a>
+              <Link className="transition hover:text-primary" href="/security">Security</Link>
               <a className="transition hover:text-primary" href="#pricing">Pricing</a>
             </nav>
             <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-soft px-3 py-2 text-[12px] font-extrabold text-emerald-dark sm:flex">
@@ -101,6 +102,8 @@ export default function HomePage() {
 
               <div className="mt-5 flex flex-wrap items-center gap-4 text-[13px] font-bold text-on-surface-variant">
                 <Link className="text-primary hover:underline" href="/privacy">Privacy Policy</Link>
+                <span className="h-1 w-1 rounded-full bg-outline-variant" />
+                <Link className="text-primary hover:underline" href="/security">Security</Link>
                 <span className="h-1 w-1 rounded-full bg-outline-variant" />
                 <span>No fake subscriptions. Empty result if there is no evidence.</span>
               </div>
@@ -288,6 +291,7 @@ export default function HomePage() {
 
           <div className="mt-10 flex flex-wrap justify-center gap-4 text-label-sm font-bold text-primary">
             <Link className="hover:underline" href="/privacy">Privacy Policy</Link>
+            <Link className="hover:underline" href="/security">Security</Link>
             <Link className="hover:underline" href="/terms">Terms of Service</Link>
           </div>
         </div>
@@ -325,6 +329,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-wrap gap-4">
             <Link className="hover:text-primary hover:underline" href="/privacy">Privacy</Link>
+            <Link className="hover:text-primary hover:underline" href="/security">Security</Link>
             <Link className="hover:text-primary hover:underline" href="/terms">Terms</Link>
             <a className="hover:text-primary hover:underline" href="mailto:mansurmaksut19@gmail.com">Contact</a>
           </div>

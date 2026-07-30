@@ -191,6 +191,11 @@ const copy = {
     activeSubscriptions: "Активные подписки",
     endingSoon: "Скоро заканчивается",
     needsReview: "Нужно проверить",
+    savingsScore: "Потенциал экономии",
+    quickReport: "Отчёт за минуту",
+    protectedNow: "Сейчас под контролем",
+    topRisk: "Главный риск",
+    noRisk: "Критичных рисков не видно",
     realEvidenceOnly: "Только реальные доказательства",
     readOnly: "Gmail read-only",
     telegramTitle: "Telegram Bot",
@@ -295,6 +300,11 @@ const copy = {
     activeSubscriptions: "Active subscriptions",
     endingSoon: "Ending soon",
     needsReview: "Needs review",
+    savingsScore: "Savings potential",
+    quickReport: "1-minute report",
+    protectedNow: "Protected now",
+    topRisk: "Top risk",
+    noRisk: "No critical risk visible",
     realEvidenceOnly: "Real evidence only",
     readOnly: "Gmail read-only",
     telegramTitle: "Telegram Bot",
@@ -399,6 +409,11 @@ const copy = {
     activeSubscriptions: "Белсенді жазылымдар",
     endingSoon: "Жақында аяқталады",
     needsReview: "Тексеру керек",
+    savingsScore: "Үнемдеу әлеуеті",
+    quickReport: "1 минуттық есеп",
+    protectedNow: "Қазір бақылауда",
+    topRisk: "Негізгі қауіп",
+    noRisk: "Маңызды қауіп көрінбейді",
     realEvidenceOnly: "Тек нақты дәлелдер",
     readOnly: "Gmail тек оқу",
     telegramTitle: "Telegram Bot",
@@ -887,12 +902,14 @@ export default function App({
   const dueSoonCount = activeSubscriptions.filter(isDueSoon).length;
   const reviewCount = activeSubscriptions.filter(needsHumanReview).length;
   const evidenceCount = allEvidence.length;
+  const savingsOpportunity = currencyTotals(activeSubscriptions.filter((item) => item.cost > 0 && (isDueSoon(item) || needsHumanReview(item)))) || "0";
   const averageConfidence = activeSubscriptions.length
     ? Math.round((activeSubscriptions.reduce((total, item) => total + item.confidence, 0) / activeSubscriptions.length) * 100)
     : 0;
   const nextSubscription = activeSubscriptions
     .filter((item) => item.next_billing_date || item.trial_ends_at)
     .sort((a, b) => String(a.trial_ends_at || a.next_billing_date).localeCompare(String(b.trial_ends_at || b.next_billing_date)))[0];
+  const topRiskSubscription = sortedSubscriptions.find((item) => isDueSoon(item) || needsHumanReview(item));
 
   async function refreshAfter(action: () => Promise<unknown>) {
     setError(null);
@@ -1305,6 +1322,15 @@ export default function App({
                     <MetricTile icon={AlertTriangle} label={t.needsReview} value={String(reviewCount)} tone="rose" />
                     <MetricTile icon={CheckCircle2} label={t.confidence} value={`${averageConfidence}%`} tone="emerald" />
                   </div>
+
+                  <SavingsReportCard
+                    activeCount={activeSubscriptions.length}
+                    dueSoonCount={dueSoonCount}
+                    evidenceCount={evidenceCount}
+                    savingsOpportunity={savingsOpportunity}
+                    t={t}
+                    topRiskLabel={topRiskSubscription ? `${topRiskSubscription.provider_name} · ${dateLabel(topRiskSubscription.trial_ends_at || topRiskSubscription.next_billing_date, locale)}` : t.noRisk}
+                  />
 
                   <TelegramCard
                     connected={Boolean(telegramStatus?.connected)}
@@ -1989,6 +2015,51 @@ function MetricTile({
         <h4 className="font-display text-2xl font-bold text-on-surface">{value}</h4>
         <p className="break-words text-[11px] font-bold uppercase leading-4 text-on-surface-variant">{label}</p>
       </div>
+    </div>
+  );
+}
+
+function SavingsReportCard({
+  activeCount,
+  dueSoonCount,
+  evidenceCount,
+  savingsOpportunity,
+  t,
+  topRiskLabel
+}: {
+  activeCount: number;
+  dueSoonCount: number;
+  evidenceCount: number;
+  savingsOpportunity: string;
+  t: (typeof copy)["ru"];
+  topRiskLabel: string;
+}) {
+  return (
+    <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-label-sm font-bold uppercase text-on-surface-variant">{t.quickReport}</p>
+          <h3 className="mt-2 break-words font-display text-[28px] font-bold leading-tight text-on-surface">{savingsOpportunity}</h3>
+          <p className="mt-1 text-body-md font-semibold text-on-surface-variant">{t.savingsScore}</p>
+        </div>
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-soft text-emerald-dark">
+          <WalletCards className="h-6 w-6" />
+        </div>
+      </div>
+      <div className="mt-5 grid gap-2">
+        <ReportLine label={t.protectedNow} value={`${activeCount} ${t.subscriptionsNav.toLowerCase()} · ${evidenceCount} ${t.evidence.toLowerCase()}`} />
+        <ReportLine label={t.endingSoon} value={String(dueSoonCount)} />
+        <ReportLine label={t.topRisk} value={topRiskLabel} />
+      </div>
+    </section>
+  );
+}
+
+function ReportLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-4 rounded-lg bg-surface-container-lowest px-3 py-2">
+      <span className="min-w-0 break-words text-label-sm font-bold text-on-surface-variant">{label}</span>
+      <span className="min-w-0 break-words text-right text-label-sm font-extrabold text-on-surface">{value}</span>
     </div>
   );
 }

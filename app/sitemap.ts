@@ -11,6 +11,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date()
     },
     {
+      url: "https://www.tengeguard.online/security",
+      lastModified: new Date()
+    },
+    {
       url: "https://www.tengeguard.online/terms",
       lastModified: new Date()
     }
