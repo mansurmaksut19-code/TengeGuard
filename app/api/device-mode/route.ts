@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(url);
   }
 
-  url.pathname = "/api/subcut/gmail/start";
+  url.pathname = "/api/auth/google";
   url.search = "";
 
   const response = NextResponse.redirect(url);
