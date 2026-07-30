@@ -306,7 +306,7 @@ export default function HomePage() {
           </div>
           <form action="/api/device-mode" method="GET">
             <input name="mode" type="hidden" value="desktop" />
-            <input name="plan" type="hidden" value="pro_monthly" />
+            <input name="plan" type="hidden" value="free" />
             <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-4 text-label-sm font-black text-primary transition hover:-translate-y-0.5 hover:bg-surface-container active:scale-[0.99] sm:w-auto" type="submit">
               Open TengeGuard
               <ArrowRight className="h-4 w-4" />
@@ -432,8 +432,8 @@ function PricingCard({
         ))}
       </ul>
 
-      <form action="/api/device-mode" className="mt-auto pt-8" method="GET">
-        <input name="mode" type="hidden" value="desktop" />
+      <form action={plan === "free" ? "/api/device-mode" : "/api/billing/checkout"} className="mt-auto pt-8" method="GET">
+        {plan === "free" ? <input name="mode" type="hidden" value="desktop" /> : null}
         <input name="plan" type="hidden" value={plan} />
         <button
           className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-label-sm font-black transition hover:-translate-y-0.5 active:scale-[0.99] ${
@@ -463,8 +463,8 @@ function PlanButton({
   title: string;
 }) {
   return (
-    <form action="/api/device-mode" method="GET">
-      <input name="mode" type="hidden" value="desktop" />
+    <form action={plan === "free" ? "/api/device-mode" : "/api/billing/checkout"} method="GET">
+      {plan === "free" ? <input name="mode" type="hidden" value="desktop" /> : null}
       <input name="plan" type="hidden" value={plan} />
       <button
         className={`group flex h-full w-full flex-col items-start rounded-[24px] border p-5 text-left shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft active:scale-[0.99] ${

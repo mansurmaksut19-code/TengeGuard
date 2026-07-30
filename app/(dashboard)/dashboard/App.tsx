@@ -1759,10 +1759,10 @@ function TrialAccessCard({
           </div>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          <a className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90" href="/api/device-mode?mode=desktop&plan=pro_monthly">
+          <a className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90" href="/api/billing/checkout?plan=pro_monthly">
             {t.upgradeMonthly}
           </a>
-          <a className="inline-flex items-center justify-center rounded-lg border border-outline-variant bg-white px-4 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container" href="/api/device-mode?mode=desktop&plan=pro_yearly">
+          <a className="inline-flex items-center justify-center rounded-lg border border-outline-variant bg-white px-4 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container" href="/api/billing/checkout?plan=pro_yearly">
             {t.upgradeYearly}
           </a>
         </div>

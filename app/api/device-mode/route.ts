@@ -25,6 +25,12 @@ export async function GET(request: Request) {
     return NextResponse.redirect(url);
   }
 
+  if (plan !== "free") {
+    url.pathname = "/api/billing/checkout";
+    url.search = `?plan=${plan}`;
+    return NextResponse.redirect(url);
+  }
+
   url.pathname = "/api/auth/google";
   url.search = "";
 

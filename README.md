@@ -24,6 +24,7 @@ TengeGuard - веб-сервис для поиска и контроля под�
 - React Query
 - Gmail OAuth
 - Telegram Bot API
+- Freedom Pay checkout
 
 ## Локальный запуск
 
@@ -36,4 +37,24 @@ npm run dev
 
 ```text
 http://localhost:3000
+```
+
+## Платные подписки
+
+TengeGuard поддерживает Pro-доступ через Freedom Pay:
+
+- Free Trial: 14 дней.
+- Pro monthly: 200 KZT в месяц.
+- Pro yearly: 2000 KZT в год.
+
+Деньги приходят не в код сайта, а в личный кабинет/мерчант-аккаунт Freedom Pay. После подключения мерчанта Freedom Pay перечисляет выплаты на банковский счет или карту, указанные в договоре с провайдером.
+
+Для production нужно добавить в Vercel Environment Variables:
+
+```text
+FREEDOMPAY_MERCHANT_ID=ваш_merchant_id
+FREEDOMPAY_SECRET_KEY=ваш_secret_key
+FREEDOMPAY_API_URL=https://api.freedompay.kz
+FREEDOMPAY_TESTING_MODE=0
+NEXT_PUBLIC_APP_URL=https://www.tengeguard.online
 ```
