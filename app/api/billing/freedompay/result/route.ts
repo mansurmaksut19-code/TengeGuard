@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { readPaymentOrder, updatePaymentOrder } from "@/lib/server/payments";
+import {
+  freedomPayXmlResponse,
+  readPaymentOrder,
+  updatePaymentOrder,
+  verifyFreedomPaySignature
+} from "@/lib/server/payments";
 
 async function readPayload(request: Request) {
   const contentType = request.headers.get("content-type") || "";
@@ -11,10 +16,18 @@ async function readPayload(request: Request) {
 
 export async function POST(request: Request) {
   const payload = await readPayload(request);
+  const scriptName = new URL(request.url).pathname.split("/").filter(Boolean).pop() || "result";
+  if (!verifyFreedomPaySignature(scriptName, payload)) {
+    return new NextResponse(
+      freedomPayXmlResponse(scriptName, { pg_status: "rejected", pg_description: "invalid signature" }),
+      { headers: { "Content-Type": "application/xml" }, status: 400 }
+    );
+  }
+
   const orderId = payload.pg_order_id;
   const order = orderId ? await readPaymentOrder(orderId) : null;
   if (!order) {
-    return new NextResponse("<?xml version=\"1.0\"?><response><pg_status>rejected</pg_status><pg_description>order not found</pg_description></response>", {
+    return new NextResponse(freedomPayXmlResponse(scriptName, { pg_status: "rejected", pg_description: "order not found" }), {
       headers: { "Content-Type": "application/xml" }
     });
   }
@@ -25,7 +38,7 @@ export async function POST(request: Request) {
   if (order.status === "paid") order.paid_at = order.paid_at || new Date().toISOString();
   await updatePaymentOrder(order);
 
-  return new NextResponse("<?xml version=\"1.0\"?><response><pg_status>ok</pg_status><pg_description>accepted</pg_description></response>", {
+  return new NextResponse(freedomPayXmlResponse(scriptName, { pg_status: "ok", pg_description: "accepted" }), {
     headers: { "Content-Type": "application/xml" }
   });
 }

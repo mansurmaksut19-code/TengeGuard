@@ -25,7 +25,7 @@ export default function TermsPage() {
         </TermsSection>
 
         <TermsSection title="Cancellation Actions">
-          When TengeGuard shows cancellation guidance, it may provide links, instructions, or status tracking. Final cancellation depends on the provider's own rules and systems.
+          When TengeGuard shows cancellation guidance, it may provide links, instructions, or status tracking. Final cancellation depends on the provider&apos;s own rules and systems.
         </TermsSection>
 
         <TermsSection title="Acceptable Use">

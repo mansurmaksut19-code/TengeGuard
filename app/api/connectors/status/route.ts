@@ -5,11 +5,10 @@ import { getSessionUserFromRequest, getUserIdFromRequest, readTokensFromRequest 
 export async function GET(request: Request) {
   const userId = getUserIdFromRequest(request);
   const user = await getSessionUserFromRequest(request, userId);
-  if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   return NextResponse.json({
     connectors: await automaticConnectors(user, {
-      gmailConnected: Boolean(await readTokensFromRequest(request, user.id)),
+      gmailConnected: Boolean(user && (await readTokensFromRequest(request, user.id))),
       request
     })
   }, {

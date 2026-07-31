@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readPaymentOrder, updatePaymentOrder } from "@/lib/server/payments";
+import { readPaymentOrder, updatePaymentOrder, verifyFreedomPaySignature } from "@/lib/server/payments";
 import { secureCookieOptions } from "@/lib/server/security";
 
 function appUrl(request: Request) {
@@ -8,10 +8,12 @@ function appUrl(request: Request) {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const orderId = url.searchParams.get("order");
+  const payload = Object.fromEntries(url.searchParams.entries());
+  const scriptName = url.pathname.split("/").filter(Boolean).pop() || "success";
+  const orderId = url.searchParams.get("pg_order_id") || url.searchParams.get("order");
   const order = orderId ? await readPaymentOrder(orderId) : null;
 
-  if (!order) {
+  if (!order || !verifyFreedomPaySignature(scriptName, payload)) {
     return NextResponse.redirect(`${appUrl(request)}/dashboard?payment=missing_order`);
   }
 

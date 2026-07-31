@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getGoogleOAuthConfig } from "@/lib/server/google-oauth-config";
+import { readStoredJson, writeStoredJson } from "@/lib/server/data-store";
 import { storagePath } from "@/lib/server/storage-root";
 import { parseEmailReceipts, type Subscription } from "@/lib/subcut-automation";
 
@@ -73,9 +73,9 @@ export type SessionUser = {
 const rootPath = storagePath("users");
 const gmailSessionCookieName = "tg_gmail_session";
 const userSessionCookieName = "tg_user_session";
-const defaultMaxMessagesPerQuery = 160;
-const defaultMaxMessagesPerSync = 1600;
-  const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 10);
+const defaultMaxMessagesPerQuery = 100;
+const defaultMaxMessagesPerSync = 800;
+const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 20);
 const gmailFetchRetryCount = readPositiveIntegerEnv("TENGEGUARD_GMAIL_RETRIES", 4);
 const gmailQueries = [
   'category:purchases newer_than:10y',
@@ -450,10 +450,7 @@ function toSubscription(userId: string, receipt: ReturnType<typeof parseEmailRec
 }
 
 async function writeJson(filePath: string, data: unknown) {
-  await mkdir(path.dirname(filePath), { recursive: true });
-  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(tempPath, JSON.stringify(data, null, 2), "utf8");
-  await rename(tempPath, filePath);
+  await writeStoredJson(filePath, data);
 }
 
 async function saveTokens(userId: string, tokens: StoredTokens) {
@@ -500,11 +497,7 @@ export function buildGoogleSignInUrl(origin?: string) {
 
 export async function readTokens(userId?: string): Promise<StoredTokens | null> {
   if (!userId) return null;
-  try {
-    return JSON.parse(await readFile(tokenPath(userId), "utf8")) as StoredTokens;
-  } catch {
-    return null;
-  }
+  return readStoredJson<StoredTokens>(tokenPath(userId));
 }
 
 export async function readTokensFromRequest(request: Request, userId?: string): Promise<StoredTokens | null> {
@@ -698,10 +691,12 @@ export async function syncRealGmailSubscriptions(userId: string, tokenOverride?:
   const tokens = tokenOverride || (await readTokens(userId));
   const messageIds = new Set<string>();
 
-  for (const query of gmailQueries) {
-    const ids = await listMessageIds(accessToken, query, gmailMaxMessagesPerQuery);
-    ids.forEach((id) => messageIds.add(id));
-  }
+  const queryResults = await mapInBatches(
+    gmailQueries,
+    6,
+    (query) => listMessageIds(accessToken, query, gmailMaxMessagesPerQuery)
+  );
+  queryResults.forEach((ids) => ids.forEach((id) => messageIds.add(id)));
 
   const messages = await mapInBatches(
     Array.from(messageIds).slice(0, gmailMaxMessagesPerSync),
@@ -739,7 +734,7 @@ export async function syncRealGmailSubscriptions(userId: string, tokenOverride?:
 export async function readRealGmailSubscriptions(userId?: string) {
   if (!userId) return [];
   try {
-    const stored = JSON.parse(await readFile(subscriptionPath(userId), "utf8")) as Subscription[];
+    const stored = (await readStoredJson<Subscription[]>(subscriptionPath(userId))) || [];
     const subscriptions = dedupeSubscriptions(stored);
     if (subscriptions.length !== stored.length) {
       await writeJson(subscriptionPath(userId), subscriptions);
@@ -759,11 +754,7 @@ export async function saveImportedSubscriptions(userId: string, incoming: Subscr
 
 export async function readSyncReport(userId?: string): Promise<SyncReport | null> {
   if (!userId) return null;
-  try {
-    return JSON.parse(await readFile(reportPath(userId), "utf8")) as SyncReport;
-  } catch {
-    return null;
-  }
+  return readStoredJson<SyncReport>(reportPath(userId));
 }
 
 export async function getSessionUser(userId?: string) {
@@ -771,11 +762,7 @@ export async function getSessionUser(userId?: string) {
   if (!userId) return null;
   if (tokens) return toSessionUser(userId, tokens);
 
-  try {
-    return JSON.parse(await readFile(profilePath(userId), "utf8")) as SessionUser;
-  } catch {
-    return null;
-  }
+  return readStoredJson<SessionUser>(profilePath(userId));
 }
 
 export async function getSessionUserFromRequest(request: Request, userId?: string) {
@@ -786,11 +773,7 @@ export async function getSessionUserFromRequest(request: Request, userId?: strin
   const encryptedUser = readEncryptedUserSession(request, userId);
   if (encryptedUser) return encryptedUser;
 
-  try {
-    return JSON.parse(await readFile(profilePath(userId), "utf8")) as SessionUser;
-  } catch {
-    return null;
-  }
+  return readStoredJson<SessionUser>(profilePath(userId));
 }
 
 export async function deleteRealGmailSubscription(userId: string, id: string) {

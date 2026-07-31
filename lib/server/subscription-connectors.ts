@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { readStoredJson, writeStoredJson } from "@/lib/server/data-store";
 import { parseSubscriptionImport } from "@/lib/server/subscription-import";
 import { storagePath } from "@/lib/server/storage-root";
 import { readTokens, saveImportedSubscriptions, type SessionUser } from "@/lib/server/subcut-gmail";
@@ -109,19 +109,15 @@ function statePath(userId: string) {
 }
 
 async function readBankState(userId: string, request?: Request): Promise<SaltEdgeState> {
-  try {
-    return JSON.parse(await readFile(statePath(userId), "utf8")) as SaltEdgeState;
-  } catch {
-    return decryptBankSession(request, userId) || { connections: [], updated_at: new Date().toISOString() };
-  }
+  return (
+    (await readStoredJson<SaltEdgeState>(statePath(userId))) ||
+    decryptBankSession(request, userId) ||
+    { connections: [], updated_at: new Date().toISOString() }
+  );
 }
 
 async function writeBankState(userId: string, state: SaltEdgeState) {
-  await mkdir(bankStateRoot, { recursive: true });
-  const filePath = statePath(userId);
-  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(tempPath, JSON.stringify({ ...state, updated_at: new Date().toISOString() }, null, 2), "utf8");
-  await rename(tempPath, filePath);
+  await writeStoredJson(statePath(userId), { ...state, updated_at: new Date().toISOString() });
 }
 
 async function saltedgeFetch<T>(pathName: string, options: RequestInit = {}) {
@@ -236,7 +232,8 @@ export async function createBankConnectSession(user: SessionUser, request?: Requ
           fetch_scopes: ["accounts", "transactions"],
           fetch_from_date: from.toISOString().slice(0, 10),
           fetch_to_date: today.toISOString().slice(0, 10),
-          return_to: `${appUrl()}/dashboard/subscriptions`,
+          return_to: `${appUrl()}/api/connectors/bank/callback`,
+          locale: "ru",
           store_credentials: true,
           unduplication_strategy: "delete_duplicated"
         },
@@ -360,7 +357,9 @@ export async function automaticConnectors(
       coverage: "Card and account transactions, recurring payments, subscriptions without emails.",
       action: bankConnected ? "Connected" : ready ? "Connect bank" : "Founder setup required",
       setup: ready
-        ? undefined
+        ? bankConnected
+          ? "Bank transactions are available for subscription analysis."
+          : "Salt Edge is configured. Sign in and connect a bank to import recurring transactions."
         : "Salt Edge keys are missing in this deployment. Add TENGEGUARD_BANK_PROVIDER_KEY and TENGEGUARD_BANK_PROVIDER_SECRET in Vercel Environment Variables, then redeploy."
     },
     {

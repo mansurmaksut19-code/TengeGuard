@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { readStoredJson, writeStoredJson } from "@/lib/server/data-store";
 import { storagePath } from "@/lib/server/storage-root";
 
 export type PaidPlan = "pro_monthly" | "pro_yearly";
@@ -69,22 +69,16 @@ export async function createPaymentOrder(userId: string, plan: PaidPlan): Promis
     created_at: new Date().toISOString()
   };
 
-  await mkdir(ordersRoot(), { recursive: true });
-  await writeFile(orderPath(order.id), JSON.stringify(order, null, 2), "utf8");
+  await writeStoredJson(orderPath(order.id), order);
   return order;
 }
 
 export async function readPaymentOrder(orderId: string) {
-  try {
-    return JSON.parse(await readFile(orderPath(orderId), "utf8")) as PaymentOrder;
-  } catch {
-    return null;
-  }
+  return readStoredJson<PaymentOrder>(orderPath(orderId));
 }
 
 export async function updatePaymentOrder(order: PaymentOrder) {
-  await mkdir(ordersRoot(), { recursive: true });
-  await writeFile(orderPath(order.id), JSON.stringify(order, null, 2), "utf8");
+  await writeStoredJson(orderPath(order.id), order);
 }
 
 function freedomPaySignature(scriptName: string, params: Record<string, string>, secretKey: string) {
@@ -93,6 +87,35 @@ function freedomPaySignature(scriptName: string, params: Record<string, string>,
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, value]) => value);
   return crypto.createHash("md5").update([scriptName, ...values, secretKey].join(";")).digest("hex");
+}
+
+export function verifyFreedomPaySignature(scriptName: string, params: Record<string, string>) {
+  const config = readFreedomPayConfig();
+  const received = params.pg_sig;
+  if (!config || !received) return false;
+
+  const expected = freedomPaySignature(scriptName, params, config.secretKey);
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received.toLowerCase());
+  return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+function escapeXml(value: string) {
+  return value.replace(/[<>&'\"]/g, (character) => ({
+    "<": "&lt;",
+    ">": "&gt;",
+    "&": "&amp;",
+    "'": "&apos;",
+    '"': "&quot;"
+  })[character] || character);
+}
+
+export function freedomPayXmlResponse(scriptName: string, fields: Record<string, string>) {
+  const config = readFreedomPayConfig();
+  const params: Record<string, string> = { ...fields, pg_salt: crypto.randomBytes(8).toString("hex") };
+  if (config) params.pg_sig = freedomPaySignature(scriptName, params, config.secretKey);
+  const body = Object.entries(params).map(([key, value]) => `<${key}>${escapeXml(value)}</${key}>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?><response>${body}</response>`;
 }
 
 function xmlValue(xml: string, tag: string) {

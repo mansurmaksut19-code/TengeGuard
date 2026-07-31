@@ -12,20 +12,30 @@ export async function GET(request: Request) {
   const user = await getSessionUserFromRequest(request, userId);
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-  const session = await createBankConnectSession(user, request);
-  if (!session.connectUrl) {
+  try {
+    const session = await createBankConnectSession(user, request);
+    if (!session.connectUrl) {
+      return NextResponse.json(
+        { message: "Банковский провайдер ещё не настроен для этого окружения." },
+        { status: 503 }
+      );
+    }
+
+    const response = NextResponse.redirect(session.connectUrl);
+    response.cookies.set(getBankSessionCookieName(), createEncryptedBankSession(user.id, session.state), {
+      ...secureCookieOptions(request, 60 * 60 * 24 * 90)
+    });
+    return response;
+  } catch (error) {
+    const providerMessage = error instanceof Error ? error.message : "Unknown provider error";
+    const waitingForAccess = /ActionNotAllowed|not enabled|pending|access/i.test(providerMessage);
     return NextResponse.json(
       {
-        message:
-          "Salt Edge keys are missing in this deployment. Add TENGEGUARD_BANK_PROVIDER_KEY and TENGEGUARD_BANK_PROVIDER_SECRET in Vercel Environment Variables, then redeploy."
+        message: waitingForAccess
+          ? "Salt Edge настроен, но аккаунту ещё не выдан Test или Live access. Откройте Salt Edge Dashboard и завершите запрос доступа."
+          : `Salt Edge не открыл подключение банка: ${providerMessage}`
       },
-      { status: 501 }
+      { status: 502 }
     );
   }
-
-  const response = NextResponse.redirect(session.connectUrl);
-  response.cookies.set(getBankSessionCookieName(), createEncryptedBankSession(user.id, session.state), {
-    ...secureCookieOptions(request, 60 * 60 * 24 * 90)
-  });
-  return response;
 }

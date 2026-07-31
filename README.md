@@ -74,3 +74,33 @@ NEXT_PUBLIC_APP_URL=https://www.tengeguard.online
 ```
 
 После сохранения переменных в Vercel нужно сделать `Redeploy`. Только после этого кнопка подключения банка увидит ключи.
+
+Salt Edge также должен перевести приложение из `Pending` в `Test` или `Live`. Наличие App ID и Secret ещё не означает доступ к реальным банкам. В TengeGuard ошибка доступа Salt Edge показывается отдельно от ошибки отсутствующих ключей.
+
+## Постоянное хранилище на Vercel
+
+Файловая система serverless-функций Vercel временная. Для production обязательно подключите Upstash Redis через Vercel Marketplace к проекту TengeGuard. После подключения Vercel должен добавить одну из пар переменных:
+
+```text
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+или:
+
+```text
+KV_REST_API_URL=...
+KV_REST_API_TOKEN=...
+```
+
+Код автоматически использует Redis для Gmail-токенов, профилей, найденных подписок, банковских подключений и платежных заказов. Локально без Redis остаётся файловое хранилище.
+
+## Google Gmail read-only
+
+Google Sign-In и Gmail read-only используют один OAuth callback:
+
+```text
+https://www.tengeguard.online/api/subcut/gmail/callback
+```
+
+Для всех пользователей приложение должно пройти Google OAuth verification для scope `https://www.googleapis.com/auth/gmail.readonly`. До одобрения Google можно использовать только тестовых пользователей или предупреждение `Google hasn't verified this app`.

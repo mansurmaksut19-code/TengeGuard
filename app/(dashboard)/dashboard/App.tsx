@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   BellRing,
@@ -8,6 +9,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Database,
+  HardDrive,
   ExternalLink,
   Globe2,
   KeyRound,
@@ -134,6 +136,13 @@ type CancellationResult = {
 type CancelSubscriptionResponse = {
   ok: boolean;
   result: CancellationResult;
+};
+
+type SystemReadiness = {
+  ok: boolean;
+  gmailConfigured: boolean;
+  paymentConfigured: boolean;
+  persistentStoreConfigured: boolean;
 };
 
 type RefundResult = {
@@ -708,6 +717,7 @@ export default function App({
   const [locale, setLocale] = useState<Locale>("ru");
   const [status, setStatus] = useState<GmailStatus | null>(null);
   const [telegramStatus, setTelegramStatus] = useState<TelegramStatus | null>(null);
+  const [readiness, setReadiness] = useState<SystemReadiness | null>(null);
   const [connectors, setConnectors] = useState<ConnectorStatus[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [query, setQuery] = useState("");
@@ -746,18 +756,21 @@ export default function App({
   const googleSignInUnavailable = !loading && !canStartGoogleOAuth;
 
   const load = useCallback(async () => {
-    const [gmailStatus, telegram] = await Promise.all([
+    const [gmailStatus, telegram, connectorData, systemReadiness] = await Promise.all([
       readJson<GmailStatus>("/api/subcut/gmail/status"),
-      readJson<TelegramStatus>("/api/telegram/status")
+      readJson<TelegramStatus>("/api/telegram/status"),
+      readJson<{ connectors: ConnectorStatus[] }>("/api/connectors/status"),
+      readJson<SystemReadiness>("/api/system/readiness")
     ]);
     setStatus(gmailStatus);
     setTelegramStatus(telegram);
+    setConnectors(connectorData.connectors);
+    setReadiness(systemReadiness);
 
     if (gmailStatus.connected) {
       const cachedSubscriptions = readCachedSubscriptions(gmailStatus.user);
       if (cachedSubscriptions.length > 0) setSubscriptions(cachedSubscriptions);
 
-      const connectorData = await readJson<{ connectors: ConnectorStatus[] }>("/api/connectors/status");
       const subscriptionData = await readJson<{ subscriptions: Subscription[] }>("/api/subscriptions").catch(() => ({
         subscriptions: cachedSubscriptions
       }));
@@ -768,10 +781,8 @@ export default function App({
 
       setSubscriptions(nextSubscriptions);
       if (nextSubscriptions.length > 0) writeCachedSubscriptions(gmailStatus.user, nextSubscriptions);
-      setConnectors(connectorData.connectors);
     } else {
       setSubscriptions([]);
-      setConnectors([]);
     }
   }, []);
 
@@ -822,8 +833,8 @@ export default function App({
         writeCachedSubscriptions(status?.user, syncResult.subscriptions);
       }
       await load();
-    } catch {
-      setError("Не удалось завершить сканирование Gmail. Проверьте доступ Gmail readonly и попробуйте еще раз.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Не удалось завершить сканирование Gmail.");
     } finally {
       setSyncing(false);
       setAuthStage("idle");
@@ -840,11 +851,6 @@ export default function App({
 
     callbackSyncStartedRef.current = true;
     window.history.replaceState(null, "", window.location.pathname);
-    if (!shouldScan) {
-      setNotice("Google подключен. Нажмите «Сканировать Gmail», чтобы найти реальные подписки.");
-      return;
-    }
-
     void runDashboardSync();
   }, [loading, runDashboardSync, status?.connected]);
 
@@ -997,6 +1003,18 @@ export default function App({
     } finally {
       setMarkingCancelledId(null);
     }
+  }
+
+  function handlePaymentSetup() {
+    if (readiness?.paymentConfigured) {
+      window.location.href = "/api/billing/checkout?plan=pro_monthly";
+      return;
+    }
+    setNotice("Оплата ожидает merchant ID и secret key от Freedom Pay. Заявка провайдеру должна быть одобрена до запуска реальных платежей.");
+  }
+
+  function handleStorageSetup() {
+    window.open("https://vercel.com/marketplace/upstash", "_blank", "noopener,noreferrer");
   }
 
   async function handleRefundSubscription(subscription: Subscription) {
@@ -1197,9 +1215,9 @@ export default function App({
                 <span className="break-words">Режим ноутбука</span>
               </div>
               <p className="mt-3 text-[12px] leading-5 text-on-surface-variant">Широкий dashboard с аналитикой и быстрым доступом к разделам.</p>
-              <a className="mt-3 inline-flex text-label-sm font-bold text-primary hover:underline" href="/">
+              <Link className="mt-3 inline-flex text-label-sm font-bold text-primary hover:underline" href="/">
                 Сменить режим
-              </a>
+              </Link>
             </div>
           </aside>
         ) : null}
@@ -1229,9 +1247,9 @@ export default function App({
 
           <div className="flex shrink-0 items-center gap-3">
             {isMobileMode ? (
-              <a className="grid h-10 w-10 place-items-center rounded-full border border-outline-variant bg-surface-container-low text-primary" href="/" aria-label="Сменить режим">
+              <Link className="grid h-10 w-10 place-items-center rounded-full border border-outline-variant bg-surface-container-low text-primary" href="/" aria-label="Сменить режим">
                 <Smartphone className="h-5 w-5" />
-              </a>
+              </Link>
             ) : null}
             <span
               className={`hidden whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-bold sm:inline-flex ${
@@ -1302,7 +1320,7 @@ export default function App({
 
                   {!activeSubscriptions.length ? (
                     <DashboardActivationPanel
-                      bankReady={connectors.some((connector) => connector.id === "bank" && connector.status === "ready")}
+                      bankStatus={connectors.find((connector) => connector.id === "bank")?.status}
                       connected={Boolean(status?.connected)}
                       disabled={loading || syncing || googleSigningIn}
                       onConnect={handleConnect}
@@ -1475,6 +1493,28 @@ export default function App({
                     title={t.telegramTitle}
                     tone={telegramStatus?.connected ? "emerald" : "sky"}
                   />
+                  <AccessCard
+                    action={readiness?.paymentConfigured ? "Открыть оплату Pro" : "Ожидает Freedom Pay"}
+                    body="Реальная оплата Pro: 200 ₸ в месяц или 2 000 ₸ в год. Доступ включается только после подписанного подтверждения Freedom Pay."
+                    disabled={loading}
+                    icon={WalletCards}
+                    meta="Freedom Pay · KZT"
+                    onAction={handlePaymentSetup}
+                    status={readiness?.paymentConfigured ? "готово" : "нужны merchant-ключи"}
+                    title="Оплата TengeGuard Pro"
+                    tone={readiness?.paymentConfigured ? "emerald" : "amber"}
+                  />
+                  <AccessCard
+                    action={readiness?.persistentStoreConfigured ? "Хранилище подключено" : "Подключить Redis в Vercel"}
+                    body="Постоянная база нужна, чтобы подписки, банковские подключения и платежные заказы не исчезали между запусками Vercel и были доступны на разных устройствах."
+                    disabled={Boolean(readiness?.persistentStoreConfigured)}
+                    icon={HardDrive}
+                    meta="Upstash Redis / Vercel Marketplace"
+                    onAction={handleStorageSetup}
+                    status={readiness?.persistentStoreConfigured ? "готово" : "обязательно для production"}
+                    title="Постоянное хранение"
+                    tone={readiness?.persistentStoreConfigured ? "emerald" : "amber"}
+                  />
                 </div>
 
                 <div className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch">
@@ -1505,7 +1545,8 @@ export default function App({
                         </div>
                         {connector.id === "bank" ? (
                           <button
-                            className="mt-4 w-full rounded-lg bg-inverse-surface px-3 py-2 text-label-sm font-bold text-inverse-on-surface transition hover:bg-on-surface"
+                            className="mt-4 w-full rounded-lg bg-inverse-surface px-3 py-2 text-label-sm font-bold text-inverse-on-surface transition hover:bg-on-surface disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={connector.status === "setup_required" || connector.status === "not_available" || connector.status === "connected"}
                             onClick={handleConnectBank}
                             type="button"
                           >
@@ -2447,7 +2488,7 @@ function EmptyState({
 }
 
 function DashboardActivationPanel({
-  bankReady,
+  bankStatus,
   connected,
   disabled,
   onConnect,
@@ -2457,7 +2498,7 @@ function DashboardActivationPanel({
   scanning,
   telegramReady
 }: {
-  bankReady: boolean;
+  bankStatus?: ConnectorStatus["status"];
   connected: boolean;
   disabled: boolean;
   onConnect: () => void;
@@ -2467,6 +2508,9 @@ function DashboardActivationPanel({
   scanning: boolean;
   telegramReady: boolean;
 }) {
+  const bankReady = bankStatus === "ready" || bankStatus === "connected";
+  const bankConnected = bankStatus === "connected";
+
   return (
     <section className="overflow-hidden rounded-2xl border border-primary/15 bg-white shadow-stitch">
       <div className="border-b border-outline-variant bg-[linear-gradient(135deg,#ffffff_0%,#eefcf7_100%)] p-5">
@@ -2498,12 +2542,12 @@ function DashboardActivationPanel({
           tone={connected ? "emerald" : "primary"}
         />
         <ActivationStep
-          action={bankReady ? "Подключить банк" : "Ожидает API"}
+          action={bankConnected ? "Банк подключен" : bankReady ? "Подключить банк" : "Ожидает API"}
           body="Для подписок без email: регулярные списания, карты и банковская история."
-          disabled={!bankReady}
+          disabled={!bankReady || bankConnected}
           icon={WalletCards}
           onClick={onConnectBank}
-          state={bankReady ? "готово" : "нужны ключи провайдера"}
+          state={bankConnected ? "подключено" : bankReady ? "API готов" : "нужен доступ провайдера"}
           title="Банковская интеграция"
           tone="primary"
         />
@@ -2525,7 +2569,7 @@ function DashboardActivationPanel({
             <div>
               <h4 className="font-bold text-on-surface">Полный охват</h4>
               <p className="mt-1 text-body-md leading-6 text-on-surface-variant">
-                Для максимального результата система использует Gmail сейчас, а банковские транзакции подключаются через провайдера API после выдачи ключей.
+                TengeGuard объединяет Gmail и банковские транзакции. Подключаются только выбранные пользователем источники, а неподтвержденные данные не показываются как подписки.
               </p>
             </div>
           </div>
