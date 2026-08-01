@@ -6,6 +6,7 @@ import {
   syncRealGmailSubscriptions
 } from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
+import { requireActiveAccess } from "@/lib/server/access-control";
 
 export const maxDuration = 300;
 
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+  const expired = requireActiveAccess(request);
+  if (expired) return expired;
 
   try {
     const subscriptions = await syncRealGmailSubscriptions(user.id, await readTokensFromRequest(request, user.id));

@@ -250,6 +250,8 @@ const copy = {
     upgradeYearly: "Pro за 2000 тг/год",
     proActiveTitle: "Pro активен",
     proActiveText: "Полный доступ: мониторинг, Telegram-напоминания, история и помощь с отменой.",
+    proExpiredTitle: "Подписка Pro закончилась",
+    proExpiredText: "Продлите Pro, чтобы снова открыть мониторинг, историю, банковские данные и уведомления.",
     remove: "Убрать",
     noSubsTitle: "Реальные подписки пока не найдены",
     noSubsText: "Подключите Google и запустите сканирование Gmail. Если доказательств нет, TengeGuard честно покажет пусто.",
@@ -359,6 +361,8 @@ const copy = {
     upgradeYearly: "Pro for 2000 KZT/yr",
     proActiveTitle: "Pro active",
     proActiveText: "Full access: monitoring, Telegram reminders, history, and cancellation assistance.",
+    proExpiredTitle: "Pro subscription ended",
+    proExpiredText: "Renew Pro to restore monitoring, history, bank data, and reminders.",
     remove: "Remove",
     noSubsTitle: "No real subscriptions found yet",
     noSubsText: "Connect Google and run a Gmail scan. If there is no evidence, TengeGuard shows empty results.",
@@ -468,6 +472,8 @@ const copy = {
     upgradeYearly: "Pro 2000 тг/жыл",
     proActiveTitle: "Pro белсенді",
     proActiveText: "Толық қолжетімділік: мониторинг, Telegram ескертулері, тарих және тоқтатуға көмек.",
+    proExpiredTitle: "Pro жазылымы аяқталды",
+    proExpiredText: "Мониторингті, тарихты, банк деректерін және ескертулерді қайта ашу үшін Pro-ны ұзартыңыз.",
     remove: "Өшіру",
     noSubsTitle: "Әзірге нақты жазылым табылмады",
     noSubsText: "Google қосып, Gmail сканерлеуді бастаңыз. Дәлел болмаса, TengeGuard бос нәтиже көрсетеді.",
@@ -704,11 +710,13 @@ function writeCachedSubscriptions(user: SessionUser | null | undefined, nextSubs
 }
 
 export default function App({
+  initialBillingEndsAt = null,
   initialBillingPlan = "free",
   initialDeviceMode = "desktop",
   initialTrialStartedAt = null,
   initialView = "dashboard"
 }: {
+  initialBillingEndsAt?: string | null;
   initialBillingPlan?: BillingPlan;
   initialDeviceMode?: DeviceMode;
   initialTrialStartedAt?: string | null;
@@ -749,8 +757,9 @@ export default function App({
   const t = copy[locale];
   const isMobileMode = initialDeviceMode === "mobile";
   const trialStartedAt = initialTrialStartedAt || new Date().toISOString();
-  const trialDaysLeft = initialBillingPlan === "free" ? Math.max(0, 14 - Math.max(0, daysUntilPast(trialStartedAt))) : null;
-  const trialExpired = initialBillingPlan === "free" && trialDaysLeft === 0;
+  const calculatedTrialDaysLeft = Math.max(0, 14 - Math.max(0, daysUntilPast(trialStartedAt)));
+  const accessDaysLeft = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : initialBillingPlan === "free" ? calculatedTrialDaysLeft : 0;
+  const accessExpired = accessDaysLeft === 0;
   const isPreparingDashboard = loading || googleSigningIn || syncing || authStage !== "idle";
   const canStartGoogleOAuth = Boolean(status?.connectUrl || status?.configured);
   const googleSignInUnavailable = !loading && !canStartGoogleOAuth;
@@ -1288,9 +1297,11 @@ export default function App({
           <NoticeCard tone="success" title="TengeGuard" body={notice} />
         ) : null}
         {paymentSetupNeeded ? <PaymentSetupCard t={t} /> : null}
-        <TrialAccessCard billingPlan={initialBillingPlan} daysLeft={trialDaysLeft} expired={trialExpired} t={t} />
+        <TrialAccessCard billingPlan={initialBillingPlan} daysLeft={accessDaysLeft} expired={accessExpired} t={t} />
 
-        {isPreparingDashboard ? (
+        {accessExpired ? (
+          <ExpiredAccessPanel billingPlan={initialBillingPlan} t={t} />
+        ) : isPreparingDashboard ? (
           <MagicProgress locale={locale} stepIndex={progressStep} />
         ) : (
           <>
@@ -1836,9 +1847,10 @@ function TrialAccessCard({
   expired: boolean;
   t: (typeof copy)["ru"];
 }) {
-  const proActive = billingPlan !== "free";
-  const title = proActive ? t.proActiveTitle : expired ? t.trialExpiredTitle : t.trialActiveTitle;
-  const body = proActive ? t.proActiveText : expired ? t.trialExpiredText : t.trialActiveText;
+  const proActive = billingPlan !== "free" && !expired;
+  const paidPlan = billingPlan !== "free";
+  const title = proActive ? t.proActiveTitle : expired && paidPlan ? t.proExpiredTitle : expired ? t.trialExpiredTitle : t.trialActiveTitle;
+  const body = proActive ? t.proActiveText : expired && paidPlan ? t.proExpiredText : expired ? t.trialExpiredText : t.trialActiveText;
 
   return (
     <section className={`mb-6 overflow-hidden rounded-xl border p-5 shadow-stitch ${expired ? "border-amber-200 bg-amber-soft" : "border-emerald-200 bg-white"}`}>
@@ -1851,7 +1863,7 @@ function TrialAccessCard({
             <h3 className="break-words font-display text-xl font-extrabold text-on-surface">{title}</h3>
             <p className="mt-1 max-w-2xl break-words text-body-md leading-6 text-on-surface-variant">
               {body}
-              {!proActive && !expired && daysLeft !== null ? ` Осталось: ${daysLeft} дн.` : ""}
+              {!expired && daysLeft !== null ? ` Осталось: ${daysLeft} дн.` : ""}
             </p>
           </div>
         </div>
@@ -1863,6 +1875,23 @@ function TrialAccessCard({
             {t.upgradeYearly}
           </a>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function ExpiredAccessPanel({ billingPlan, t }: { billingPlan: BillingPlan; t: (typeof copy)["ru"] }) {
+  const paidPlan = billingPlan !== "free";
+  return (
+    <section className="rounded-xl border border-amber-200 bg-white p-8 text-center shadow-stitch">
+      <div className="mx-auto grid h-14 w-14 place-items-center rounded-xl bg-amber-soft text-amber-dark">
+        <LockKeyhole className="h-6 w-6" />
+      </div>
+      <h2 className="mt-5 font-display text-2xl font-extrabold text-on-surface">{paidPlan ? t.proExpiredTitle : t.trialExpiredTitle}</h2>
+      <p className="mx-auto mt-3 max-w-xl text-body-md leading-7 text-on-surface-variant">{paidPlan ? t.proExpiredText : t.trialExpiredText}</p>
+      <div className="mx-auto mt-6 grid max-w-lg gap-3 sm:grid-cols-2">
+        <a className="rounded-lg bg-primary px-5 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90" href="/api/billing/checkout?plan=pro_monthly">{t.upgradeMonthly}</a>
+        <a className="rounded-lg border border-outline-variant bg-white px-5 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container" href="/api/billing/checkout?plan=pro_yearly">{t.upgradeYearly}</a>
       </div>
     </section>
   );

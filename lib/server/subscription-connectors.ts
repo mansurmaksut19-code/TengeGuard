@@ -244,12 +244,12 @@ export async function createBankConnectSession(user: SessionUser, request?: Requ
           show_consent_confirmation: true,
           disable_provider_search: false,
           skip_provider_selection: false,
-          skip_stages_screen: true,
-          allowed_countries: ["XF", "KZ", "UZ", "KG", "AZ", "AM", "GE", "MD"],
-          popular_providers_country: "XF"
+          skip_stages_screen: false,
+          allowed_countries: ["KZ", "UZ", "KG", "TJ", "AZ", "AM", "GE", "MD", "UA"],
+          popular_providers_country: "KZ"
         },
         provider: {
-          include_sandboxes: true
+          include_sandboxes: process.env.TENGEGUARD_BANK_INCLUDE_SANDBOXES === "1"
         },
         return_connection_id: true,
         return_error_class: true,
@@ -354,12 +354,12 @@ export async function automaticConnectors(
       id: "bank",
       name: bankProviderName(),
       status: bankConnected ? "connected" : ready ? "ready" : "setup_required",
-      coverage: "Card and account transactions, recurring payments, subscriptions without emails.",
-      action: bankConnected ? "Connected" : ready ? "Connect bank" : "Founder setup required",
+      coverage: "Только чтение счетов и истории транзакций. Без переводов, платежей и списаний.",
+      action: bankConnected ? "Банк подключён" : ready ? "Выбрать банк" : "Нужна настройка",
       setup: ready
         ? bankConnected
-          ? "Bank transactions are available for subscription analysis."
-          : "Salt Edge is configured. Sign in and connect a bank to import recurring transactions."
+          ? "История транзакций доступна для поиска регулярных списаний."
+          : "Откроется защищённый Salt Edge Connect: выберите банк и подтвердите read-only доступ к истории."
         : "Salt Edge keys are missing in this deployment. Add TENGEGUARD_BANK_PROVIDER_KEY and TENGEGUARD_BANK_PROVIDER_SECRET in Vercel Environment Variables, then redeploy."
     },
     {

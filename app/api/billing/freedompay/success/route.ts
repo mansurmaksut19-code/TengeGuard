@@ -21,8 +21,15 @@ export async function GET(request: Request) {
   order.paid_at = order.paid_at || new Date().toISOString();
   await updatePaymentOrder(order);
 
+  const startedAt = new Date(order.paid_at);
+  const endsAt = new Date(startedAt);
+  if (order.plan === "pro_yearly") endsAt.setUTCFullYear(endsAt.getUTCFullYear() + 1);
+  else endsAt.setUTCMonth(endsAt.getUTCMonth() + 1);
+
   const response = NextResponse.redirect(`${appUrl(request)}/dashboard?payment=success`);
-  response.cookies.set("tg_billing_plan", order.plan, secureCookieOptions(request, 60 * 60 * 24 * 365));
-  response.cookies.set("tg_payment_order", order.id, secureCookieOptions(request, 60 * 60 * 24 * 365));
+  response.cookies.set("tg_billing_plan", order.plan, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
+  response.cookies.set("tg_billing_started_at", startedAt.toISOString(), secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
+  response.cookies.set("tg_billing_ends_at", endsAt.toISOString(), secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
+  response.cookies.set("tg_payment_order", order.id, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
   return response;
 }

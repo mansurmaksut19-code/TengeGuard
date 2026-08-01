@@ -10,5 +10,6 @@ export default async function DashboardPage() {
       ? billingPlanValue
       : "free";
   const trialStartedAt = cookieStore.get("tg_trial_started_at")?.value || null;
-  return <App initialBillingPlan={billingPlan} initialDeviceMode={mode} initialTrialStartedAt={trialStartedAt} />;
+  const billingEndsAt = cookieStore.get("tg_billing_ends_at")?.value || null;
+  return <App initialBillingEndsAt={billingEndsAt} initialBillingPlan={billingPlan} initialDeviceMode={mode} initialTrialStartedAt={trialStartedAt} />;
 }

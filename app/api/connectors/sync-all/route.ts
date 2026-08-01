@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
 import { secureCookieOptions } from "@/lib/server/security";
+import { requireActiveAccess } from "@/lib/server/access-control";
 
 export async function POST(request: Request) {
   const blocked = protectMutation(request, { key: "connectors-sync-all", limit: 6, windowMs: 60_000 });
@@ -17,6 +18,8 @@ export async function POST(request: Request) {
   const userId = getUserIdFromRequest(request);
   const user = await getSessionUserFromRequest(request, userId);
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  const expired = requireActiveAccess(request);
+  if (expired) return expired;
 
   const tokens = await readTokensFromRequest(request, user.id);
   const connectors = await automaticConnectors(user, { gmailConnected: Boolean(tokens), request });

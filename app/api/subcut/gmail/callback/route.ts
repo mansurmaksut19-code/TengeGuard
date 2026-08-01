@@ -66,6 +66,21 @@ export async function GET(request: Request) {
     response.cookies.set("tg_gmail_connected", "1", {
       ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
+    const existingTrialStartedAt = readCookie(request, "tg_trial_started_at");
+    if (!existingTrialStartedAt) {
+      const startedAt = new Date();
+      const endsAt = new Date(startedAt);
+      endsAt.setUTCDate(endsAt.getUTCDate() + 14);
+      response.cookies.set("tg_billing_plan", "free", {
+        ...secureCookieOptions(request, 60 * 60 * 24 * 365 * 2)
+      });
+      response.cookies.set("tg_trial_started_at", startedAt.toISOString(), {
+        ...secureCookieOptions(request, 60 * 60 * 24 * 365 * 2)
+      });
+      response.cookies.set("tg_billing_ends_at", endsAt.toISOString(), {
+        ...secureCookieOptions(request, 60 * 60 * 24 * 365 * 2)
+      });
+    }
     const tokens = await readTokens(user.id);
     if (tokens) {
       response.cookies.set(getGmailSessionCookieName(), createEncryptedGmailSession(tokens), {

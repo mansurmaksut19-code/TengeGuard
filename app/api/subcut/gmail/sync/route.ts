@@ -8,6 +8,7 @@ import {
 } from "@/lib/server/subcut-gmail";
 import { sendTelegramDigest } from "@/lib/server/telegram";
 import { protectMutation } from "@/lib/server/security";
+import { requireActiveAccess } from "@/lib/server/access-control";
 
 export const maxDuration = 300;
 
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ ok: false, error: "Unauthorized", subscriptions: [] }, { status: 401 });
   }
+  const expired = requireActiveAccess(request);
+  if (expired) return expired;
 
   try {
     const tokens = await readTokensFromRequest(request, user.id);
