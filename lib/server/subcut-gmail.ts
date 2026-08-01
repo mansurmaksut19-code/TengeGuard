@@ -73,13 +73,12 @@ export type SessionUser = {
 const rootPath = storagePath("users");
 const gmailSessionCookieName = "tg_gmail_session";
 const userSessionCookieName = "tg_user_session";
-const defaultMaxMessagesPerQuery = 100;
-const defaultMaxMessagesPerSync = 800;
+const defaultMaxMessagesPerQuery = 80;
+const defaultMaxMessagesPerSync = 500;
 const gmailFetchBatchSize = readPositiveIntegerEnv("TENGEGUARD_GMAIL_BATCH_SIZE", 20);
 const gmailFetchRetryCount = readPositiveIntegerEnv("TENGEGUARD_GMAIL_RETRIES", 4);
 const gmailQueries = [
   'category:purchases newer_than:10y',
-  '(newer_than:24m)',
   '(subject:payment OR subject:receipt OR subject:invoice OR subject:order OR subject:purchase OR subject:subscription OR subject:trial OR subject:billing) newer_than:10y',
   '("welcome to" OR "account created" OR "account is ready" OR "plan is active" OR "subscription confirmed" OR "payment successful" OR "order confirmation") newer_than:10y',
   '("добро пожаловать" OR "аккаунт создан" OR "аккаунт готов" OR "тариф активен" OR "подписка подтверждена" OR "оплата прошла" OR "подтверждение заказа") newer_than:10y',

@@ -9,6 +9,8 @@ import {
 import { sendTelegramDigest } from "@/lib/server/telegram";
 import { protectMutation } from "@/lib/server/security";
 
+export const maxDuration = 300;
+
 export async function GET(request: Request) {
   const userId = getUserIdFromRequest(request);
   const user = await getSessionUserFromRequest(request, userId);

@@ -7,6 +7,8 @@ import {
 } from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
 
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   const blocked = protectMutation(request, { key: "sync", limit: 6, windowMs: 60_000 });
   if (blocked) return blocked;

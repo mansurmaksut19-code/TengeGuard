@@ -1,337 +1,329 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import {
   ArrowRight,
   BarChart3,
+  BellRing,
   Check,
   CheckCircle2,
   Clock3,
-  DatabaseZap,
+  Landmark,
   Laptop,
   LockKeyhole,
   MailCheck,
   ShieldCheck,
-  Smartphone,
-  Sparkles
+  Smartphone
 } from "lucide-react";
 
-function LogoMark({ className = "h-full w-full" }: { className?: string }) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img alt="TengeGuard" className={`${className} object-cover`} src="/tengeguard-mark.jpg" />
-  );
-}
+type Locale = "kk" | "en" | "ru";
+type DeviceMode = "desktop" | "mobile";
 
-function GoogleMark() {
-  return (
-    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-    </svg>
-  );
-}
+const localeNames: Record<Locale, string> = {
+  kk: "Қазақша",
+  en: "English",
+  ru: "Русский"
+};
+
+const content = {
+  ru: {
+    navProduct: "Как работает",
+    navPricing: "Тарифы",
+    security: "Безопасность",
+    badge: "Только подтверждённые данные",
+    title: "Все подписки и даты списаний в одном месте",
+    subtitle:
+      "TengeGuard находит платные, бесплатные и пробные подписки по разрешённым источникам и предупреждает до следующего списания.",
+    freeTitle: "Начать бесплатно",
+    freeMeta: "14 дней · Gmail read-only",
+    proTitle: "Выбрать Pro",
+    proMeta: "200 ₸/мес · 2 000 ₸/год",
+    privacyNote: "Мы не отправляем, не изменяем и не удаляем письма.",
+    desktop: "Ноутбук",
+    mobile: "Телефон",
+    previewTitle: "Контроль подписок",
+    previewStatus: "Защита активна",
+    metricActive: "Активные",
+    metricNext: "Ближайшая дата",
+    metricSources: "Источники",
+    sourceValue: "Gmail + банки",
+    paid: "Платные",
+    free: "Бесплатные",
+    trials: "Пробные",
+    howEyebrow: "Три шага",
+    howTitle: "Подключение без ручного ввода",
+    steps: [
+      ["Разрешите чтение Gmail", "Google открывает официальный экран OAuth. TengeGuard получает только Gmail read-only."],
+      ["Получите реальные подписки", "Система анализирует чеки, продления, free-тарифы, trial-периоды и банковские списания."],
+      ["Получайте напоминания", "Telegram заранее сообщает о списании или завершении пробного периода."]
+    ],
+    dataTitle: "Зачем нужен доступ Gmail",
+    dataText:
+      "Gmail read-only используется только для поиска писем о подписках, счетах, продлениях, бесплатных планах и пробных периодах. Доступ добровольный и может быть отозван в Google Account.",
+    pricingEyebrow: "Простые тарифы",
+    pricingTitle: "Начните бесплатно, продолжите когда будет полезно",
+    trialName: "Free Trial",
+    trialPrice: "0 ₸",
+    trialDescription: "Полная проверка продукта в течение 14 дней.",
+    trialFeatures: ["Gmail read-only", "Платные, free и trial", "Даты окончания", "Доказательства из писем"],
+    proName: "TengeGuard Pro",
+    proPrice: "200 ₸ / месяц",
+    proYear: "или 2 000 ₸ в год",
+    proDescription: "Постоянный контроль подписок и напоминания.",
+    proFeatures: ["Всё из Free Trial", "Telegram-напоминания", "История подписок", "Банковские транзакции"],
+    start: "Продолжить",
+    footer: "Контроль подписок на основе данных пользователя"
+  },
+  en: {
+    navProduct: "How it works",
+    navPricing: "Pricing",
+    security: "Security",
+    badge: "Verified data only",
+    title: "Every subscription and renewal date in one place",
+    subtitle:
+      "TengeGuard finds paid, free, and trial subscriptions from user-approved sources and warns you before the next charge.",
+    freeTitle: "Start free",
+    freeMeta: "14 days · Gmail read-only",
+    proTitle: "Choose Pro",
+    proMeta: "200 KZT/mo · 2,000 KZT/yr",
+    privacyNote: "We never send, change, or delete email.",
+    desktop: "Desktop",
+    mobile: "Phone",
+    previewTitle: "Subscription control",
+    previewStatus: "Protection active",
+    metricActive: "Active",
+    metricNext: "Next date",
+    metricSources: "Sources",
+    sourceValue: "Gmail + banks",
+    paid: "Paid",
+    free: "Free",
+    trials: "Trials",
+    howEyebrow: "Three steps",
+    howTitle: "Connect without manual entry",
+    steps: [
+      ["Allow Gmail reading", "Google opens the official OAuth screen. TengeGuard receives Gmail read-only access only."],
+      ["See real subscriptions", "The system analyzes receipts, renewals, free plans, trials, and recurring bank transactions."],
+      ["Receive reminders", "Telegram warns you before a charge or trial expiration."]
+    ],
+    dataTitle: "Why Gmail access is requested",
+    dataText:
+      "Gmail read-only is used only to find subscription receipts, invoices, renewals, free-plan notices, and trial messages. Access is optional and can be revoked in Google Account.",
+    pricingEyebrow: "Simple pricing",
+    pricingTitle: "Start free and continue when it proves useful",
+    trialName: "Free Trial",
+    trialPrice: "0 KZT",
+    trialDescription: "Full product evaluation for 14 days.",
+    trialFeatures: ["Gmail read-only", "Paid, free, and trial plans", "End dates", "Email evidence"],
+    proName: "TengeGuard Pro",
+    proPrice: "200 KZT / month",
+    proYear: "or 2,000 KZT per year",
+    proDescription: "Continuous subscription monitoring and reminders.",
+    proFeatures: ["Everything in Free Trial", "Telegram reminders", "Subscription history", "Bank transactions"],
+    start: "Continue",
+    footer: "Subscription control based on user-owned data"
+  },
+  kk: {
+    navProduct: "Қалай жұмыс істейді",
+    navPricing: "Тарифтер",
+    security: "Қауіпсіздік",
+    badge: "Тек расталған деректер",
+    title: "Барлық жазылымдар мен төлем күндері бір жерде",
+    subtitle:
+      "TengeGuard рұқсат етілген дереккөздерден ақылы, тегін және сынақ жазылымдарын тауып, келесі төлемге дейін ескертеді.",
+    freeTitle: "Тегін бастау",
+    freeMeta: "14 күн · Gmail тек оқу",
+    proTitle: "Pro таңдау",
+    proMeta: "200 ₸/ай · 2 000 ₸/жыл",
+    privacyNote: "Біз хаттарды жібермейміз, өзгертпейміз және жоймаймыз.",
+    desktop: "Ноутбук",
+    mobile: "Телефон",
+    previewTitle: "Жазылымдарды бақылау",
+    previewStatus: "Қорғаныс белсенді",
+    metricActive: "Белсенді",
+    metricNext: "Келесі күн",
+    metricSources: "Дереккөздер",
+    sourceValue: "Gmail + банктер",
+    paid: "Ақылы",
+    free: "Тегін",
+    trials: "Сынақ",
+    howEyebrow: "Үш қадам",
+    howTitle: "Қолмен енгізусіз қосылу",
+    steps: [
+      ["Gmail оқуға рұқсат беріңіз", "Google ресми OAuth экранын ашады. TengeGuard тек Gmail read-only рұқсатын алады."],
+      ["Нақты жазылымдарды көріңіз", "Жүйе түбіртектерді, ұзартуларды, тегін жоспарларды, сынақ мерзімдерін және банк төлемдерін талдайды."],
+      ["Ескертулер алыңыз", "Telegram төлем немесе сынақ мерзімі аяқталғанға дейін хабарлайды."]
+    ],
+    dataTitle: "Gmail рұқсаты не үшін қажет",
+    dataText:
+      "Gmail read-only тек жазылым түбіртектерін, шоттарды, ұзартуларды, тегін жоспарлар мен сынақ хабарламаларын іздеу үшін қолданылады. Рұқсат ерікті және Google Account ішінде қайтарып алынады.",
+    pricingEyebrow: "Қарапайым тарифтер",
+    pricingTitle: "Тегін бастаңыз, пайдалы болса жалғастырыңыз",
+    trialName: "Free Trial",
+    trialPrice: "0 ₸",
+    trialDescription: "Өнімді 14 күн толық тексеру.",
+    trialFeatures: ["Gmail тек оқу", "Ақылы, тегін және сынақ", "Аяқталу күндері", "Хаттардан дәлелдер"],
+    proName: "TengeGuard Pro",
+    proPrice: "200 ₸ / ай",
+    proYear: "немесе жылына 2 000 ₸",
+    proDescription: "Жазылымдарды тұрақты бақылау және ескертулер.",
+    proFeatures: ["Free Trial мүмкіндіктері", "Telegram ескертулері", "Жазылымдар тарихы", "Банк транзакциялары"],
+    start: "Жалғастыру",
+    footer: "Пайдаланушы деректеріне негізделген жазылым бақылауы"
+  }
+} satisfies Record<Locale, Record<string, string | string[] | string[][]>>;
 
 export default function HomePage() {
+  const [locale, setLocale] = useState<Locale>("ru");
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
+  const t = content[locale];
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f6f8fb] text-on-surface antialiased">
-      <section className="relative min-h-screen">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(16,185,129,0.16),transparent_32rem),radial-gradient(circle_at_80%_0%,rgba(30,64,175,0.14),transparent_30rem),linear-gradient(180deg,#ffffff_0%,#f6f8fb_100%)]" />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
-
-        <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
-          <header className="flex items-center justify-between gap-4 rounded-[24px] border border-white/70 bg-white/75 px-4 py-3 shadow-stitch backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-2xl border border-outline-variant bg-white shadow-stitch">
-                <LogoMark />
-              </div>
-              <div>
-                <h1 className="font-display text-[18px] font-extrabold leading-5 text-primary">TengeGuard</h1>
-                <p className="text-[12px] font-bold text-on-surface-variant">Subscription discovery and reminders</p>
-              </div>
+    <main className="min-h-screen overflow-hidden bg-[#f7f9fc] text-on-surface antialiased">
+      <header className="sticky top-0 z-50 border-b border-outline-variant/80 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link className="flex items-center gap-3" href="/">
+            <Logo />
+            <div>
+              <p className="text-[17px] font-extrabold text-primary">TengeGuard</p>
+              <p className="hidden text-[11px] font-semibold text-on-surface-variant sm:block">{t.footer as string}</p>
             </div>
-            <nav className="hidden items-center gap-6 text-[13px] font-extrabold text-on-surface-variant lg:flex">
-              <a className="transition hover:text-primary" href="#about-tengeguard">Product</a>
-              <a className="transition hover:text-primary" href="#privacy-and-control">Data use</a>
-              <Link className="transition hover:text-primary" href="/security">Security</Link>
-              <a className="transition hover:text-primary" href="#pricing">Pricing</a>
-            </nav>
-            <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-soft px-3 py-2 text-[12px] font-extrabold text-emerald-dark sm:flex">
-              <LockKeyhole className="h-4 w-4" />
-              Gmail read-only, user controlled
-            </div>
-          </header>
+          </Link>
 
-          <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[0.9fr_1.1fr] lg:py-14">
-            <div className="min-w-0">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-3 py-2 text-[12px] font-extrabold uppercase text-primary shadow-stitch">
-                <Sparkles className="h-4 w-4" />
-                Real subscription data from user-approved sources
-              </div>
+          <nav className="hidden items-center gap-6 text-[13px] font-bold text-on-surface-variant lg:flex">
+            <a className="transition-colors hover:text-primary" href="#how">{t.navProduct as string}</a>
+            <a className="transition-colors hover:text-primary" href="#pricing">{t.navPricing as string}</a>
+            <Link className="transition-colors hover:text-primary" href="/security">{t.security as string}</Link>
+          </nav>
 
-              <h2 className="max-w-3xl font-display text-[44px] font-extrabold leading-[0.98] tracking-[-0.02em] text-[#111827] sm:text-[64px]">
-                TengeGuard helps users find subscriptions before the next charge
-              </h2>
-
-              <p className="mt-6 max-w-2xl text-[17px] font-medium leading-8 text-on-surface-variant">
-                TengeGuard is a subscription control center. Users sign in with Google, optionally connect Gmail in read-only mode,
-                and TengeGuard scans subscription-related receipts, renewal notices, trial emails, free-plan messages, and billing
-                evidence to build a clear dashboard of paid, free, and trial subscriptions.
-              </p>
-
-              <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
-                <PlanButton
-                  badge="14 days"
-                  description="Real Gmail scan, paid/free/trial detection, clear end dates."
-                  plan="free"
-                  primary
-                  title="Start Free Trial"
-                />
-                <PlanButton
-                  badge="200 KZT/mo or 2000 KZT/yr"
-                  description="Full monitoring, Telegram reminders, history, cancellation help."
-                  plan="pro_monthly"
-                  title="Choose Pro"
-                />
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2 text-[12px] font-bold text-on-surface-variant">
-                <ModeButton mode="desktop" title="Desktop mode" icon={Laptop} />
-                <ModeButton mode="mobile" title="Phone mode" icon={Smartphone} />
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-4 text-[13px] font-bold text-on-surface-variant">
-                <Link className="text-primary hover:underline" href="/privacy">Privacy Policy</Link>
-                <span className="h-1 w-1 rounded-full bg-outline-variant" />
-                <Link className="text-primary hover:underline" href="/security">Security</Link>
-                <span className="h-1 w-1 rounded-full bg-outline-variant" />
-                <span>No fake subscriptions. Empty result if there is no evidence.</span>
-              </div>
-
-              <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-                <TrustItem icon={GoogleMark} title="Google Sign-In" text="official account login" />
-                <TrustItem icon={MailCheck} title="Gmail evidence" text="receipts and renewal notices" />
-                <TrustItem icon={ShieldCheck} title="No fake data" text="only user-owned evidence" />
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-primary/10 via-white to-emerald-accent/10 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[32px] border border-white bg-white shadow-[0_30px_100px_-55px_rgba(15,23,42,0.75)]">
-                <div className="border-b border-outline-variant bg-white px-5 py-4">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 overflow-hidden rounded-2xl border border-outline-variant bg-white">
-                        <LogoMark />
-                      </div>
-                      <div>
-                        <p className="text-[12px] font-extrabold uppercase text-on-surface-variant">Dashboard preview</p>
-                        <h3 className="font-display text-[22px] font-extrabold text-[#111827]">TengeGuard</h3>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-soft px-3 py-2 text-[12px] font-extrabold text-emerald-dark">
-                      <CheckCircle2 className="h-4 w-4" />
-                      user approved
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 bg-[#fbfcfe] p-5">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <PreviewMetric icon={BarChart3} label="Monthly risk" value="Real data" />
-                    <PreviewMetric icon={Clock3} label="Trials" value="End dates" />
-                    <PreviewMetric icon={DatabaseZap} label="Sources" value="Gmail + banks" />
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
-                    <div className="rounded-[24px] border border-outline-variant bg-white p-5 shadow-stitch">
-                      <div className="mb-4 flex items-center justify-between">
-                        <div>
-                          <p className="text-[12px] font-extrabold uppercase text-on-surface-variant">Subscription graph</p>
-                          <h4 className="font-display text-[20px] font-extrabold">Paid, free, and trial plans</h4>
-                        </div>
-                        <span className="rounded-full bg-surface-container px-3 py-1 text-[12px] font-bold text-on-surface-variant">auto scan</span>
-                      </div>
-                      <div className="flex items-end gap-3 pt-8">
-                        <GraphBar height="h-24" tone="bg-primary" />
-                        <GraphBar height="h-36" tone="bg-emerald-accent" />
-                        <GraphBar height="h-20" tone="bg-amber-400" />
-                        <GraphBar height="h-32" tone="bg-primary/75" />
-                        <GraphBar height="h-16" tone="bg-emerald-accent/75" />
-                        <GraphBar height="h-28" tone="bg-primary/90" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <PreviewRow title="End date detected" meta="trial or free period" tone="emerald" />
-                      <PreviewRow title="Gmail evidence attached" meta="receipt or renewal email" tone="primary" />
-                      <PreviewRow title="Telegram reminder ready" meta="before charge date" tone="amber" />
-                    </div>
-                  </div>
-
-                  <div className="rounded-[24px] border border-primary/10 bg-primary px-5 py-4 text-on-primary shadow-stitch">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-[12px] font-extrabold uppercase text-on-primary/70">Purpose of TengeGuard</p>
-                        <p className="mt-1 max-w-xl text-[15px] font-semibold leading-6 text-on-primary/90">
-                          TengeGuard helps users monitor subscriptions, understand upcoming renewals, and receive reminders before
-                          trials or paid plans renew. Gmail access is optional, read-only, and used only for this subscription tracking feature.
-                        </p>
-                      </div>
-                      <Check className="h-8 w-8 shrink-0 text-emerald-accent" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 pb-8 sm:grid-cols-3">
-            <TrustMetric label="Google data use" value="Optional Gmail read-only" />
-            <TrustMetric label="Evidence policy" value="No mock subscriptions" />
-            <TrustMetric label="Reminders" value="Telegram before renewals" />
+          <div aria-label="Language" className="flex rounded-lg border border-outline-variant bg-surface-container-low p-1">
+            {(Object.keys(localeNames) as Locale[]).map((item) => (
+              <button
+                className={`rounded-md px-2.5 py-1.5 text-[11px] font-bold transition-all sm:px-3 ${
+                  locale === item ? "bg-white text-primary shadow-stitch" : "text-on-surface-variant hover:text-on-surface"
+                }`}
+                key={item}
+                onClick={() => setLocale(item)}
+                type="button"
+              >
+                <span className="sm:hidden">{item.toUpperCase()}</span>
+                <span className="hidden sm:inline">{localeNames[item]}</span>
+              </button>
+            ))}
           </div>
         </div>
-      </section>
+      </header>
 
-      <section aria-labelledby="about-tengeguard" className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="text-label-sm font-black uppercase text-primary">App homepage</p>
-            <h2 id="about-tengeguard" className="mt-3 font-display text-[34px] font-extrabold leading-tight text-[#111827] sm:text-[44px]">
-              What TengeGuard does
-            </h2>
-            <p className="mt-4 text-body-lg leading-8 text-on-surface-variant">
-              TengeGuard is a subscription discovery and reminder application. It helps users understand which subscriptions they have,
-              when paid plans renew, when trial periods end, and which free plans are active.
+      <section className="border-b border-outline-variant bg-white">
+        <div className="mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-20">
+          <div className="animate-tg-rise">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-soft px-3 py-2 text-[11px] font-extrabold uppercase text-emerald-dark">
+              <ShieldCheck className="h-4 w-4" />
+              {t.badge as string}
+            </span>
+            <h1 className="mt-6 max-w-3xl text-[42px] font-extrabold leading-[1.06] text-[#101828] sm:text-[58px] lg:text-[64px]">
+              {t.title as string}
+            </h1>
+            <p className="mt-6 max-w-2xl text-[17px] font-medium leading-8 text-on-surface-variant">
+              {t.subtitle as string}
+            </p>
+
+            <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
+              <PrimaryAction title={t.freeTitle as string} meta={t.freeMeta as string} plan="free" label={t.start as string} mode={deviceMode} />
+              <PrimaryAction title={t.proTitle as string} meta={t.proMeta as string} plan="pro_monthly" label={t.start as string} secondary />
+            </div>
+
+            <div className="mt-3 flex w-fit rounded-lg border border-outline-variant bg-surface-container-low p-1">
+              {([
+                ["desktop", Laptop, t.desktop],
+                ["mobile", Smartphone, t.mobile]
+              ] as const).map(([mode, Icon, label]) => (
+                <button
+                  aria-pressed={deviceMode === mode}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-[11px] font-bold transition-all ${deviceMode === mode ? "bg-white text-primary shadow-stitch" : "text-on-surface-variant"}`}
+                  key={mode}
+                  onClick={() => setDeviceMode(mode)}
+                  type="button"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label as string}
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-5 flex items-center gap-2 text-[12px] font-semibold text-on-surface-variant">
+              <LockKeyhole className="h-4 w-4 text-primary" />
+              {t.privacyNote as string}
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <ReviewCard
-              title="Why TengeGuard requests Google user data"
-              text="TengeGuard uses Google Sign-In for account login. Gmail read-only access is optional and is requested only when a user wants TengeGuard to scan subscription-related emails."
-            />
-            <ReviewCard
-              title="How Gmail read-only data is used"
-              text="TengeGuard scans receipts, invoices, billing notices, renewal notices, trial emails, free-plan emails, and cancellation confirmations to show subscription evidence in the user's dashboard."
-            />
-            <ReviewCard
-              title="What TengeGuard does not do"
-              text="TengeGuard does not send emails, modify Gmail messages, delete emails, create labels, sell Google user data, or use Gmail data for advertising."
-            />
-            <ReviewCard
-              title="User control"
-              text="Users choose whether to connect Gmail, can review the results in the dashboard, and can revoke Google access from their Google Account at any time."
-            />
-          </div>
+
+          <DashboardPreview t={t} />
         </div>
       </section>
 
-      <section id="privacy-and-control" className="relative border-t border-outline-variant bg-[#f8fafc] px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
-          <DataUseCard
-            title="User-controlled access"
-            text="Users can sign in with Google first and connect Gmail only if they want subscription scanning from email evidence."
-          />
-          <DataUseCard
-            title="Read-only scanning"
-            text="TengeGuard uses Gmail read-only only for subscription receipts, invoices, trial messages, free-plan notices, and renewal evidence."
-          />
-          <DataUseCard
-            title="Clear boundaries"
-            text="TengeGuard does not send, change, delete, label, sell, or advertise with Gmail data."
-          />
-        </div>
-      </section>
-
-      <section id="pricing" className="relative border-t border-outline-variant bg-white px-4 py-16 sm:px-6 lg:px-8">
+      <section className="border-b border-outline-variant bg-[#f7f9fc] px-4 py-20 sm:px-6 lg:px-8" id="how">
         <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-label-sm font-black uppercase text-primary">TengeGuard plans</p>
-            <h2 className="mt-3 font-display text-[36px] font-extrabold leading-tight text-[#111827] sm:text-[48px]">
-              Start free, then unlock full subscription monitoring
-            </h2>
-            <p className="mt-4 text-body-lg leading-7 text-on-surface-variant">
-              The 14-day trial lets users test real subscription discovery. The full plan enables ongoing monitoring, history,
-              Telegram reminders, and deeper subscription review.
-            </p>
+          <div className="max-w-2xl">
+            <p className="text-[12px] font-extrabold uppercase text-primary">{t.howEyebrow as string}</p>
+            <h2 className="mt-3 text-[34px] font-extrabold leading-tight text-[#101828] sm:text-[44px]">{t.howTitle as string}</h2>
+          </div>
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {(t.steps as string[][]).map(([title, text], index) => (
+              <article className="rounded-lg border border-outline-variant bg-white p-6 shadow-stitch transition-all duration-300 hover:-translate-y-1 hover:shadow-soft" key={title}>
+                <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-[13px] font-extrabold text-on-primary">{index + 1}</span>
+                <h3 className="mt-5 text-[19px] font-extrabold text-[#101828]">{title}</h3>
+                <p className="mt-3 text-[14px] leading-7 text-on-surface-variant">{text}</p>
+              </article>
+            ))}
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-5xl gap-5 lg:grid-cols-2">
-            <PricingCard
-              badge="14 days"
-              description="A trial period for checking Gmail scanning, free plans, trial periods, and renewal dates."
-              features={[
-                "Google Sign-In",
-                "Optional Gmail read-only connection",
-                "Paid, free, and trial subscription discovery",
-                "Evidence from receipts and billing notices"
-              ]}
-              price="0 KZT"
-              plan="free"
-              title="Free start"
-            />
-            <PricingCard
-              badge="Full access"
-              description="For ongoing subscription monitoring, reminders, history, and account-level subscription control."
-              features={[
-                "Everything in the free start",
-                "Telegram renewal reminders",
-                "Current and cancelled subscription history",
-                "Prepared bank integration flow",
-                "Priority deep scan"
-              ]}
-              highlighted
-              price="200 KZT / month"
-              plan="pro_monthly"
-              secondaryPrice="2000 KZT / year"
-              title="TengeGuard Full"
-            />
-          </div>
-
-          <div className="mt-10 flex flex-wrap justify-center gap-4 text-label-sm font-bold text-primary">
-            <Link className="hover:underline" href="/privacy">Privacy Policy</Link>
-            <Link className="hover:underline" href="/security">Security</Link>
-            <Link className="hover:underline" href="/terms">Terms of Service</Link>
+          <div className="mt-6 flex flex-col gap-4 rounded-lg border border-primary/15 bg-primary px-6 py-6 text-on-primary sm:flex-row sm:items-start">
+            <MailCheck className="h-6 w-6 shrink-0 text-emerald-accent" />
+            <div>
+              <h3 className="text-[17px] font-extrabold">{t.dataTitle as string}</h3>
+              <p className="mt-2 max-w-5xl text-[13px] font-medium leading-6 text-on-primary/80">{t.dataText as string}</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="border-t border-outline-variant bg-primary px-4 py-14 text-on-primary sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[12px] font-black uppercase text-on-primary/70">Ready to review subscriptions</p>
-            <h2 className="mt-2 font-display text-[34px] font-extrabold leading-tight sm:text-[44px]">
-              Start with Google Sign-In, then connect the sources you trust.
-            </h2>
-            <p className="mt-3 max-w-2xl text-body-lg leading-7 text-on-primary/78">
-              TengeGuard keeps the product honest: if there is no real evidence, the dashboard stays empty instead of inventing results.
-            </p>
+      <section className="bg-white px-4 py-20 sm:px-6 lg:px-8" id="pricing">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-[12px] font-extrabold uppercase text-primary">{t.pricingEyebrow as string}</p>
+            <h2 className="mt-3 text-[34px] font-extrabold leading-tight text-[#101828] sm:text-[44px]">{t.pricingTitle as string}</h2>
           </div>
-          <form action="/api/device-mode" method="GET">
-            <input name="mode" type="hidden" value="desktop" />
-            <input name="plan" type="hidden" value="free" />
-            <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-4 text-label-sm font-black text-primary transition hover:-translate-y-0.5 hover:bg-surface-container active:scale-[0.99] sm:w-auto" type="submit">
-              Open TengeGuard
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
+          <div className="mt-10 grid gap-5 lg:grid-cols-2">
+            <PlanCard
+              description={t.trialDescription as string}
+              features={t.trialFeatures as string[]}
+              label={t.start as string}
+              name={t.trialName as string}
+              plan="free"
+              price={t.trialPrice as string}
+            />
+            <PlanCard
+              description={t.proDescription as string}
+              features={t.proFeatures as string[]}
+              label={t.start as string}
+              name={t.proName as string}
+              plan="pro_monthly"
+              price={t.proPrice as string}
+              secondaryPrice={t.proYear as string}
+              highlighted
+            />
+          </div>
         </div>
       </section>
 
       <footer className="border-t border-outline-variant bg-white px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 text-[13px] font-semibold text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 overflow-hidden rounded-xl border border-outline-variant bg-white">
-              <LogoMark />
-            </div>
-            <span>TengeGuard</span>
-          </div>
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 text-[12px] font-semibold text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3"><Logo small /><span>© 2026 TengeGuard</span></div>
           <div className="flex flex-wrap gap-4">
-            <Link className="hover:text-primary hover:underline" href="/privacy">Privacy</Link>
-            <Link className="hover:text-primary hover:underline" href="/security">Security</Link>
-            <Link className="hover:text-primary hover:underline" href="/terms">Terms</Link>
-            <a className="hover:text-primary hover:underline" href="mailto:mansurmaksut19@gmail.com">Contact</a>
+            <Link className="hover:text-primary" href="/privacy">Privacy</Link>
+            <Link className="hover:text-primary" href="/security">Security</Link>
+            <Link className="hover:text-primary" href="/terms">Terms</Link>
+            <a className="hover:text-primary" href="mailto:mansurmaksut19@gmail.com">Contact</a>
           </div>
         </div>
       </footer>
@@ -339,224 +331,87 @@ export default function HomePage() {
   );
 }
 
-function TrustMetric({ label, value }: { label: string; value: string }) {
+function Logo({ small = false }: { small?: boolean }) {
   return (
-    <div className="rounded-2xl border border-white/80 bg-white/74 p-4 shadow-stitch backdrop-blur">
-      <p className="text-[11px] font-black uppercase text-on-surface-variant">{label}</p>
-      <p className="mt-1 text-[15px] font-extrabold text-[#111827]">{value}</p>
+    <div className={`${small ? "h-8 w-8 rounded-lg" : "h-10 w-10 rounded-xl"} overflow-hidden border border-outline-variant bg-white`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" />
     </div>
   );
 }
 
-function ReviewCard({ text, title }: { text: string; title: string }) {
-  return (
-    <article className="rounded-[24px] border border-outline-variant bg-surface-container-lowest p-5 shadow-stitch">
-      <h3 className="font-display text-[20px] font-extrabold text-[#111827]">{title}</h3>
-      <p className="mt-3 text-body-md leading-7 text-on-surface-variant">{text}</p>
-    </article>
-  );
-}
-
-function DataUseCard({ text, title }: { text: string; title: string }) {
-  return (
-    <article className="rounded-[24px] border border-outline-variant bg-white p-6 shadow-stitch">
-      <div className="mb-5 grid h-11 w-11 place-items-center rounded-2xl bg-emerald-soft text-emerald-dark">
-        <ShieldCheck className="h-5 w-5" />
-      </div>
-      <h3 className="font-display text-[22px] font-extrabold text-[#111827]">{title}</h3>
-      <p className="mt-3 text-body-md leading-7 text-on-surface-variant">{text}</p>
-    </article>
-  );
-}
-
-function PricingCard({
-  badge,
-  description,
-  features,
-  highlighted = false,
-  price,
-  plan,
-  secondaryPrice,
-  title
-}: {
-  badge: string;
-  description: string;
-  features: string[];
-  highlighted?: boolean;
-  price: string;
-  plan: "free" | "pro_monthly" | "pro_yearly";
-  secondaryPrice?: string;
-  title: string;
-}) {
-  return (
-    <article
-      className={`flex min-h-[460px] flex-col rounded-[28px] border p-6 shadow-stitch ${
-        highlighted
-          ? "border-primary bg-primary text-on-primary shadow-float"
-          : "border-outline-variant bg-surface-container-lowest text-on-surface"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <span
-            className={`inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase ${
-              highlighted ? "bg-white/15 text-on-primary" : "bg-emerald-soft text-emerald-dark"
-            }`}
-          >
-            {badge}
-          </span>
-          <h3 className="mt-5 font-display text-[28px] font-extrabold">{title}</h3>
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <p className="font-display text-[34px] font-extrabold leading-tight">{price}</p>
-        {secondaryPrice ? (
-          <p className={`mt-1 text-body-md font-bold ${highlighted ? "text-on-primary/70" : "text-on-surface-variant"}`}>
-            or {secondaryPrice}
-          </p>
-        ) : null}
-      </div>
-
-      <p className={`mt-5 text-body-md leading-7 ${highlighted ? "text-on-primary/78" : "text-on-surface-variant"}`}>
-        {description}
-      </p>
-
-      <ul className="mt-6 space-y-3">
-        {features.map((feature) => (
-          <li className="flex items-start gap-3 text-body-md font-semibold leading-6" key={feature}>
-            <span
-              className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${
-                highlighted ? "bg-white text-primary" : "bg-emerald-soft text-emerald-dark"
-              }`}
-            >
-              <Check className="h-3.5 w-3.5" />
-            </span>
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      <form action={plan === "free" ? "/api/device-mode" : "/api/billing/checkout"} className="mt-auto pt-8" method="GET">
-        {plan === "free" ? <input name="mode" type="hidden" value="desktop" /> : null}
-        <input name="plan" type="hidden" value={plan} />
-        <button
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-label-sm font-black transition hover:-translate-y-0.5 active:scale-[0.99] ${
-            highlighted ? "bg-white text-primary hover:bg-surface-container" : "bg-primary text-on-primary hover:bg-primary/90"
-          }`}
-          type="submit"
-        >
-          Start
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </form>
-    </article>
-  );
-}
-
-function PlanButton({
-  badge,
-  description,
-  plan,
-  primary = false,
-  title
-}: {
-  badge: string;
-  description: string;
-  plan: "free" | "pro_monthly";
-  primary?: boolean;
-  title: string;
-}) {
+function PrimaryAction({ label, meta, mode = "desktop", plan, secondary = false, title }: { label: string; meta: string; mode?: DeviceMode; plan: "free" | "pro_monthly"; secondary?: boolean; title: string }) {
   return (
     <form action={plan === "free" ? "/api/device-mode" : "/api/billing/checkout"} method="GET">
-      {plan === "free" ? <input name="mode" type="hidden" value="desktop" /> : null}
+      {plan === "free" ? <input name="mode" type="hidden" value={mode} /> : null}
       <input name="plan" type="hidden" value={plan} />
-      <button
-        className={`group flex h-full w-full flex-col items-start rounded-[24px] border p-5 text-left shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft active:scale-[0.99] ${
-          primary ? "border-primary bg-primary text-on-primary" : "border-outline-variant bg-white text-on-surface"
-        }`}
-        type="submit"
-      >
-        <span className={`rounded-full px-3 py-1 text-[11px] font-black uppercase ${primary ? "bg-white/15" : "bg-emerald-soft text-emerald-dark"}`}>
-          {badge}
-        </span>
-        <span className="mt-4 font-display text-[24px] font-extrabold leading-tight">{title}</span>
-        <span className={`mt-2 text-[13px] font-semibold leading-6 ${primary ? "text-on-primary/75" : "text-on-surface-variant"}`}>{description}</span>
-        <span className="mt-5 inline-flex items-center gap-2 text-[13px] font-black">
-          Continue
-          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-        </span>
+      <button className={`group flex w-full items-center justify-between rounded-lg border px-5 py-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft ${secondary ? "border-outline-variant bg-white text-on-surface" : "border-primary bg-primary text-on-primary"}`} type="submit">
+        <span><span className="block text-[15px] font-extrabold">{title}</span><span className={`mt-1 block text-[11px] font-semibold ${secondary ? "text-on-surface-variant" : "text-on-primary/70"}`}>{meta}</span></span>
+        <span className="flex items-center gap-2 text-[12px] font-extrabold">{label}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
       </button>
     </form>
   );
 }
 
-function ModeButton({
-  icon: Icon,
-  mode,
-  title
-}: {
-  icon: typeof Laptop;
-  mode: "desktop" | "mobile";
-  title: string;
-}) {
+function DashboardPreview({ t }: { t: Record<string, string | string[] | string[][]> }) {
   return (
-    <form action="/api/device-mode" method="GET">
-      <input name="mode" type="hidden" value={mode} />
-      <input name="plan" type="hidden" value="free" />
-      <button
-        className="group inline-flex items-center gap-2 rounded-full border border-outline-variant bg-white px-3 py-2 text-left text-[12px] font-extrabold text-on-surface shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft active:scale-[0.99]"
-        type="submit"
-      >
-        <Icon className="h-4 w-4" />
-        {title}
-      </button>
-    </form>
-  );
-}
+    <div className="animate-tg-rise-delayed rounded-lg border border-outline-variant bg-[#f8fafc] p-4 shadow-float sm:p-5">
+      <div className="rounded-lg border border-outline-variant bg-white p-5 shadow-stitch">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3"><Logo /><div><p className="text-[11px] font-bold uppercase text-on-surface-variant">TengeGuard</p><h2 className="text-[18px] font-extrabold text-[#101828]">{t.previewTitle as string}</h2></div></div>
+          <span className="hidden items-center gap-2 rounded-full bg-emerald-soft px-3 py-2 text-[10px] font-extrabold text-emerald-dark sm:flex"><CheckCircle2 className="h-4 w-4" />{t.previewStatus as string}</span>
+        </div>
 
-function TrustItem({ icon: Icon, text, title }: { icon: React.ElementType; text: string; title: string }) {
-  return (
-    <div className="rounded-2xl border border-outline-variant bg-white/82 p-4 shadow-stitch backdrop-blur">
-      <Icon className="h-5 w-5 text-primary" />
-      <p className="mt-3 text-[13px] font-extrabold text-on-surface">{title}</p>
-      <p className="mt-1 text-[12px] font-semibold text-on-surface-variant">{text}</p>
+        <div className="mt-6 grid grid-cols-3 gap-3">
+          <PreviewMetric icon={BarChart3} label={t.metricActive as string} value="12" />
+          <PreviewMetric icon={Clock3} label={t.metricNext as string} value="7 d" />
+          <PreviewMetric icon={Landmark} label={t.metricSources as string} value={t.sourceValue as string} />
+        </div>
+
+        <div className="mt-4 rounded-lg border border-outline-variant bg-[#fbfcfe] p-4">
+          <div className="flex h-36 items-end gap-4">
+            <Graph label={t.paid as string} height="76%" color="bg-primary" />
+            <Graph label={t.free as string} height="48%" color="bg-emerald-accent" />
+            <Graph label={t.trials as string} height="62%" color="bg-amber-400" />
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <PreviewSignal icon={MailCheck} text="Gmail read-only" />
+          <PreviewSignal icon={BellRing} text="Telegram reminders" />
+        </div>
+      </div>
     </div>
   );
 }
 
 function PreviewMetric({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
-  return (
-    <div className="rounded-[22px] border border-outline-variant bg-white p-4 shadow-stitch">
-      <Icon className="h-5 w-5 text-primary" />
-      <p className="mt-4 text-[12px] font-extrabold uppercase text-on-surface-variant">{label}</p>
-      <p className="mt-1 break-words font-display text-[20px] font-extrabold text-[#111827]">{value}</p>
-    </div>
-  );
+  return <div className="rounded-lg border border-outline-variant bg-white p-3"><Icon className="h-4 w-4 text-primary" /><p className="mt-3 text-[10px] font-bold text-on-surface-variant">{label}</p><p className="mt-1 truncate text-[14px] font-extrabold text-[#101828]">{value}</p></div>;
 }
 
-function GraphBar({ height, tone }: { height: string; tone: string }) {
-  return <div className={`w-full rounded-t-2xl ${height} ${tone}`} />;
+function Graph({ color, height, label }: { color: string; height: string; label: string }) {
+  return <div className="flex h-full flex-1 flex-col justify-end gap-2"><div className={`w-full rounded-t-md ${color}`} style={{ height }} /><span className="truncate text-center text-[10px] font-bold text-on-surface-variant">{label}</span></div>;
 }
 
-function PreviewRow({ meta, title, tone }: { meta: string; title: string; tone: "emerald" | "primary" | "amber" }) {
-  const toneClass = {
-    amber: "bg-amber-soft text-amber-dark",
-    emerald: "bg-emerald-soft text-emerald-dark",
-    primary: "bg-surface-container text-primary"
-  }[tone];
+function PreviewSignal({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
+  return <div className="flex items-center gap-2 rounded-lg bg-surface-container-low px-3 py-2 text-[11px] font-bold text-on-surface-variant"><Icon className="h-4 w-4 text-primary" />{text}</div>;
+}
 
+function PlanCard({ description, features, highlighted = false, label, name, plan, price, secondaryPrice }: { description: string; features: string[]; highlighted?: boolean; label: string; name: string; plan: "free" | "pro_monthly"; price: string; secondaryPrice?: string }) {
   return (
-    <div className="rounded-[22px] border border-outline-variant bg-white p-4 shadow-stitch">
-      <div className="flex items-start gap-3">
-        <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl ${toneClass}`}>
-          <Check className="h-4 w-4" />
-        </span>
-        <div className="min-w-0">
-          <p className="break-words text-[14px] font-extrabold text-on-surface">{title}</p>
-          <p className="mt-1 break-words text-[12px] font-semibold text-on-surface-variant">{meta}</p>
-        </div>
-      </div>
-    </div>
+    <article className={`flex flex-col rounded-lg border p-6 shadow-stitch ${highlighted ? "border-primary bg-primary text-on-primary" : "border-outline-variant bg-white text-on-surface"}`}>
+      <h3 className="text-[22px] font-extrabold">{name}</h3>
+      <p className="mt-5 text-[32px] font-extrabold">{price}</p>
+      {secondaryPrice ? <p className="mt-1 text-[12px] font-semibold text-on-primary/70">{secondaryPrice}</p> : null}
+      <p className={`mt-4 text-[13px] leading-6 ${highlighted ? "text-on-primary/78" : "text-on-surface-variant"}`}>{description}</p>
+      <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        {features.map((feature) => <li className="flex items-center gap-2 text-[12px] font-bold" key={feature}><span className={`grid h-5 w-5 place-items-center rounded-full ${highlighted ? "bg-white text-primary" : "bg-emerald-soft text-emerald-dark"}`}><Check className="h-3 w-3" /></span>{feature}</li>)}
+      </ul>
+      <form action={plan === "free" ? "/api/device-mode" : "/api/billing/checkout"} className="mt-8" method="GET">
+        {plan === "free" ? <input name="mode" type="hidden" value="desktop" /> : null}
+        <input name="plan" type="hidden" value={plan} />
+        <button className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-[12px] font-extrabold transition-all duration-300 hover:-translate-y-0.5 ${highlighted ? "bg-white text-primary" : "bg-primary text-on-primary"}`} type="submit">{label}<ArrowRight className="h-4 w-4" /></button>
+      </form>
+    </article>
   );
 }

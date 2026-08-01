@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   if (!user) {
     const response = NextResponse.redirect(`${appUrl(request)}/api/auth/google`);
     response.cookies.set("tg_pending_checkout_plan", plan, secureCookieOptions(request, 60 * 20));
+    response.cookies.set("tg_device_mode", "desktop", secureCookieOptions(request, 60 * 60 * 24 * 365));
     return response;
   }
 

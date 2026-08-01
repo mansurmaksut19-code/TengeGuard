@@ -55,7 +55,7 @@ export async function GET(request: Request) {
 
     const user = await exchangeGmailCode(code, url.origin);
     url.pathname = "/dashboard";
-    url.search = "?gmail=connected";
+    url.search = "?gmail=connected&scan=1";
     const response = NextResponse.redirect(url);
     response.cookies.set("tg_user_id", user.id, {
       ...secureCookieOptions(request, 60 * 60 * 24 * 30)

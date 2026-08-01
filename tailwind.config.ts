@@ -40,7 +40,7 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Bodoni Moda", "Plus Jakarta Sans", "ui-serif", "Georgia", "serif"],
+        display: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
         "body-md": ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
         "label-sm": ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
         "mono-data": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"]

@@ -813,6 +813,12 @@ export default function App({
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const gmailState = params.get("gmail");
+    if (gmailState === "sync_failed" || gmailState === "missing_code") {
+      setError(params.get("reason") || "Google не завершил подключение Gmail read-only. Попробуйте ещё раз.");
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
     if (params.get("payment") === "not_configured") {
       setPaymentSetupNeeded(true);
       setNotice(t.paymentPendingText);
@@ -945,17 +951,7 @@ export default function App({
 
   async function handleConnectBank() {
     setError(null);
-    try {
-      const response = await fetch("/api/connectors/bank/start");
-      if (response.redirected) {
-        window.location.href = response.url;
-        return;
-      }
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || "Bank auto-connect is not configured.");
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Bank auto-connect is not configured.");
-    }
+    window.location.href = "/api/connectors/bank/start";
   }
 
   async function handleDelete(id: string) {
