@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 
-const updatedAt = "July 30, 2026";
+const updatedAt = "August 2, 2026";
 
 const controls = [
   {
-    title: "Google OAuth only",
-    text: "TengeGuard never asks for a Gmail password. Users grant access through Google's official OAuth screen."
+    title: "Google Sign-In only",
+    text: "Google is used only for authentication. TengeGuard requests the user's basic profile and does not request access to Gmail messages."
   },
   {
-    title: "Gmail read-only",
-    text: "Gmail access is used only to scan subscription-related receipts, renewal notices, trial emails, free-plan notices, and cancellation confirmations."
+    title: "Read-only bank access",
+    text: "Bank connections request only accounts and transaction history. TengeGuard cannot initiate transfers, payments, or withdrawals."
   },
   {
-    title: "No Gmail modification",
-    text: "TengeGuard does not send emails, delete emails, modify Gmail, create labels, or change mailbox settings."
+    title: "Paid subscriptions only",
+    text: "A subscription is shown only when recurring bank transactions provide evidence of a real paid charge."
   },
   {
     title: "No fake subscriptions",
@@ -22,7 +22,7 @@ const controls = [
   },
   {
     title: "User-controlled access",
-    text: "Users can revoke Google access at any time from their Google Account permissions page."
+    text: "Users can revoke Google authentication or disconnect their bank connection through the relevant provider."
   },
   {
     title: "Telegram boundaries",
@@ -66,7 +66,7 @@ export default function SecurityPage() {
           <div className="flex items-start gap-3">
             <LockKeyhole className="mt-1 h-5 w-5 shrink-0 text-emerald-dark" />
             <p className="text-body-md leading-7 text-emerald-dark">
-              TengeGuard uses Gmail data only for subscription discovery and reminders. It does not sell Google user data, use Gmail data for ads, or share Gmail content with advertisers.
+              TengeGuard does not read Gmail. Bank data is used only to identify recurring paid subscriptions, calculate expected charge dates, and send reminders requested by the user.
             </p>
           </div>
         </section>

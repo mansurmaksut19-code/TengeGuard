@@ -465,19 +465,7 @@ export function isGmailConfigured(origin?: string) {
 }
 
 export function buildGmailConnectUrl(origin?: string) {
-  const clientId = getGoogleClientId(origin);
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: getRedirectUri(origin),
-    response_type: "code",
-    scope: "openid email profile https://www.googleapis.com/auth/gmail.readonly",
-    access_type: "offline",
-    prompt: "consent select_account",
-    include_granted_scopes: "true",
-    state: "tengeguard:gmail"
-  });
-
-  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  return buildGoogleSignInUrl(origin);
 }
 
 export function buildGoogleSignInUrl(origin?: string) {
@@ -543,6 +531,8 @@ async function getAccessToken(userId: string, tokenOverride?: StoredTokens | nul
 }
 
 export async function exchangeGmailCode(code: string, origin?: string) {
+  return exchangeGoogleSignInCode(code, origin);
+  /* Legacy token exchange is intentionally unreachable while Gmail scanning is disabled.
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -576,7 +566,7 @@ export async function exchangeGmailCode(code: string, origin?: string) {
 
   await saveTokens(userId, storedTokens);
   await saveSessionUser(toSessionUser(userId, storedTokens));
-  return toSessionUser(userId, storedTokens);
+  return toSessionUser(userId, storedTokens); */
 }
 
 export async function exchangeGoogleSignInCode(code: string, origin?: string) {
@@ -686,6 +676,10 @@ function mergeSubscriptionType(existing: Subscription["type"], incoming: Subscri
 }
 
 export async function syncRealGmailSubscriptions(userId: string, tokenOverride?: StoredTokens | null) {
+  void userId;
+  void tokenOverride;
+  throw new Error("Gmail scanning is disabled. Connect a bank to find paid subscriptions.");
+  /* Legacy scanner is intentionally unreachable while the product is bank-only.
   const accessToken = await getAccessToken(userId, tokenOverride);
   const tokens = tokenOverride || (await readTokens(userId));
   const messageIds = new Set<string>();
@@ -727,7 +721,7 @@ export async function syncRealGmailSubscriptions(userId: string, tokenOverride?:
     user_email: tokens?.email
   } satisfies SyncReport);
 
-  return subscriptions;
+  return subscriptions; */
 }
 
 export async function readRealGmailSubscriptions(userId?: string) {
@@ -738,7 +732,11 @@ export async function readRealGmailSubscriptions(userId?: string) {
     if (subscriptions.length !== stored.length) {
       await writeJson(subscriptionPath(userId), subscriptions);
     }
-    return subscriptions;
+    return subscriptions.filter(
+      (subscription) =>
+        subscription.cost > 0 &&
+        subscription.evidence.some((evidence) => evidence.source === "bank" || evidence.source === "open_banking")
+    );
   } catch {
     return [];
   }

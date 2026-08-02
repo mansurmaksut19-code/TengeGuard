@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const updatedAt = "July 4, 2026";
+const updatedAt = "August 2, 2026";
 
 export default function TermsPage() {
   return (
@@ -13,11 +13,11 @@ export default function TermsPage() {
         <p className="mt-2 text-body-md text-on-surface-variant">Last updated: {updatedAt}</p>
 
         <TermsSection title="Service">
-          TengeGuard is a subscription discovery and reminder tool. It helps users analyze their own account data to find paid subscriptions, free plans, trial periods, renewal notices, and cancellation information.
+          TengeGuard is a paid-subscription discovery and reminder tool. It analyzes authorized bank transaction history to identify recurring charges and estimate future billing dates.
         </TermsSection>
 
         <TermsSection title="User Permission">
-          Users must only connect accounts they own or are authorized to use. Gmail scanning is optional and requires explicit user consent through Google OAuth.
+          Users must only connect bank and Google accounts they own or are authorized to use. Bank access is granted through the provider&apos;s consent flow and is limited to read-only account and transaction data.
         </TermsSection>
 
         <TermsSection title="No Financial or Legal Advice">

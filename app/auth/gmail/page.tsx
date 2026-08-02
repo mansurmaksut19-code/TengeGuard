@@ -2,7 +2,6 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CheckCircle2, Laptop, LockKeyhole, ShieldCheck, Smartphone } from "lucide-react";
-import { readTokens } from "@/lib/server/subcut-gmail";
 
 type DeviceMode = "mobile" | "desktop";
 
@@ -37,9 +36,7 @@ export default async function GmailAuthPage() {
 
   const cookieStore = await cookies();
   const userId = cookieStore.get("tg_user_id")?.value;
-  const tokens = await readTokens(userId);
-  const gmailConnected = cookieStore.get("tg_gmail_connected")?.value === "1";
-  if (tokens || gmailConnected) redirect("/dashboard");
+  if (userId) redirect("/dashboard");
 
   const ModeIcon = mode === "mobile" ? Smartphone : Laptop;
   const modeLabel = mode === "mobile" ? "режим телефона" : "режим ноутбука";
@@ -59,14 +56,14 @@ export default async function GmailAuthPage() {
             <ModeIcon className="h-4 w-4" />
             Выбран {modeLabel}
           </p>
-          <h1 className="font-display text-headline-lg font-bold leading-10 text-on-surface">Подключите Gmail</h1>
+          <h1 className="font-display text-headline-lg font-bold leading-10 text-on-surface">Войдите через Google</h1>
           <p className="mt-3 text-body-md leading-7 text-on-surface-variant">
-            Это обязательный шаг перед входом. TengeGuard использует только Gmail read-only, чтобы найти реальные подписки, trial и бесплатные периоды по письмам-доказательствам.
+            Google используется только для создания аккаунта и входа. TengeGuard получает имя, email и аватар, но не запрашивает доступ к письмам Gmail.
           </p>
         </div>
 
         <div className="rounded-xl border border-outline-variant bg-white/95 p-6 shadow-stitch backdrop-blur">
-          <form action="/api/subcut/gmail/start" method="GET">
+          <form action="/api/auth/google" method="GET">
             <button
               className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-outline-variant bg-white text-label-sm font-bold text-on-surface transition hover:bg-surface-container active:scale-[0.98]"
               type="submit"
@@ -77,9 +74,9 @@ export default async function GmailAuthPage() {
           </form>
 
           <div className="mt-6 grid gap-3">
-            <AuthFact icon={LockKeyhole} text="Пароль Gmail не нужен и не хранится." />
-            <AuthFact icon={CheckCircle2} text="Доступ можно отозвать в Google Account." />
-            <AuthFact icon={ShieldCheck} text="После подключения откроется выбранный dashboard." />
+            <AuthFact icon={LockKeyhole} text="Пароль Google не передаётся и не хранится." />
+            <AuthFact icon={CheckCircle2} text="Доступ к Gmail и письмам не запрашивается." />
+            <AuthFact icon={ShieldCheck} text="После входа можно подключить банк в режиме read-only." />
           </div>
         </div>
 

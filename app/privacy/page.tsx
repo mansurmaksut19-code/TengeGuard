@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const updatedAt = "July 4, 2026";
+const updatedAt = "August 2, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -14,27 +14,27 @@ export default function PrivacyPage() {
 
         <section className="mt-8 space-y-4 text-body-md leading-7 text-on-surface-variant">
           <p>
-            TengeGuard helps users find subscriptions, free plans, trial periods, renewal notices, and billing evidence from their own account data.
+            TengeGuard helps users identify paid subscriptions and forecast recurring charges from bank transaction history that they explicitly authorize.
           </p>
           <p>
-            We use Google Sign-In to create a user session. If a user chooses to connect Gmail, TengeGuard requests Gmail read-only access to scan emails for subscription-related receipts and notices.
+            We use Google Sign-In only to create a user session and receive the user&apos;s name, email address, and profile image. TengeGuard does not request access to Gmail messages.
           </p>
         </section>
 
-        <PolicySection title="Google User Data">
-          TengeGuard may access your Google account email, profile name, profile image, and, only after explicit Gmail connection, Gmail messages that match subscription, receipt, billing, renewal, free plan, or trial-related searches.
+        <PolicySection title="Google Account Data">
+          TengeGuard may access only your Google account identifier, email address, profile name, and profile image for authentication and account display.
         </PolicySection>
 
-        <PolicySection title="How We Use Gmail Data">
-          Gmail data is used only to identify real subscription evidence, including provider name, billing or renewal dates, trial end dates, free plan indicators, costs, and cancellation hints. We do not send email, delete email, modify Gmail, or use Gmail data for advertising.
+        <PolicySection title="Bank Transaction Data">
+          After explicit consent through the bank connection provider, TengeGuard processes read-only account and transaction history to identify recurring paid charges, estimate billing cycles, and forecast the next expected charge. TengeGuard cannot initiate payments, transfers, or withdrawals.
         </PolicySection>
 
         <PolicySection title="Data Sharing">
-          We do not sell user data. We do not share Gmail content with advertisers. Telegram notifications are sent only when a user explicitly connects Telegram.
+          We do not sell user data or share financial transaction details with advertisers. Telegram notifications are sent only when a user explicitly connects Telegram.
         </PolicySection>
 
         <PolicySection title="Storage and Security">
-          Authentication sessions are stored in secure HTTP-only cookies. Gmail access tokens are handled server-side for scanning and are protected by application security controls. Users can revoke Google access at any time from their Google Account permissions page.
+          Authentication sessions are stored in secure HTTP-only cookies. Bank connection identifiers and subscription results are stored using protected production storage. Provider credentials are handled server-side and are never exposed to the browser.
         </PolicySection>
 
         <PolicySection title="Data Deletion">

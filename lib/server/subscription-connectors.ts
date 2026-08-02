@@ -3,12 +3,12 @@ import path from "node:path";
 import { readStoredJson, writeStoredJson } from "@/lib/server/data-store";
 import { parseSubscriptionImport } from "@/lib/server/subscription-import";
 import { storagePath } from "@/lib/server/storage-root";
-import { readTokens, saveImportedSubscriptions, type SessionUser } from "@/lib/server/subcut-gmail";
+import { saveImportedSubscriptions, type SessionUser } from "@/lib/server/subcut-gmail";
 
 type ConnectorStatus = "connected" | "ready" | "setup_required" | "not_available";
 
 export type AutomaticConnector = {
-  id: "gmail" | "bank" | "google_account" | "apple";
+  id: "bank";
   name: string;
   status: ConnectorStatus;
   coverage: string;
@@ -334,22 +334,13 @@ export async function syncBankSubscriptions(user: SessionUser, request?: Request
 
 export async function automaticConnectors(
   user?: SessionUser | null,
-  options?: { gmailConnected?: boolean; request?: Request }
+  options?: { request?: Request }
 ): Promise<AutomaticConnector[]> {
-  const gmailTokens = await readTokens(user?.id);
-  const gmailConnected = options?.gmailConnected || Boolean(gmailTokens);
   const ready = bankReady() || Boolean(process.env.TENGEGUARD_BANK_CONNECT_URL);
   const bankState = user ? await readBankState(user.id, options?.request) : { connections: [], updated_at: new Date().toISOString() };
   const bankConnected = bankState.connections.length > 0;
 
   return [
-    {
-      id: "gmail",
-      name: "Gmail read-only",
-      status: gmailConnected ? "connected" : "ready",
-      coverage: "Receipts, trials, free plans, Google Play emails, renewal notices.",
-      action: gmailConnected ? "Connected" : "Connect Google"
-    },
     {
       id: "bank",
       name: bankProviderName(),
@@ -361,22 +352,6 @@ export async function automaticConnectors(
           ? "История транзакций доступна для поиска регулярных списаний."
           : "Откроется защищённый Salt Edge Connect: выберите банк и подтвердите read-only доступ к истории."
         : "Salt Edge keys are missing in this deployment. Add TENGEGUARD_BANK_PROVIDER_KEY and TENGEGUARD_BANK_PROVIDER_SECRET in Vercel Environment Variables, then redeploy."
-    },
-    {
-      id: "google_account",
-      name: "Google Payments / Play",
-      status: "not_available",
-      coverage: "Google Account can show purchases and subscriptions, but Google does not provide a general public OAuth API for every user's consumer subscriptions.",
-      action: "Use Gmail now; add official provider when available",
-      setup: "For full Google purchase history without user export, you need an approved Google/Payments integration or a compliant data-access partner."
-    },
-    {
-      id: "apple",
-      name: "Apple subscriptions",
-      status: "not_available",
-      coverage: "Apple subscriptions bought through App Store are visible to the user in Apple Account settings.",
-      action: "Official universal third-party access is not available",
-      setup: "App Store Server API gives subscription status for your own apps, not every subscription in a user's Apple ID."
     }
   ];
 }

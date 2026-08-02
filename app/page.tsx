@@ -12,7 +12,6 @@ import {
   Landmark,
   Laptop,
   LockKeyhole,
-  MailCheck,
   ShieldCheck,
   Smartphone
 } from "lucide-react";
@@ -34,12 +33,12 @@ const content = {
     badge: "Только подтверждённые данные",
     title: "Все подписки и даты списаний в одном месте",
     subtitle:
-      "TengeGuard находит платные, бесплатные и пробные подписки по разрешённым источникам и предупреждает до следующего списания.",
+      "TengeGuard находит платные подписки по повторяющимся банковским операциям и предупреждает до следующего списания.",
     freeTitle: "Начать бесплатно",
-    freeMeta: "14 дней · Gmail read-only",
+    freeMeta: "14 дней · банковский анализ",
     proTitle: "Выбрать Pro",
     proMeta: "200 ₸/мес · 2 000 ₸/год",
-    privacyNote: "Мы не отправляем, не изменяем и не удаляем письма.",
+    privacyNote: "Google используется только для входа. Банковский доступ — только чтение.",
     desktop: "Ноутбук",
     mobile: "Телефон",
     previewTitle: "Контроль подписок",
@@ -47,26 +46,26 @@ const content = {
     metricActive: "Активные",
     metricNext: "Ближайшая дата",
     metricSources: "Источники",
-    sourceValue: "Gmail + банки",
-    paid: "Платные",
-    free: "Бесплатные",
-    trials: "Пробные",
+    sourceValue: "Банк",
+    paid: "Ежемесячные",
+    free: "Годовые",
+    trials: "Проверить",
     howEyebrow: "Три шага",
     howTitle: "Подключение без ручного ввода",
     steps: [
-      ["Разрешите чтение Gmail", "Google открывает официальный экран OAuth. TengeGuard получает только Gmail read-only."],
-      ["Получите реальные подписки", "Система анализирует чеки, продления, free-тарифы, trial-периоды и банковские списания."],
-      ["Получайте напоминания", "Telegram заранее сообщает о списании или завершении пробного периода."]
+      ["Войдите через Google", "TengeGuard получает только имя, email и аватар. Доступ к письмам Gmail не запрашивается."],
+      ["Подключите банк", "В защищённом окне банка разрешите только чтение счетов и истории транзакций."],
+      ["Получайте напоминания", "Telegram заранее сообщает о прогнозируемом следующем списании."]
     ],
-    dataTitle: "Зачем нужен доступ Gmail",
+    dataTitle: "Какие данные использует TengeGuard",
     dataText:
-      "Gmail read-only используется только для поиска писем о подписках, счетах, продлениях, бесплатных планах и пробных периодах. Доступ добровольный и может быть отозван в Google Account.",
+      "Система анализирует только разрешённую историю банковских транзакций, чтобы находить повторяющиеся платные списания. TengeGuard не получает право переводить деньги и не читает Gmail.",
     pricingEyebrow: "Простые тарифы",
     pricingTitle: "Начните бесплатно, продолжите когда будет полезно",
     trialName: "Free Trial",
     trialPrice: "0 ₸",
     trialDescription: "Полная проверка продукта в течение 14 дней.",
-    trialFeatures: ["Gmail read-only", "Платные, free и trial", "Даты окончания", "Доказательства из писем"],
+    trialFeatures: ["Банк read-only", "Платные подписки", "Прогноз следующей даты", "Доказательства из транзакций"],
     proName: "TengeGuard Pro",
     proPrice: "200 ₸ / месяц",
     proYear: "или 2 000 ₸ в год",
@@ -82,12 +81,12 @@ const content = {
     badge: "Verified data only",
     title: "Every subscription and renewal date in one place",
     subtitle:
-      "TengeGuard finds paid, free, and trial subscriptions from user-approved sources and warns you before the next charge.",
+      "TengeGuard finds paid subscriptions from recurring bank transactions and warns you before the next expected charge.",
     freeTitle: "Start free",
-    freeMeta: "14 days · Gmail read-only",
+    freeMeta: "14 days · bank analysis",
     proTitle: "Choose Pro",
     proMeta: "200 KZT/mo · 2,000 KZT/yr",
-    privacyNote: "We never send, change, or delete email.",
+    privacyNote: "Google is used only for sign-in. Bank access is read-only.",
     desktop: "Desktop",
     mobile: "Phone",
     previewTitle: "Subscription control",
@@ -95,26 +94,26 @@ const content = {
     metricActive: "Active",
     metricNext: "Next date",
     metricSources: "Sources",
-    sourceValue: "Gmail + banks",
-    paid: "Paid",
-    free: "Free",
-    trials: "Trials",
+    sourceValue: "Bank",
+    paid: "Monthly",
+    free: "Yearly",
+    trials: "Review",
     howEyebrow: "Three steps",
     howTitle: "Connect without manual entry",
     steps: [
-      ["Allow Gmail reading", "Google opens the official OAuth screen. TengeGuard receives Gmail read-only access only."],
-      ["See real subscriptions", "The system analyzes receipts, renewals, free plans, trials, and recurring bank transactions."],
-      ["Receive reminders", "Telegram warns you before a charge or trial expiration."]
+      ["Sign in with Google", "TengeGuard receives only your name, email, and avatar. Gmail access is not requested."],
+      ["Connect your bank", "Approve read-only access to accounts and transaction history in the bank's protected flow."],
+      ["Receive reminders", "Telegram warns you before the next predicted recurring charge."]
     ],
-    dataTitle: "Why Gmail access is requested",
+    dataTitle: "What data TengeGuard uses",
     dataText:
-      "Gmail read-only is used only to find subscription receipts, invoices, renewals, free-plan notices, and trial messages. Access is optional and can be revoked in Google Account.",
+      "The system analyzes only authorized bank transaction history to detect recurring paid charges. TengeGuard cannot transfer money and does not read Gmail.",
     pricingEyebrow: "Simple pricing",
     pricingTitle: "Start free and continue when it proves useful",
     trialName: "Free Trial",
     trialPrice: "0 KZT",
     trialDescription: "Full product evaluation for 14 days.",
-    trialFeatures: ["Gmail read-only", "Paid, free, and trial plans", "End dates", "Email evidence"],
+    trialFeatures: ["Read-only bank access", "Paid subscriptions", "Next-charge prediction", "Transaction evidence"],
     proName: "TengeGuard Pro",
     proPrice: "200 KZT / month",
     proYear: "or 2,000 KZT per year",
@@ -130,12 +129,12 @@ const content = {
     badge: "Тек расталған деректер",
     title: "Барлық жазылымдар мен төлем күндері бір жерде",
     subtitle:
-      "TengeGuard рұқсат етілген дереккөздерден ақылы, тегін және сынақ жазылымдарын тауып, келесі төлемге дейін ескертеді.",
+      "TengeGuard қайталанатын банк операциялары арқылы ақылы жазылымдарды тауып, келесі төлемге дейін ескертеді.",
     freeTitle: "Тегін бастау",
-    freeMeta: "14 күн · Gmail тек оқу",
+    freeMeta: "14 күн · банк талдауы",
     proTitle: "Pro таңдау",
     proMeta: "200 ₸/ай · 2 000 ₸/жыл",
-    privacyNote: "Біз хаттарды жібермейміз, өзгертпейміз және жоймаймыз.",
+    privacyNote: "Google тек кіру үшін қолданылады. Банк рұқсаты тек оқуға арналған.",
     desktop: "Ноутбук",
     mobile: "Телефон",
     previewTitle: "Жазылымдарды бақылау",
@@ -143,26 +142,26 @@ const content = {
     metricActive: "Белсенді",
     metricNext: "Келесі күн",
     metricSources: "Дереккөздер",
-    sourceValue: "Gmail + банктер",
-    paid: "Ақылы",
-    free: "Тегін",
-    trials: "Сынақ",
+    sourceValue: "Банк",
+    paid: "Ай сайын",
+    free: "Жыл сайын",
+    trials: "Тексеру",
     howEyebrow: "Үш қадам",
     howTitle: "Қолмен енгізусіз қосылу",
     steps: [
-      ["Gmail оқуға рұқсат беріңіз", "Google ресми OAuth экранын ашады. TengeGuard тек Gmail read-only рұқсатын алады."],
-      ["Нақты жазылымдарды көріңіз", "Жүйе түбіртектерді, ұзартуларды, тегін жоспарларды, сынақ мерзімдерін және банк төлемдерін талдайды."],
-      ["Ескертулер алыңыз", "Telegram төлем немесе сынақ мерзімі аяқталғанға дейін хабарлайды."]
+      ["Google арқылы кіріңіз", "TengeGuard тек атыңызды, email мен аватарды алады. Gmail хаттарына рұқсат сұралмайды."],
+      ["Банкті қосыңыз", "Қорғалған терезеде шоттар мен операциялар тарихын тек оқуға рұқсат беріңіз."],
+      ["Ескертулер алыңыз", "Telegram келесі болжамды төлемге дейін хабарлайды."]
     ],
-    dataTitle: "Gmail рұқсаты не үшін қажет",
+    dataTitle: "TengeGuard қандай деректерді пайдаланады",
     dataText:
-      "Gmail read-only тек жазылым түбіртектерін, шоттарды, ұзартуларды, тегін жоспарлар мен сынақ хабарламаларын іздеу үшін қолданылады. Рұқсат ерікті және Google Account ішінде қайтарып алынады.",
+      "Жүйе қайталанатын ақылы төлемдерді табу үшін рұқсат берілген банк операцияларының тарихын ғана талдайды. TengeGuard ақша аудара алмайды және Gmail хаттарын оқымайды.",
     pricingEyebrow: "Қарапайым тарифтер",
     pricingTitle: "Тегін бастаңыз, пайдалы болса жалғастырыңыз",
     trialName: "Free Trial",
     trialPrice: "0 ₸",
     trialDescription: "Өнімді 14 күн толық тексеру.",
-    trialFeatures: ["Gmail тек оқу", "Ақылы, тегін және сынақ", "Аяқталу күндері", "Хаттардан дәлелдер"],
+    trialFeatures: ["Банк тек оқу", "Ақылы жазылымдар", "Келесі төлем болжамы", "Операциялардан дәлелдер"],
     proName: "TengeGuard Pro",
     proPrice: "200 ₸ / ай",
     proYear: "немесе жылына 2 000 ₸",
@@ -278,7 +277,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-6 flex flex-col gap-4 rounded-lg border border-primary/15 bg-primary px-6 py-6 text-on-primary sm:flex-row sm:items-start">
-            <MailCheck className="h-6 w-6 shrink-0 text-emerald-accent" />
+            <Landmark className="h-6 w-6 shrink-0 text-emerald-accent" />
             <div>
               <h3 className="text-[17px] font-extrabold">{t.dataTitle as string}</h3>
               <p className="mt-2 max-w-5xl text-[13px] font-medium leading-6 text-on-primary/80">{t.dataText as string}</p>
@@ -377,7 +376,7 @@ function DashboardPreview({ t }: { t: Record<string, string | string[] | string[
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <PreviewSignal icon={MailCheck} text="Gmail read-only" />
+          <PreviewSignal icon={Landmark} text="Bank read-only" />
           <PreviewSignal icon={BellRing} text="Telegram reminders" />
         </div>
       </div>

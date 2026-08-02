@@ -117,7 +117,7 @@ type TelegramStatus = {
 };
 
 type ConnectorStatus = {
-  id: "gmail" | "bank" | "google_account" | "apple";
+  id: "bank";
   name: string;
   status: "connected" | "ready" | "setup_required" | "not_available";
   coverage: string;
@@ -188,8 +188,8 @@ const copy = {
     activeProtection: "Активная защита",
     totalMonthlySpend: "Сумма в месяц",
     nextBilling: "Следующее списание",
-    googleConnected: "Gmail-сканирование подключено",
-    googleDisconnected: "Gmail-сканирование не подключено",
+    googleConnected: "Google-аккаунт подключён",
+    googleDisconnected: "Google-аккаунт не подключён",
     activeConnection: "Активное подключение",
     lastScan: "Последний scan",
     scanNow: "Сканировать Gmail",
@@ -206,20 +206,20 @@ const copy = {
     topRisk: "Главный риск",
     noRisk: "Критичных рисков не видно",
     realEvidenceOnly: "Только реальные доказательства",
-    readOnly: "Gmail read-only",
+    readOnly: "Банк read-only",
     telegramTitle: "Telegram Bot",
-    telegramText: "Мгновенные уведомления о списаниях, trial и free-периодах.",
+    telegramText: "Уведомления перед прогнозируемыми списаниями по платным подпискам.",
     telegramConnect: "Подключить Telegram",
     telegramTest: "Отправить тест",
     telegramSent: "Тестовое сообщение отправлено в Telegram.",
     subscriptionsTitle: "Ваши подписки",
-    subscriptionsText: "Текущие подписки, бесплатные тарифы и trial-периоды, найденные по реальным доказательствам.",
+    subscriptionsText: "Платные подписки, подтверждённые повторяющимися банковскими транзакциями.",
     allFilter: "Все",
     paidFilter: "Платные",
     freeFilter: "Бесплатные",
     trialFilter: "Trial",
     reviewFilter: "Проверить",
-    search: "Поиск по подписке, письму или отправителю",
+    search: "Поиск по подписке или банковской операции",
     showing: "Показано",
     paid: "Платные",
     free: "Бесплатные",
@@ -244,7 +244,7 @@ const copy = {
     paymentPendingText: "Freedom Pay ещё не выдал merchant-ключи. Как только добавим MERCHANT_ID и SECRET_KEY в Vercel, кнопка Pro начнёт открывать настоящую страницу оплаты.",
     trialActiveTitle: "Free Trial активен",
     trialExpiredTitle: "Free Trial закончился",
-    trialActiveText: "У вас есть 14 дней, чтобы проверить реальные подписки, trial и free-периоды.",
+    trialActiveText: "У вас есть 14 дней, чтобы проверить поиск платных подписок по банковским операциям.",
     trialExpiredText: "Чтобы продолжить мониторинг подписок, подключите Pro: 200 тг в месяц или 2000 тг в год.",
     upgradeMonthly: "Pro за 200 тг/мес",
     upgradeYearly: "Pro за 2000 тг/год",
@@ -254,14 +254,14 @@ const copy = {
     proExpiredText: "Продлите Pro, чтобы снова открыть мониторинг, историю, банковские данные и уведомления.",
     remove: "Убрать",
     noSubsTitle: "Реальные подписки пока не найдены",
-    noSubsText: "Подключите Google и запустите сканирование Gmail. Если доказательств нет, TengeGuard честно покажет пусто.",
-    evidenceTitle: "Gmail Evidence",
+    noSubsText: "Подключите банк и запустите анализ. Если повторяющихся платных списаний нет, TengeGuard честно покажет пусто.",
+    evidenceTitle: "Банковские доказательства",
     evidenceText: "Аудит-лог писем, на основе которых TengeGuard нашел подписки.",
-    verifiedData: "Verified data from your Gmail",
+    verifiedData: "Подтверждено банковскими транзакциями",
     sourceLocked: "Источник защищен",
     accessTitle: "Доступ и интеграции",
     accessText: "Управляйте подключениями Google, Telegram и будущими источниками данных.",
-    privacy: "Пароль Gmail не нужен и не хранится. Доступ выдает Google через OAuth, пользователь может отозвать его в Google Account.",
+    privacy: "Банковское подключение работает только на чтение счетов и транзакций. Переводы и платежи недоступны TengeGuard.",
     connectBank: "Подключить банк",
     syncAll: "Найти автоматически",
     syncingAll: "Ищем...",
@@ -299,8 +299,8 @@ const copy = {
     activeProtection: "Active Protection",
     totalMonthlySpend: "Total Monthly Spend",
     nextBilling: "Next Billing",
-    googleConnected: "Gmail scanning connected",
-    googleDisconnected: "Gmail scanning not connected",
+    googleConnected: "Google account connected",
+    googleDisconnected: "Google account not connected",
     activeConnection: "Active connection",
     lastScan: "Last scan",
     scanNow: "Scan Gmail",
@@ -317,20 +317,20 @@ const copy = {
     topRisk: "Top risk",
     noRisk: "No critical risk visible",
     realEvidenceOnly: "Real evidence only",
-    readOnly: "Gmail read-only",
+    readOnly: "Bank read-only",
     telegramTitle: "Telegram Bot",
-    telegramText: "Instant alerts for renewals, trials, and free periods.",
+    telegramText: "Alerts before predicted paid-subscription charges.",
     telegramConnect: "Connect Telegram",
     telegramTest: "Send test",
     telegramSent: "Test message sent to Telegram.",
     subscriptionsTitle: "Your subscriptions",
-    subscriptionsText: "Current subscriptions, free plans, and trials found from real evidence.",
+    subscriptionsText: "Paid subscriptions confirmed by recurring bank transactions.",
     allFilter: "All",
     paidFilter: "Paid",
     freeFilter: "Free",
     trialFilter: "Trial",
     reviewFilter: "Review",
-    search: "Search subscription, email, or sender",
+    search: "Search by subscription or bank transaction",
     showing: "Showing",
     paid: "Paid",
     free: "Free",
@@ -355,7 +355,7 @@ const copy = {
     paymentPendingText: "Freedom Pay merchant keys are not configured yet. Once MERCHANT_ID and SECRET_KEY are added in Vercel, the Pro button will open the real checkout page.",
     trialActiveTitle: "Free Trial active",
     trialExpiredTitle: "Free Trial ended",
-    trialActiveText: "You have 14 days to test real subscriptions, trials, and free periods.",
+    trialActiveText: "You have 14 days to test paid-subscription detection from bank transactions.",
     trialExpiredText: "To keep monitoring subscriptions, upgrade to Pro: 200 KZT monthly or 2000 KZT yearly.",
     upgradeMonthly: "Pro for 200 KZT/mo",
     upgradeYearly: "Pro for 2000 KZT/yr",
@@ -365,14 +365,14 @@ const copy = {
     proExpiredText: "Renew Pro to restore monitoring, history, bank data, and reminders.",
     remove: "Remove",
     noSubsTitle: "No real subscriptions found yet",
-    noSubsText: "Connect Google and run a Gmail scan. If there is no evidence, TengeGuard shows empty results.",
-    evidenceTitle: "Gmail Evidence",
-    evidenceText: "Audit trail of emails used to detect subscriptions.",
-    verifiedData: "Verified data from your Gmail",
+    noSubsText: "Connect your bank and run analysis. If no recurring paid charges exist, TengeGuard shows empty results.",
+    evidenceTitle: "Bank evidence",
+    evidenceText: "Audit trail of bank transactions used to detect paid subscriptions.",
+    verifiedData: "Verified bank transaction data",
     sourceLocked: "Source locked",
     accessTitle: "Access and integrations",
     accessText: "Manage Google, Telegram, and future data sources.",
-    privacy: "Gmail password is never requested or stored. Google grants OAuth access, and the user can revoke it in Google Account.",
+    privacy: "Bank connections are read-only for accounts and transactions. TengeGuard cannot initiate transfers or payments.",
     connectBank: "Connect bank",
     syncAll: "Find automatically",
     syncingAll: "Finding...",
@@ -410,8 +410,8 @@ const copy = {
     activeProtection: "Белсенді қорғаныс",
     totalMonthlySpend: "Айлық шығын",
     nextBilling: "Келесі төлем",
-    googleConnected: "Gmail сканері қосылды",
-    googleDisconnected: "Gmail сканері қосылмаған",
+    googleConnected: "Google аккаунты қосылды",
+    googleDisconnected: "Google аккаунты қосылмаған",
     activeConnection: "Белсенді қосылым",
     lastScan: "Соңғы scan",
     scanNow: "Gmail сканерлеу",
@@ -428,20 +428,20 @@ const copy = {
     topRisk: "Негізгі қауіп",
     noRisk: "Маңызды қауіп көрінбейді",
     realEvidenceOnly: "Тек нақты дәлелдер",
-    readOnly: "Gmail тек оқу",
+    readOnly: "Банк тек оқу",
     telegramTitle: "Telegram Bot",
-    telegramText: "Төлем, trial және free кезеңдері туралы хабарламалар.",
+    telegramText: "Ақылы жазылымның болжамды төлеміне дейінгі хабарламалар.",
     telegramConnect: "Telegram қосу",
     telegramTest: "Тест жіберу",
     telegramSent: "Telegram-ға тест хабарлама жіберілді.",
     subscriptionsTitle: "Сіздің жазылымдар",
-    subscriptionsText: "Нақты дәлелдерден табылған қазіргі жазылымдар, free plans және trials.",
+    subscriptionsText: "Қайталанатын банк операцияларымен расталған ақылы жазылымдар.",
     allFilter: "Барлығы",
     paidFilter: "Ақылы",
     freeFilter: "Тегін",
     trialFilter: "Trial",
     reviewFilter: "Тексеру",
-    search: "Жазылым, хат немесе жіберуші бойынша іздеу",
+    search: "Жазылым немесе банк операциясы бойынша іздеу",
     showing: "Көрсетілді",
     paid: "Ақылы",
     free: "Тегін",
@@ -466,7 +466,7 @@ const copy = {
     paymentPendingText: "Freedom Pay merchant кілттері әлі қосылмаған. MERCHANT_ID және SECRET_KEY Vercel-ге енгізілгеннен кейін Pro батырмасы нақты төлем бетіне апарады.",
     trialActiveTitle: "Free Trial белсенді",
     trialExpiredTitle: "Free Trial аяқталды",
-    trialActiveText: "Нақты жазылымдарды, trial және free кезеңдерін тексеруге 14 күн бар.",
+    trialActiveText: "Банк операциялары арқылы ақылы жазылымдарды іздеуді тексеруге 14 күн бар.",
     trialExpiredText: "Жазылым мониторингін жалғастыру үшін Pro қосыңыз: айына 200 тг немесе жылына 2000 тг.",
     upgradeMonthly: "Pro 200 тг/ай",
     upgradeYearly: "Pro 2000 тг/жыл",
@@ -476,14 +476,14 @@ const copy = {
     proExpiredText: "Мониторингті, тарихты, банк деректерін және ескертулерді қайта ашу үшін Pro-ны ұзартыңыз.",
     remove: "Өшіру",
     noSubsTitle: "Әзірге нақты жазылым табылмады",
-    noSubsText: "Google қосып, Gmail сканерлеуді бастаңыз. Дәлел болмаса, TengeGuard бос нәтиже көрсетеді.",
-    evidenceTitle: "Gmail Evidence",
-    evidenceText: "Жазылымдарды анықтауға қолданылған хаттар аудиті.",
-    verifiedData: "Gmail-ден расталған дерек",
+    noSubsText: "Банкті қосып, талдауды бастаңыз. Қайталанатын ақылы төлемдер болмаса, TengeGuard бос нәтиже көрсетеді.",
+    evidenceTitle: "Банк дәлелдері",
+    evidenceText: "Ақылы жазылымдарды анықтауға қолданылған банк операцияларының аудиті.",
+    verifiedData: "Банк операцияларымен расталған дерек",
     sourceLocked: "Дереккөзі қорғалған",
     accessTitle: "Рұқсат және интеграциялар",
     accessText: "Google, Telegram және болашақ дерек көздерін басқарыңыз.",
-    privacy: "Gmail құпиясөзі сұралмайды және сақталмайды. Рұқсатты Google OAuth арқылы береді.",
+    privacy: "Банк рұқсаты тек шоттар мен операцияларды оқуға арналған. TengeGuard ақша аудара алмайды.",
     connectBank: "Банк қосу",
     syncAll: "Автоматты табу",
     syncingAll: "Ізделуде...",
@@ -569,7 +569,6 @@ const dashboardProgressSteps = [
   "Анализируем ежемесячные траты..."
 ];
 
-type AuthStage = "idle" | "identity" | "consent" | "scan";
 
 function typeLabel(type: SubscriptionType, locale: Locale) {
   return subscriptionTypeLabels[locale][type];
@@ -732,7 +731,6 @@ export default function App({
   const [filter, setFilter] = useState<DashboardFilter>("all");
   const [activeView, setActiveView] = useState<DashboardView>(initialView);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [syncingAll, setSyncingAll] = useState(false);
   const [telegramTesting, setTelegramTesting] = useState(false);
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
@@ -746,13 +744,10 @@ export default function App({
   const [cancellingSubscriptionId, setCancellingSubscriptionId] = useState<string | null>(null);
   const [markingCancelledId, setMarkingCancelledId] = useState<string | null>(null);
   const [refundingSubscriptionId, setRefundingSubscriptionId] = useState<string | null>(null);
-  const [googleSigningIn, setGoogleSigningIn] = useState(false);
-  const [authStage, setAuthStage] = useState<AuthStage>("idle");
   const [progressStep, setProgressStep] = useState(0);
   const [paymentSetupNeeded, setPaymentSetupNeeded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const callbackSyncStartedRef = useRef(false);
   const telegramPollTimerRef = useRef<number | null>(null);
   const t = copy[locale];
   const isMobileMode = initialDeviceMode === "mobile";
@@ -760,9 +755,7 @@ export default function App({
   const calculatedTrialDaysLeft = Math.max(0, 14 - Math.max(0, daysUntilPast(trialStartedAt)));
   const accessDaysLeft = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : initialBillingPlan === "free" ? calculatedTrialDaysLeft : 0;
   const accessExpired = accessDaysLeft === 0;
-  const isPreparingDashboard = loading || googleSigningIn || syncing || authStage !== "idle";
-  const canStartGoogleOAuth = Boolean(status?.connectUrl || status?.configured);
-  const googleSignInUnavailable = !loading && !canStartGoogleOAuth;
+  const isPreparingDashboard = loading;
 
   const load = useCallback(async () => {
     const [gmailStatus, telegram, connectorData, systemReadiness] = await Promise.all([
@@ -822,9 +815,13 @@ export default function App({
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const gmailState = params.get("gmail");
-    if (gmailState === "sync_failed" || gmailState === "missing_code") {
-      setError(params.get("reason") || "Google не завершил подключение Gmail read-only. Попробуйте ещё раз.");
+    if (params.get("bank") === "connected") {
+      setNotice("Банк подключён. TengeGuard завершил анализ подтверждённых платных списаний.");
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+    if (params.get("bank") === "sync_failed") {
+      setError("Банк подключён, но первая синхронизация не завершилась. Нажмите «Найти автоматически» ещё раз.");
       window.history.replaceState(null, "", window.location.pathname);
       return;
     }
@@ -834,40 +831,6 @@ export default function App({
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, [t.paymentPendingText]);
-
-  const runDashboardSync = useCallback(async () => {
-    setSyncing(true);
-    setAuthStage("scan");
-    setError(null);
-    setNotice(null);
-
-    try {
-      const syncResult = await readJson<{ ok: true; subscriptions?: Subscription[] }>("/api/sync", { method: "POST" });
-      if (syncResult.subscriptions) {
-        setSubscriptions(syncResult.subscriptions);
-        writeCachedSubscriptions(status?.user, syncResult.subscriptions);
-      }
-      await load();
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось завершить сканирование Gmail.");
-    } finally {
-      setSyncing(false);
-      setAuthStage("idle");
-    }
-  }, [load, status?.user]);
-
-  useEffect(() => {
-    if (loading || !status?.connected || callbackSyncStartedRef.current) return;
-
-    const params = new URLSearchParams(window.location.search);
-    const shouldScan = params.get("scan") === "1";
-    const justConnected = params.get("gmail") === "connected";
-    if (!shouldScan && !justConnected) return;
-
-    callbackSyncStartedRef.current = true;
-    window.history.replaceState(null, "", window.location.pathname);
-    void runDashboardSync();
-  }, [loading, runDashboardSync, status?.connected]);
 
   const activeSubscriptions = useMemo(() => subscriptions.filter((item) => item.status !== "cancelled"), [subscriptions]);
   const cancelledSubscriptions = useMemo(() => subscriptions.filter((item) => item.status === "cancelled"), [subscriptions]);
@@ -936,10 +899,6 @@ export default function App({
     setError(null);
     await action();
     await load();
-  }
-
-  async function handleSync() {
-    await runDashboardSync();
   }
 
   async function handleSyncAll() {
@@ -1137,27 +1096,13 @@ export default function App({
   async function handleChangeAccount() {
     setError(null);
     await readJson<{ ok: true }>("/api/subcut/gmail/logout", { method: "POST" }).catch(() => null);
-    window.location.href = "/auth/gmail";
+    window.location.href = "/api/auth/google";
   }
 
   async function handleLogout() {
     setError(null);
     await readJson<{ ok: true }>("/api/subcut/gmail/logout", { method: "POST" }).catch(() => null);
     window.location.href = "/";
-  }
-
-  function handleConnect() {
-    const connectUrl = "/api/subcut/gmail/start";
-
-    if (!status?.connected && !canStartGoogleOAuth) {
-      window.location.href = "/setup/google";
-      return;
-    }
-
-    setGoogleSigningIn(true);
-    setAuthStage("consent");
-    setError(null);
-    window.location.href = connectUrl;
   }
 
   function navigateView(view: DashboardView) {
@@ -1314,27 +1259,11 @@ export default function App({
                     nextLabel={nextSubscription ? `${nextSubscription.provider_name} · ${dateLabel(nextSubscription.trial_ends_at || nextSubscription.next_billing_date, locale)}` : "—"}
                   />
 
-                  <GoogleStatusCard
-                    connected={Boolean(status?.connected)}
-                    disabled={loading || syncing || googleSigningIn}
-                    lastScan={status?.report?.scanned_at ? formatDate(status.report.scanned_at, locale) : "—"}
-                    onConnect={handleConnect}
-                    onScan={handleSync}
-                    scanLabel={syncing ? t.scanning : t.scanNow}
-                    t={t}
-                    unavailable={googleSignInUnavailable}
-                  />
-
                   {!activeSubscriptions.length ? (
                     <DashboardActivationPanel
                       bankStatus={connectors.find((connector) => connector.id === "bank")?.status}
-                      connected={Boolean(status?.connected)}
-                      disabled={loading || syncing || googleSigningIn}
-                      onConnect={handleConnect}
                       onConnectBank={handleConnectBank}
-                      onScan={handleSync}
                       onTelegram={handleTelegramConnect}
-                      scanning={syncing}
                       telegramReady={Boolean(telegramStatus?.configured)}
                     />
                   ) : null}
@@ -1402,7 +1331,7 @@ export default function App({
                     </p>
                   </div>
                   <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                    {(["all", "paid", "free", "trial", "review"] as DashboardFilter[]).map((item) => (
+                    {(["all", "paid", "review"] as DashboardFilter[]).map((item) => (
                       <button
                         className={`shrink-0 rounded-full px-5 py-2 text-label-sm font-bold transition ${
                           filter === item
@@ -1447,9 +1376,9 @@ export default function App({
               <section className="space-y-6">
                 <PageHeading eyebrow={t.evidenceNav} title={t.evidenceTitle} body={t.evidenceText} />
                 <div className="grid gap-4 md:grid-cols-3">
-                  <MetricTile icon={MailCheck} label={t.evidence} value={String(evidenceCount)} tone="emerald" />
+                  <MetricTile icon={WalletCards} label={t.evidence} value={String(evidenceCount)} tone="emerald" />
                   <MetricTile icon={CheckCircle2} label={t.confidence} value={`${averageConfidence}%`} />
-                  <MetricTile icon={LockKeyhole} label={t.readOnly} value="Gmail" tone="amber" />
+                  <MetricTile icon={LockKeyhole} label={t.readOnly} value="Bank" tone="amber" />
                 </div>
                 <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-stitch">
                   <div className="flex items-start gap-4">
@@ -1479,15 +1408,15 @@ export default function App({
                 <PageHeading eyebrow={t.accessNav} title={t.accessTitle} body={t.accessText} />
                 <div className="grid gap-4 lg:grid-cols-2">
                   <AccessCard
-                    action={status?.connected ? t.reconnectGoogle : t.continueGoogle}
-                    body={t.privacy}
-                    disabled={loading || googleSigningIn}
+                    action={t.changeAccount}
+                    body="Google используется только для входа в TengeGuard. Приложение не запрашивает доступ к письмам Gmail."
+                    disabled={loading}
                     icon={UserCircle2}
-                    meta={status?.user?.email || "gmail.readonly"}
-                    onAction={handleConnect}
+                    meta={status?.user?.email || "Google Account"}
+                    onAction={handleChangeAccount}
                     status={status?.user ? "Google-аккаунт подключен" : "Google-аккаунт не найден"}
                     title="Google Account"
-                    tone={status?.connected ? "emerald" : "amber"}
+                    tone={status?.user ? "emerald" : "amber"}
                   />
                   <AccessCard
                     action={telegramStatus?.connected ? t.telegramTest : t.telegramConnect}
@@ -1593,7 +1522,7 @@ export default function App({
                         </div>
                         <div>
                           <h3 className="font-headline-md text-headline-md">{t.aiTitle}</h3>
-                          <p className="text-label-sm text-on-surface-variant">Gmail context + subscription intelligence</p>
+                          <p className="text-label-sm text-on-surface-variant">Bank transaction context + subscription intelligence</p>
                         </div>
                       </div>
                       {aiSending ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : null}
@@ -1692,7 +1621,6 @@ export default function App({
                     </div>
 
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                      <AccountAction icon={RefreshCw} label={t.reconnectGoogle} onClick={handleConnect} />
                       <AccountAction icon={UserCog} label={t.changeAccount} onClick={handleChangeAccount} />
                       <AccountAction icon={Smartphone} label={t.changeMode} onClick={() => (window.location.href = "/")} />
                       <AccountAction danger icon={LogOut} label={t.logout} onClick={handleLogout} />
@@ -1702,10 +1630,10 @@ export default function App({
                   <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-stitch">
                     <h3 className="font-headline-md text-headline-md">{t.accessTitle}</h3>
                     <div className="mt-5 space-y-3">
-                      <AccountStatus label="Gmail" value={status?.connected ? t.googleConnected : t.googleDisconnected} tone={status?.connected ? "emerald" : "amber"} />
+                      <AccountStatus label="Google" value={status?.user?.email || "not connected"} tone={status?.user ? "emerald" : "amber"} />
                       <AccountStatus label="Telegram" value={telegramStatus?.connected ? "connected" : "not connected"} tone={telegramStatus?.connected ? "emerald" : "amber"} />
                       <AccountStatus label="Interface" value={isMobileMode ? "mobile" : "desktop"} tone="primary" />
-                      <AccountStatus label="Last scan" value={status?.report?.scanned_at ? formatDate(status.report.scanned_at, locale) : "—"} tone="primary" />
+                      <AccountStatus label="Bank source" value={connectors.find((connector) => connector.id === "bank")?.status || "not connected"} tone="primary" />
                     </div>
                   </section>
                 </div>
@@ -1929,69 +1857,6 @@ function FinancialSummary({ monthlyTotal, nextLabel, locale }: { monthlyTotal: s
   );
 }
 
-function GoogleStatusCard({
-  connected,
-  disabled,
-  lastScan,
-  onConnect,
-  onScan,
-  scanLabel,
-  t,
-  unavailable
-}: {
-  connected: boolean;
-  disabled: boolean;
-  lastScan: string;
-  onConnect: () => void;
-  onScan: () => void;
-  scanLabel: string;
-  t: (typeof copy)["ru"];
-  unavailable: boolean;
-}) {
-  return (
-    <section className="overflow-hidden rounded-xl border border-outline-variant bg-white shadow-stitch">
-      <div className="flex items-center justify-between border-b border-outline-variant/70 p-5">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-surface-container">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-label-sm font-bold text-on-surface">{connected ? t.googleConnected : t.googleDisconnected}</h3>
-            <p className="mt-1 flex items-center gap-1 text-[11px] leading-4 text-on-surface-variant">
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${connected ? "bg-emerald-accent" : "bg-amber-400"}`} />
-              {connected ? t.activeConnection : unavailable ? t.serverMissing : "OAuth"}
-            </p>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] font-bold uppercase text-on-surface-variant">{t.lastScan}</p>
-          <p className="text-label-sm font-semibold text-on-surface">{lastScan}</p>
-        </div>
-      </div>
-      <div className="grid gap-3 p-5 sm:grid-cols-2">
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={disabled}
-          onClick={onConnect}
-          type="button"
-        >
-          <UserCircle2 className="h-4 w-4" />
-          {connected ? t.reconnectGoogle : t.continueGoogle}
-        </button>
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-accent px-4 py-3 text-label-sm font-bold text-white transition hover:bg-emerald-dark disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={disabled || !connected}
-          onClick={onScan}
-          type="button"
-        >
-          {disabled && connected ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          {scanLabel}
-        </button>
-      </div>
-    </section>
-  );
-}
-
 function TrustCard({ evidenceCount, messagesScanned, t }: { evidenceCount: number; messagesScanned: number; t: (typeof copy)["ru"] }) {
   return (
     <section className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-white p-5 shadow-stitch">
@@ -2132,9 +1997,14 @@ function ReportLine({ label, value }: { label: string; value: string }) {
 
 function SubscriptionGraph({ subscriptions, locale }: { subscriptions: Subscription[]; locale: Locale }) {
   const t = copy[locale];
-  const paid = subscriptions.filter((item) => item.type === "paid" || item.cost > 0).length;
-  const free = subscriptions.filter((item) => item.type === "free").length;
-  const trial = subscriptions.filter((item) => item.type === "free_trial" || item.status === "trial").length;
+  const monthly = subscriptions.filter((item) => item.billing_cycle === "monthly").length;
+  const yearly = subscriptions.filter((item) => item.billing_cycle === "yearly").length;
+  const review = subscriptions.filter((item) => item.billing_cycle === "unknown" || item.status === "review").length;
+  const cycleLabels = {
+    ru: ["Ежемесячные", "Годовые", "Проверить"],
+    en: ["Monthly", "Yearly", "Review"],
+    kk: ["Ай сайын", "Жыл сайын", "Тексеру"]
+  }[locale];
   const monthlyTotal = currencyTotals(subscriptions) || "0";
 
   return (
@@ -2162,9 +2032,9 @@ function SubscriptionGraph({ subscriptions, locale }: { subscriptions: Subscript
           </div>
         </div>
         <div className="grid w-full gap-3 sm:grid-cols-3">
-          <LegendDot color="bg-primary" label={t.paid} value={paid} />
-          <LegendDot color="bg-emerald-accent" label={t.free} value={free} />
-          <LegendDot color="bg-amber-400" label={t.trials} value={trial} />
+          <LegendDot color="bg-primary" label={cycleLabels[0]} value={monthly} />
+          <LegendDot color="bg-emerald-accent" label={cycleLabels[1]} value={yearly} />
+          <LegendDot color="bg-amber-400" label={cycleLabels[2]} value={review} />
         </div>
       </div>
     </section>
@@ -2244,7 +2114,7 @@ function SubscriptionCard({
       <div className="mb-4 flex items-center gap-2 rounded-lg bg-surface-container-low p-2.5">
         <CheckCircle2 className="h-4 w-4 text-on-surface-variant" />
         <span className="text-label-sm font-semibold text-on-surface-variant">
-          {item.evidence.length} Gmail proofs found
+          {item.evidence.length} bank transaction proofs
         </span>
       </div>
 
@@ -2497,15 +2367,15 @@ function EmptyState({
       <div className="mx-auto mt-5 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
         <div className="rounded-xl bg-surface-container-low p-3">
           <p className="text-[11px] font-black uppercase text-on-surface-variant">Источник</p>
-          <p className="mt-1 text-label-sm font-bold text-on-surface">Gmail read-only</p>
+          <p className="mt-1 text-label-sm font-bold text-on-surface">Bank read-only</p>
         </div>
         <div className="rounded-xl bg-surface-container-low p-3">
           <p className="text-[11px] font-black uppercase text-on-surface-variant">Типы</p>
-          <p className="mt-1 text-label-sm font-bold text-on-surface">Paid / Free / Trial</p>
+          <p className="mt-1 text-label-sm font-bold text-on-surface">Paid only</p>
         </div>
         <div className="rounded-xl bg-surface-container-low p-3">
           <p className="text-[11px] font-black uppercase text-on-surface-variant">Режим</p>
-          <p className="mt-1 text-label-sm font-bold text-on-surface">Deep scan</p>
+          <p className="mt-1 text-label-sm font-bold text-on-surface">Recurring charges</p>
         </div>
       </div>
     </div>
@@ -2514,23 +2384,13 @@ function EmptyState({
 
 function DashboardActivationPanel({
   bankStatus,
-  connected,
-  disabled,
-  onConnect,
   onConnectBank,
-  onScan,
   onTelegram,
-  scanning,
   telegramReady
 }: {
   bankStatus?: ConnectorStatus["status"];
-  connected: boolean;
-  disabled: boolean;
-  onConnect: () => void;
   onConnectBank: () => void;
-  onScan: () => void;
   onTelegram: () => void;
-  scanning: boolean;
   telegramReady: boolean;
 }) {
   const bankReady = bankStatus === "ready" || bankStatus === "connected";
@@ -2546,7 +2406,7 @@ function DashboardActivationPanel({
               Подключаем источники и сразу собираем реальные данные
             </h3>
             <p className="mt-2 max-w-2xl text-body-md leading-6 text-on-surface-variant">
-              После Gmail-доступа TengeGuard сам сканирует письма, находит платные подписки, free-тарифы, trial-периоды и даты окончания.
+              Подключите свой банк в защищённом окне Salt Edge. TengeGuard анализирует только историю транзакций и находит подтверждённые регулярные списания.
             </p>
           </div>
           <span className="w-fit rounded-full border border-emerald-200 bg-emerald-soft px-3 py-1 text-[11px] font-black uppercase text-emerald-dark">
@@ -2557,18 +2417,8 @@ function DashboardActivationPanel({
 
       <div className="grid gap-3 p-5 md:grid-cols-2">
         <ActivationStep
-          action={connected ? (scanning ? "Сканируем..." : "Сканировать Gmail") : "Подключить Gmail"}
-          body="Основной источник: письма о чеках, продлениях, пробных периодах и free-тарифах."
-          disabled={disabled}
-          icon={MailCheck}
-          onClick={connected ? onScan : onConnect}
-          state={connected ? "подключено" : "нужно подключить"}
-          title="Gmail read-only"
-          tone={connected ? "emerald" : "primary"}
-        />
-        <ActivationStep
           action={bankConnected ? "Банк подключен" : bankReady ? "Подключить банк" : "Ожидает API"}
-          body="Для подписок без email: регулярные списания, карты и банковская история."
+          body="Read-only доступ к счетам и истории операций. TengeGuard не может переводить или списывать деньги."
           disabled={!bankReady || bankConnected}
           icon={WalletCards}
           onClick={onConnectBank}
@@ -2578,7 +2428,7 @@ function DashboardActivationPanel({
         />
         <ActivationStep
           action={telegramReady ? "Подключить Telegram" : "Бот не настроен"}
-          body="Напоминания перед списанием и окончанием пробного периода."
+          body="Напоминания перед прогнозируемым следующим списанием."
           disabled={!telegramReady}
           icon={MessageCircle}
           onClick={onTelegram}
@@ -2594,7 +2444,7 @@ function DashboardActivationPanel({
             <div>
               <h4 className="font-bold text-on-surface">Полный охват</h4>
               <p className="mt-1 text-body-md leading-6 text-on-surface-variant">
-                TengeGuard объединяет Gmail и банковские транзакции. Подключаются только выбранные пользователем источники, а неподтвержденные данные не показываются как подписки.
+                Показываются только платные подписки, подтверждённые повторяющимися банковскими операциями. Бесплатные планы и неподтверждённые догадки не добавляются.
               </p>
             </div>
           </div>

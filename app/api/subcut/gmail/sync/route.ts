@@ -1,58 +1,11 @@
 import { NextResponse } from "next/server";
-import {
-  getSessionUserFromRequest,
-  getUserIdFromRequest,
-  readRealGmailSubscriptions,
-  readTokensFromRequest,
-  syncRealGmailSubscriptions
-} from "@/lib/server/subcut-gmail";
-import { sendTelegramDigest } from "@/lib/server/telegram";
-import { protectMutation } from "@/lib/server/security";
-import { requireActiveAccess } from "@/lib/server/access-control";
 
-export const maxDuration = 300;
-
-export async function GET(request: Request) {
-  const userId = getUserIdFromRequest(request);
-  const user = await getSessionUserFromRequest(request, userId);
-  if (!user) {
-    return NextResponse.json({ ok: false, subscriptions: [] }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    ok: true,
-    subscriptions: await readRealGmailSubscriptions(user.id)
-  });
+function disabled() {
+  return NextResponse.json(
+    { message: "Gmail scanning is disabled. Connect a bank to find paid subscriptions." },
+    { status: 410 }
+  );
 }
 
-export async function POST(request: Request) {
-  const blocked = protectMutation(request, { key: "gmail-sync", limit: 6, windowMs: 60_000 });
-  if (blocked) return blocked;
-
-  const userId = getUserIdFromRequest(request);
-  const user = await getSessionUserFromRequest(request, userId);
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Unauthorized", subscriptions: [] }, { status: 401 });
-  }
-  const expired = requireActiveAccess(request);
-  if (expired) return expired;
-
-  try {
-    const tokens = await readTokensFromRequest(request, user.id);
-    const subscriptions = await syncRealGmailSubscriptions(user.id, tokens);
-    await sendTelegramDigest(user.id).catch(() => null);
-    return NextResponse.json({
-      ok: true,
-      subscriptions
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Gmail sync failed",
-        subscriptions: await readRealGmailSubscriptions(user.id)
-      },
-      { status: 400 }
-    );
-  }
-}
+export const GET = disabled;
+export const POST = disabled;

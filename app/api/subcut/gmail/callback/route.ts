@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import {
-  createEncryptedGmailSession,
   createEncryptedUserSession,
-  exchangeGmailCode,
   exchangeGoogleSignInCode,
-  getGmailSessionCookieName,
-  getUserSessionCookieName,
-  readTokens
+  getUserSessionCookieName
 } from "@/lib/server/subcut-gmail";
 import { secureCookieOptions } from "@/lib/server/security";
 
@@ -53,45 +49,13 @@ export async function GET(request: Request) {
       return response;
     }
 
-    const user = await exchangeGmailCode(code, url.origin);
-    url.pathname = "/dashboard";
-    url.search = "?gmail=connected&scan=1";
-    const response = NextResponse.redirect(url);
-    response.cookies.set("tg_user_id", user.id, {
-      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
-    });
-    response.cookies.set(getUserSessionCookieName(), createEncryptedUserSession(user), {
-      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
-    });
-    response.cookies.set("tg_gmail_connected", "1", {
-      ...secureCookieOptions(request, 60 * 60 * 24 * 30)
-    });
-    const existingTrialStartedAt = readCookie(request, "tg_trial_started_at");
-    if (!existingTrialStartedAt) {
-      const startedAt = new Date();
-      const endsAt = new Date(startedAt);
-      endsAt.setUTCDate(endsAt.getUTCDate() + 14);
-      response.cookies.set("tg_billing_plan", "free", {
-        ...secureCookieOptions(request, 60 * 60 * 24 * 365 * 2)
-      });
-      response.cookies.set("tg_trial_started_at", startedAt.toISOString(), {
-        ...secureCookieOptions(request, 60 * 60 * 24 * 365 * 2)
-      });
-      response.cookies.set("tg_billing_ends_at", endsAt.toISOString(), {
-        ...secureCookieOptions(request, 60 * 60 * 24 * 365 * 2)
-      });
-    }
-    const tokens = await readTokens(user.id);
-    if (tokens) {
-      response.cookies.set(getGmailSessionCookieName(), createEncryptedGmailSession(tokens), {
-        ...secureCookieOptions(request, 60 * 60 * 24 * 30)
-      });
-    }
-    return response;
+    url.pathname = "/api/auth/google";
+    url.search = "";
+    return NextResponse.redirect(url);
   } catch (error) {
-    console.error("[TengeGuard Gmail OAuth] Callback failed:", error instanceof Error ? error.message : error);
+    console.error("[TengeGuard Google OAuth] Callback failed:", error instanceof Error ? error.message : error);
     url.pathname = "/dashboard";
-    url.search = `?gmail=sync_failed&reason=${encodeURIComponent(error instanceof Error ? error.message : "unknown")}`;
+    url.search = `?signin=failed&reason=${encodeURIComponent(error instanceof Error ? error.message : "unknown")}`;
     return NextResponse.redirect(url);
   }
 }

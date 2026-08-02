@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import {
   createEncryptedBankSession,
   getBankSessionCookieName,
-  saveBankConnection
+  saveBankConnection,
+  syncBankSubscriptions
 } from "@/lib/server/subscription-connectors";
 import { protectMutation, secureCookieOptions } from "@/lib/server/security";
 import { getSessionUserFromRequest, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
@@ -22,9 +23,20 @@ export async function GET(request: Request) {
 
   const connectionId = url.searchParams.get("connection_id") || url.searchParams.get("id") || "";
   const state = await saveBankConnection(user.id, connectionId, request);
+  let bankSession = createEncryptedBankSession(user.id, state);
+  let bankStatus = "connected";
+  try {
+    const syncResult = await syncBankSubscriptions(user, request);
+    if ("bank_session" in syncResult && syncResult.bank_session) bankSession = syncResult.bank_session;
+  } catch (error) {
+    console.error("[TengeGuard Bank] Initial sync failed:", error instanceof Error ? error.message : error);
+    bankStatus = "sync_failed";
+  }
 
-  const response = NextResponse.redirect(new URL("/dashboard/subscriptions", request.url));
-  response.cookies.set(getBankSessionCookieName(), createEncryptedBankSession(user.id, state), {
+  const destination = new URL("/dashboard/subscriptions", request.url);
+  destination.searchParams.set("bank", bankStatus);
+  const response = NextResponse.redirect(destination);
+  response.cookies.set(getBankSessionCookieName(), bankSession, {
     ...secureCookieOptions(request, 60 * 60 * 24 * 90)
   });
   return response;

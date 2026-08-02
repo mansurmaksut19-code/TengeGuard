@@ -3,9 +3,7 @@ import { automaticConnectors, getBankSessionCookieName, syncBankSubscriptions } 
 import {
   getSessionUserFromRequest,
   getUserIdFromRequest,
-  readRealGmailSubscriptions,
-  readTokensFromRequest,
-  syncRealGmailSubscriptions
+  readRealGmailSubscriptions
 } from "@/lib/server/subcut-gmail";
 import { protectMutation } from "@/lib/server/security";
 import { secureCookieOptions } from "@/lib/server/security";
@@ -21,13 +19,7 @@ export async function POST(request: Request) {
   const expired = requireActiveAccess(request);
   if (expired) return expired;
 
-  const tokens = await readTokensFromRequest(request, user.id);
-  const connectors = await automaticConnectors(user, { gmailConnected: Boolean(tokens), request });
-  const gmail = connectors.find((connector) => connector.id === "gmail");
-
-  if (gmail?.status === "connected") {
-    await syncRealGmailSubscriptions(user.id, tokens);
-  }
+  const connectors = await automaticConnectors(user, { request });
   const bank = await syncBankSubscriptions(user, request);
 
   const response = NextResponse.json({

@@ -6,7 +6,7 @@ import { Providers } from "@/components/providers";
 export const metadata: Metadata = {
   title: "TengeGuard",
   description:
-    "TengeGuard helps users find paid subscriptions, free plans, trial periods, renewal dates, and billing evidence from user-approved sources such as Google Sign-In and optional Gmail read-only access.",
+    "TengeGuard finds paid subscriptions from authorized bank transaction history, forecasts recurring charges, and sends reminders before the next payment.",
   applicationName: "TengeGuard",
   icons: {
     icon: "/tengeguard-mark.jpg",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "TengeGuard",
     description:
-      "Subscription discovery and reminder dashboard for paid, free, and trial subscriptions.",
+      "Paid subscription discovery and recurring-charge reminder dashboard.",
     siteName: "TengeGuard",
     url: "https://www.tengeguard.online"
   }
