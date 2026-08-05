@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import App from "./App";
 
-type View = "dashboard" | "subscriptions" | "evidence" | "access" | "history" | "ai" | "account";
+type View = "dashboard" | "subscriptions" | "ai" | "account";
 
 export default async function DashboardScreen({ view = "dashboard" }: { view?: View }) {
   const cookieStore = await cookies();

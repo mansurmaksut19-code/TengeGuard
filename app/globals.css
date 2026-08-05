@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -100,7 +100,7 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family:
-    "Inter",
+    "Golos Text",
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -121,7 +121,8 @@ h4,
 h5,
 h6,
 .font-display {
-  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Golos Text", ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01" 1, "ss02" 1;
 }
 
 .tg-shell-grid { background: #f8f9fa; }

@@ -40,10 +40,10 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
-        "body-md": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        "label-sm": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        "mono-data": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+        display: ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"],
+        "body-md": ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"],
+        "label-sm": ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"],
+        "mono-data": ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       fontSize: {
         display: ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],

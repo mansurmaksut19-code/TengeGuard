@@ -55,3 +55,11 @@ export async function writeStoredJson(filePath: string, data: unknown) {
   await writeFile(tempPath, JSON.stringify(data, null, 2), "utf8");
   await rename(tempPath, filePath);
 }
+
+export async function deleteStoredJson(filePath: string) {
+  const remote = await redisCommand<number>(["DEL", keyForPath(filePath)]);
+  if (remote) return;
+
+  const { unlink } = await import("node:fs/promises");
+  await unlink(filePath).catch(() => null);
+}

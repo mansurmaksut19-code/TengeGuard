@@ -1,5 +1,5 @@
-import DashboardScreen from "../DashboardScreen";
+import { redirect } from "next/navigation";
 
 export default function IntegrationsPage() {
-  return <DashboardScreen view="access" />;
+  redirect("/dashboard");
 }

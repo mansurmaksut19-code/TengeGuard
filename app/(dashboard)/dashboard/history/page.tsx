@@ -1,5 +1,5 @@
-import DashboardScreen from "../DashboardScreen";
+import { redirect } from "next/navigation";
 
 export default function HistoryPage() {
-  return <DashboardScreen view="history" />;
+  redirect("/dashboard");
 }

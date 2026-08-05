@@ -13,9 +13,6 @@ import {
   ChevronRight,
   CircleDollarSign,
   Clock3,
-  Database,
-  FileCheck2,
-  History,
   Landmark,
   LayoutDashboard,
   Loader2,
@@ -25,15 +22,13 @@ import {
   Search,
   Send,
   Settings,
-  ShieldCheck,
-  Trash2,
   UserCircle2,
   WalletCards,
   XCircle
 } from "lucide-react";
 
 type Locale = "ru" | "en" | "kk";
-type DashboardView = "dashboard" | "subscriptions" | "evidence" | "access" | "history" | "ai" | "account";
+type DashboardView = "dashboard" | "subscriptions" | "ai" | "account";
 type DeviceMode = "mobile" | "desktop";
 type BillingPlan = "free" | "pro_monthly" | "pro_yearly";
 type SubscriptionStatus = "active" | "cancelled" | "trial" | "review";
@@ -152,6 +147,7 @@ const copy = {
     bankText: "Salt Edge открывает защищённый экран выбора банка и запрашивает историю только для чтения.",
     telegram: "Telegram",
     telegramText: "Напоминания за неделю и за день до прогнозируемого списания.",
+    telegramOpen: "Telegram открыт. Нажмите Start в боте, сайт подключится автоматически.",
     connectTelegram: "Подключить Telegram",
     testTelegram: "Отправить тест",
     google: "Google-аккаунт",
@@ -170,7 +166,6 @@ const copy = {
     storage: "Хранилище",
     payment: "Оплата",
     error: "Не удалось выполнить действие",
-    loading: "Загружаем ваши данные",
     expiredTitle: "Доступ закончился",
     expiredText: "Выберите Pro, чтобы продолжить мониторинг подписок.",
     choosePro: "Подключить Pro"
@@ -188,11 +183,11 @@ const copy = {
     securityNote: "TengeGuard shows only data received from authorized transaction history. Unverified subscriptions are never created.",
     transaction: "Transaction", date: "Date", pattern: "Signals", source: "Source", integrationsTitle: "Integrations", integrationsText: "Only the connections required for detection and reminders.",
     connected: "Connected", ready: "Ready", unavailable: "Unavailable", bank: "Bank", bankText: "Salt Edge opens a secure bank selection flow and requests read-only history.",
-    telegram: "Telegram", telegramText: "Reminders one week and one day before a predicted charge.", connectTelegram: "Connect Telegram", testTelegram: "Send test",
+    telegram: "Telegram", telegramText: "Reminders one week and one day before a predicted charge.", telegramOpen: "Telegram is open. Press Start in the bot and the site will connect automatically.", connectTelegram: "Connect Telegram", testTelegram: "Send test",
     google: "Google account", googleText: "Used only for sign-in. Gmail access is not requested.", historyTitle: "Subscription history", current: "Current", cancelled: "Cancelled",
     aiTitle: "AI Assistant", aiText: "Ask questions about detected subscriptions and spending.", aiPlaceholder: "For example: what is the next charge?", send: "Send",
     accountTitle: "Account", changeAccount: "Change Google account", logout: "Sign out", plan: "Plan", storage: "Storage", payment: "Payments",
-    error: "Action failed", loading: "Loading your data", expiredTitle: "Access expired", expiredText: "Choose Pro to continue monitoring subscriptions.", choosePro: "Choose Pro"
+    error: "Action failed", expiredTitle: "Access expired", expiredText: "Choose Pro to continue monitoring subscriptions.", choosePro: "Choose Pro"
   },
   kk: {
     overview: "Шолу", subscriptions: "Жазылымдар", evidence: "Дәлелдер", integrations: "Интеграциялар", history: "Тарих", ai: "AI көмекші", account: "Аккаунт",
@@ -207,20 +202,17 @@ const copy = {
     securityNote: "TengeGuard тек рұқсат етілген операциялар тарихынан алынған деректерді көрсетеді. Расталмаған жазылымдар жасалмайды.",
     transaction: "Операция", date: "Күні", pattern: "Белгілер", source: "Дереккөз", integrationsTitle: "Интеграциялар", integrationsText: "Тек іздеу мен ескертулерге қажетті қосылымдар.",
     connected: "Қосылған", ready: "Дайын", unavailable: "Қолжетімсіз", bank: "Банк", bankText: "Salt Edge қауіпсіз банк таңдау терезесін ашып, тарихты тек оқуға сұрайды.",
-    telegram: "Telegram", telegramText: "Болжамды төлемге бір апта және бір күн қалғанда ескерту.", connectTelegram: "Telegram қосу", testTelegram: "Тест жіберу",
+    telegram: "Telegram", telegramText: "Болжамды төлемге бір апта және бір күн қалғанда ескерту.", telegramOpen: "Telegram ашылды. Ботта Start басыңыз, сайт автоматты түрде қосылады.", connectTelegram: "Telegram қосу", testTelegram: "Тест жіберу",
     google: "Google аккаунты", googleText: "Тек кіру үшін. Gmail рұқсаты сұралмайды.", historyTitle: "Жазылымдар тарихы", current: "Ағымдағы", cancelled: "Тоқтатылған",
     aiTitle: "AI көмекші", aiText: "Табылған жазылымдар мен шығындар туралы сұраңыз.", aiPlaceholder: "Мысалы: келесі төлем қандай?", send: "Жіберу",
     accountTitle: "Аккаунт", changeAccount: "Google аккаунтын ауыстыру", logout: "Шығу", plan: "Тариф", storage: "Сақтау", payment: "Төлем",
-    error: "Әрекет орындалмады", loading: "Деректеріңіз жүктелуде", expiredTitle: "Қолжетімділік аяқталды", expiredText: "Бақылауды жалғастыру үшін Pro таңдаңыз.", choosePro: "Pro қосу"
+    error: "Әрекет орындалмады", expiredTitle: "Қолжетімділік аяқталды", expiredText: "Бақылауды жалғастыру үшін Pro таңдаңыз.", choosePro: "Pro қосу"
   }
 };
 
 const routes: Record<DashboardView, string> = {
   dashboard: "/dashboard",
   subscriptions: "/dashboard/subscriptions",
-  evidence: "/dashboard/evidence",
-  access: "/dashboard/access",
-  history: "/dashboard/history",
   ai: "/dashboard/ai",
   account: "/dashboard/account"
 };
@@ -276,18 +268,23 @@ export default function App({
   const t = copy[locale];
 
   const load = useCallback(async () => {
-    const [authData, telegramData, connectorData, readinessData, subscriptionData] = await Promise.all([
-      readJson<AuthStatus>("/api/subcut/gmail/status"),
+    const secondary = Promise.all([
       readJson<TelegramStatus>("/api/telegram/status"),
+      readJson<Readiness>("/api/system/readiness")
+    ]).then(([telegramData, readinessData]) => {
+      setTelegram(telegramData);
+      setReadiness(readinessData);
+    });
+
+    const [authData, connectorData, subscriptionData] = await Promise.all([
+      readJson<AuthStatus>("/api/subcut/gmail/status"),
       readJson<{ connectors: Connector[] }>("/api/connectors/status"),
-      readJson<Readiness>("/api/system/readiness"),
       readJson<{ subscriptions: Subscription[] }>("/api/subscriptions")
     ]);
     setAuth(authData);
-    setTelegram(telegramData);
     setConnectors(connectorData.connectors || []);
-    setReadiness(readinessData);
     setSubscriptions(subscriptionData.subscriptions || []);
+    await secondary.catch(() => null);
   }, []);
 
   useEffect(() => {
@@ -299,8 +296,6 @@ export default function App({
   }, []);
 
   const active = useMemo(() => subscriptions.filter((item) => item.status !== "cancelled"), [subscriptions]);
-  const cancelled = useMemo(() => subscriptions.filter((item) => item.status === "cancelled"), [subscriptions]);
-  const evidence = useMemo(() => subscriptions.flatMap((subscription) => subscription.evidence.map((item, index) => ({ item, subscription, key: `${subscription.id}-${item.message_id || index}` }))), [subscriptions]);
   const filtered = useMemo(() => {
     const search = query.trim().toLowerCase();
     return active
@@ -348,22 +343,24 @@ export default function App({
   }
 
   function connectTelegram() {
-    const popup = window.open("/api/telegram/connect", "_blank", "noopener,noreferrer");
+    const popup = window.open("/api/telegram/connect", "tengeguard-telegram");
     if (!popup) {
       window.location.href = "/api/telegram/connect";
       return;
     }
-    setNotice(t.telegramText);
+    popup.opener = null;
+    setNotice(t.telegramOpen);
     let checks = 0;
     telegramTimer.current = window.setInterval(async () => {
       checks += 1;
       const next = await readJson<TelegramStatus>("/api/telegram/status").catch(() => null);
       if (next) setTelegram(next);
-      if (next?.connected || checks >= 40) {
+      if (next?.connected || checks >= 80) {
         if (telegramTimer.current) window.clearInterval(telegramTimer.current);
         telegramTimer.current = null;
+        if (next?.connected) setNotice(t.telegramReady);
       }
-    }, 3000);
+    }, 1500);
   }
 
   async function testTelegram() {
@@ -422,16 +419,13 @@ export default function App({
   const nav = [
     ["dashboard", t.overview, LayoutDashboard],
     ["subscriptions", t.subscriptions, WalletCards],
-    ["evidence", t.evidence, FileCheck2],
-    ["access", t.integrations, Landmark],
-    ["history", t.history, History],
     ["ai", t.ai, Bot]
   ] as const;
 
   return (
-    <main className="min-h-screen bg-[#f8f9fa] text-[#191c1d]">
+    <main className="min-h-screen bg-[#f5f6f8] text-[#16181a]">
       <div className="min-h-screen md:flex">
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-[#e5e7eb] bg-white px-4 py-6 md:flex">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-[#e7e9ec] bg-white px-4 py-6 md:flex">
           <Brand />
           <nav className="mt-10 flex-1 space-y-1">
             {nav.map(([view, label, Icon]) => (
@@ -449,7 +443,7 @@ export default function App({
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#e5e7eb] bg-white px-4 sm:px-6 lg:px-10">
+          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#e7e9ec] bg-white/95 px-4 backdrop-blur-xl sm:px-6 lg:px-10">
             <div className="md:hidden"><Brand compact /></div>
             <div className="hidden md:block">
               <h1 className="font-display text-lg font-semibold">{nav.find(([view]) => view === initialView)?.[1] || t.account}</h1>
@@ -473,7 +467,7 @@ export default function App({
             {error ? <Notice tone="error" text={error} title={t.error} onClose={() => setError(null)} /> : null}
             {notice ? <Notice tone="success" text={notice} title="TengeGuard" onClose={() => setNotice(null)} /> : null}
 
-            {loading ? <LoadingState label={t.loading} /> : expired ? (
+            {loading ? <DashboardSkeleton /> : expired ? (
               <EmptyPanel icon={Clock3} title={t.expiredTitle} text={t.expiredText}>
                 <Link className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white" href="/api/billing/checkout?plan=pro_monthly">{t.choosePro}<ArrowRight className="h-4 w-4" /></Link>
               </EmptyPanel>
@@ -491,6 +485,7 @@ export default function App({
                     onBank={connectBank}
                     onRefresh={refresh}
                     onTelegram={connectTelegram}
+                    onTestTelegram={testTelegram}
                     review={reviewCount}
                     syncing={syncing}
                     t={t}
@@ -500,11 +495,6 @@ export default function App({
                 {initialView === "subscriptions" ? (
                   <SubscriptionsView filter={filter} items={filtered} locale={locale} onAction={subscriptionAction} query={query} setFilter={setFilter} setQuery={setQuery} t={t} workingId={workingId} />
                 ) : null}
-                {initialView === "evidence" ? <EvidenceView entries={evidence} locale={locale} t={t} /> : null}
-                {initialView === "access" ? (
-                  <IntegrationsView auth={auth} bank={bank} onBank={connectBank} onTelegram={connectTelegram} onTestTelegram={testTelegram} readiness={readiness} t={t} telegram={telegram} />
-                ) : null}
-                {initialView === "history" ? <HistoryView active={active} cancelled={cancelled} locale={locale} onAction={subscriptionAction} t={t} workingId={workingId} /> : null}
                 {initialView === "ai" ? <AiView input={aiInput} messages={aiMessages} onChange={setAiInput} onSubmit={submitAi} sending={aiSending} t={t} /> : null}
                 {initialView === "account" ? <AccountView auth={auth} initialBillingPlan={initialBillingPlan} onChange={() => logout(true)} onLogout={() => logout(false)} readiness={readiness} t={t} telegram={telegram} bank={bank} /> : null}
               </>
@@ -514,7 +504,8 @@ export default function App({
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center overflow-x-auto border-t border-[#e5e7eb] bg-white px-2 md:hidden">
-        {nav.slice(0, 5).map(([view, label, Icon]) => <Link className={`flex min-w-[72px] flex-1 flex-col items-center gap-1 text-[10px] font-semibold ${initialView === view ? "text-black" : "text-[#76777d]"}`} href={routes[view]} key={view}><Icon className="h-5 w-5" />{label}</Link>)}
+        {nav.map(([view, label, Icon]) => <Link className={`flex min-w-[72px] flex-1 flex-col items-center gap-1 text-[10px] font-semibold ${initialView === view ? "text-black" : "text-[#76777d]"}`} href={routes[view]} key={view}><Icon className="h-5 w-5" />{label}</Link>)}
+        <Link className={`flex min-w-[72px] flex-1 flex-col items-center gap-1 text-[10px] font-semibold ${initialView === "account" ? "text-black" : "text-[#76777d]"}`} href="/dashboard/account"><Settings className="h-5 w-5" />{t.account}</Link>
       </nav>
     </main>
   );
@@ -530,7 +521,7 @@ function PageTitle({ title, text, action }: { title: string; text: string; actio
   return <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="font-display text-[32px] font-semibold leading-10 tracking-[-0.02em] sm:text-[40px] sm:leading-[48px]">{title}</h2><p className="mt-2 text-sm leading-6 text-[#6b7280]">{text}</p></div>{action}</div>;
 }
 
-function Dashboard({ active, averageConfidence, bankConnected, dueSoon, locale, monthly, next, onBank, onRefresh, onTelegram, review, syncing, t, telegramConnected }: { active: Subscription[]; averageConfidence: number; bankConnected: boolean; dueSoon: number; locale: Locale; monthly: string; next?: Subscription; onBank: () => void; onRefresh: () => void; onTelegram: () => void; review: number; syncing: boolean; t: T; telegramConnected: boolean }) {
+function Dashboard({ active, averageConfidence, bankConnected, dueSoon, locale, monthly, next, onBank, onRefresh, onTelegram, onTestTelegram, review, syncing, t, telegramConnected }: { active: Subscription[]; averageConfidence: number; bankConnected: boolean; dueSoon: number; locale: Locale; monthly: string; next?: Subscription; onBank: () => void; onRefresh: () => void; onTelegram: () => void; onTestTelegram: () => void; review: number; syncing: boolean; t: T; telegramConnected: boolean }) {
   return (
     <section>
       <PageTitle action={<button className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50" disabled={syncing || !bankConnected} onClick={onRefresh} type="button">{syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}{syncing ? t.syncing : t.sync}</button>} text={t.dashboardText} title={t.dashboardTitle} />
@@ -547,6 +538,15 @@ function Dashboard({ active, averageConfidence, bankConnected, dueSoon, locale, 
       <div className="mt-5 flex flex-wrap gap-2">
         <StatusChip active={bankConnected} label={bankConnected ? t.bankOnly : t.connectBank} onClick={bankConnected ? undefined : onBank} />
         <StatusChip active={telegramConnected} label={telegramConnected ? t.telegramReady : t.telegramMissing} onClick={telegramConnected ? undefined : onTelegram} />
+      </div>
+      <div className="mt-6 flex flex-col gap-5 rounded-2xl border border-[#dfe3e7] bg-[#111315] p-6 text-white shadow-[0_18px_50px_-32px_rgba(0,0,0,0.55)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10"><MessageCircle className="h-5 w-5 text-[#5ee3a1]" /></span>
+          <div><h3 className="font-display text-lg font-semibold">{t.telegram}</h3><p className="mt-1 max-w-xl text-sm leading-6 text-white/60">{t.telegramText}</p></div>
+        </div>
+        <button className={`shrink-0 rounded-lg px-5 py-3 text-sm font-semibold ${telegramConnected ? "border border-white/20 bg-white/5 text-white" : "bg-white text-black"}`} onClick={telegramConnected ? onTestTelegram : onTelegram} type="button">
+          {telegramConnected ? t.testTelegram : t.connectTelegram}
+        </button>
       </div>
       {!active.length ? (
         <div className="mt-8"><EmptyPanel icon={Landmark} title={t.noDataTitle} text={t.noDataText}><button className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white disabled:opacity-45" disabled={bankConnected} onClick={onBank} type="button"><Landmark className="h-4 w-4" />{bankConnected ? t.sync : t.connectBank}</button></EmptyPanel></div>
@@ -580,42 +580,6 @@ function SubscriptionsView({ filter, items, locale, onAction, query, setFilter, 
       )}
     </section>
   );
-}
-
-function EvidenceView({ entries, locale, t }: { entries: Array<{ item: Evidence; subscription: Subscription; key: string }>; locale: Locale; t: T }) {
-  return (
-    <section>
-      <PageTitle text={t.evidenceText} title={t.evidenceTitle} />
-      <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" /><span>{t.securityNote}</span></div>
-      {!entries.length ? <EmptyPanel icon={FileCheck2} text={t.noDataText} title={t.empty} /> : (
-        <div className="overflow-x-auto rounded-xl border border-[#e5e7eb] bg-white shadow-stitch">
-          <table className="w-full min-w-[900px] text-left"><thead className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-xs font-semibold text-[#6b7280]"><tr><th className="px-5 py-4">{t.provider}</th><th className="px-5 py-4">{t.transaction}</th><th className="px-5 py-4">{t.date}</th><th className="px-5 py-4">{t.pattern}</th><th className="px-5 py-4">{t.confidence}</th></tr></thead>
-          <tbody className="divide-y divide-[#e5e7eb]">{entries.map(({ item, subscription, key }) => <tr className="hover:bg-[#f8f9fa]" key={key}><td className="px-5 py-4 font-semibold">{subscription.provider_name}</td><td className="max-w-sm px-5 py-4 text-sm text-[#45464c]"><p className="font-medium text-black">{item.subject || item.from || t.transaction}</p><p className="mt-1 line-clamp-2 text-xs text-[#76777d]">{item.snippet || "—"}</p></td><td className="px-5 py-4 text-sm tabular-nums">{formatDate(item.date || subscription.last_seen_at, locale)}</td><td className="px-5 py-4"><div className="flex flex-wrap gap-1">{item.matched_signals.slice(0, 3).map((signal) => <span className="rounded bg-[#f3f4f5] px-2 py-1 text-xs text-[#5f6368]" key={signal}>{signal}</span>)}</div></td><td className="px-5 py-4"><Confidence value={subscription.confidence} /></td></tr>)}</tbody></table>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function IntegrationsView({ auth, bank, onBank, onTelegram, onTestTelegram, readiness, t, telegram }: { auth: AuthStatus | null; bank?: Connector; onBank: () => void; onTelegram: () => void; onTestTelegram: () => void; readiness: Readiness | null; t: T; telegram: TelegramStatus | null }) {
-  return (
-    <section>
-      <PageTitle text={t.integrationsText} title={t.integrationsTitle} />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <IntegrationCard action={bank?.status === "connected" ? undefined : onBank} actionLabel={t.connectBank} connected={bank?.status === "connected"} icon={Landmark} text={t.bankText} title={t.bank} />
-        <IntegrationCard action={telegram?.connected ? onTestTelegram : onTelegram} actionLabel={telegram?.connected ? t.testTelegram : t.connectTelegram} connected={Boolean(telegram?.connected)} icon={MessageCircle} text={t.telegramText} title={t.telegram} />
-        <IntegrationCard connected={Boolean(auth?.connected)} icon={UserCircle2} text={t.googleText} title={t.google} />
-        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6">
-          <div className="flex items-center gap-3"><Database className="h-5 w-5" /><h3 className="font-display text-lg font-semibold">Production</h3></div>
-          <div className="mt-6 space-y-3"><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /><StatusLine label={t.payment} ready={Boolean(readiness?.paymentConfigured)} /></div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HistoryView({ active, cancelled, locale, onAction, t, workingId }: { active: Subscription[]; cancelled: Subscription[]; locale: Locale; onAction: (item: Subscription, action: "cancel" | "cancelled" | "refund" | "delete") => void; t: T; workingId: string | null }) {
-  return <section><PageTitle text={t.subscriptionsText} title={t.historyTitle} /><div className="grid gap-5 xl:grid-cols-2"><HistoryColumn items={active} locale={locale} title={t.current} empty={t.empty} /><HistoryColumn items={cancelled} locale={locale} title={t.cancelled} empty={t.empty} onDelete={(item) => onAction(item, "delete")} workingId={workingId} /></div></section>;
 }
 
 function AiView({ input, messages, onChange, onSubmit, sending, t }: { input: string; messages: AiMessage[]; onChange: (value: string) => void; onSubmit: (event: React.FormEvent) => void; sending: boolean; t: T }) {
@@ -653,11 +617,11 @@ function SubscriptionRow({ item, locale }: { item: Subscription; locale: Locale 
 function SubscriptionTableRow({ item, locale, onAction, t, working }: { item: Subscription; locale: Locale; onAction: (item: Subscription, action: "cancel" | "cancelled" | "refund" | "delete") => void; t: T; working: boolean }) { return <tr className="hover:bg-[#f8f9fa]"><td className="px-5 py-4"><div className="flex items-center gap-3"><ServiceIcon name={item.provider_name} /><div><p className="font-semibold">{item.provider_name}</p><p className="mt-0.5 text-xs text-[#76777d]">{item.evidence.length} {t.evidence.toLowerCase()}</p></div></div></td><td className="px-5 py-4 text-sm font-semibold tabular-nums">{formatMoney(item, locale)}</td><td className="px-5 py-4 text-sm text-[#5f6368]">{cycleName(item.billing_cycle, locale)}</td><td className="px-5 py-4 text-sm tabular-nums">{formatDate(item.next_billing_date, locale)}</td><td className="px-5 py-4"><Confidence value={item.confidence} /></td><td className="px-5 py-4"><div className="flex items-center gap-2">{working ? <Loader2 className="h-4 w-4 animate-spin" /> : <><button className="rounded-lg border border-[#e5e7eb] px-3 py-2 text-xs font-semibold hover:border-black" onClick={() => onAction(item, "cancel")} type="button">{t.cancel}</button><button aria-label={t.markCancelled} className="grid h-8 w-8 place-items-center rounded-lg border border-[#e5e7eb]" onClick={() => onAction(item, "cancelled")} title={t.markCancelled} type="button"><Check className="h-4 w-4" /></button></>}</div></td></tr>; }
 function ServiceIcon({ name }: { name: string }) { return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#e5e7eb] bg-[#f3f4f5] font-display text-sm font-bold">{name.slice(0, 1).toUpperCase()}</span>; }
 function Confidence({ value }: { value: number }) { const percent = Math.round(value * 100); return <div className="flex items-center gap-2"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${percent >= 85 ? "bg-emerald-50 text-emerald-700" : percent >= 70 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>{percent}%</span><span className="h-1.5 w-12 overflow-hidden rounded-full bg-[#e5e7eb]"><span className="block h-full bg-black" style={{ width: `${percent}%` }} /></span></div>; }
-function IntegrationCard({ action, actionLabel, connected, icon: Icon, text, title }: { action?: () => void; actionLabel?: string; connected: boolean; icon: React.ElementType; text: string; title: string }) { return <article className="rounded-xl border border-[#e5e7eb] bg-white p-6"><div className="flex items-start justify-between gap-4"><span className="grid h-10 w-10 place-items-center rounded-lg bg-[#f3f4f5]"><Icon className="h-5 w-5" /></span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${connected ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{connected ? <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" /> : <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />}{connected ? "Active" : "Setup"}</span></div><h3 className="mt-5 font-display text-lg font-semibold">{title}</h3><p className="mt-2 min-h-12 text-sm leading-6 text-[#6b7280]">{text}</p>{action ? <button className={`mt-5 rounded-lg px-4 py-2.5 text-sm font-semibold ${connected ? "border border-[#e5e7eb]" : "bg-black text-white"}`} onClick={action} type="button">{actionLabel}</button> : null}</article>; }
 function StatusLine({ label, ready, value }: { label: string; ready: boolean; value?: string }) { return <div className="flex items-center justify-between gap-4 rounded-lg bg-[#f8f9fa] px-4 py-3 text-sm"><span>{label}</span><span className={`flex items-center gap-1.5 font-semibold ${ready ? "text-emerald-700" : "text-amber-700"}`}>{ready ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}{value || (ready ? "Ready" : "Setup")}</span></div>; }
-function HistoryColumn({ empty, items, locale, onDelete, title, workingId }: { empty: string; items: Subscription[]; locale: Locale; onDelete?: (item: Subscription) => void; title: string; workingId?: string | null }) { return <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white"><div className="flex items-center justify-between border-b border-[#e5e7eb] px-5 py-4"><h3 className="font-display font-semibold">{title}</h3><span className="rounded-full bg-[#f3f4f5] px-2.5 py-1 text-xs font-semibold">{items.length}</span></div>{items.length ? <div className="divide-y divide-[#e5e7eb]">{items.map((item) => <div className="flex items-center justify-between gap-4 p-4" key={item.id}><SubscriptionRow item={item} locale={locale} />{onDelete ? <button aria-label="Delete" className="grid h-8 w-8 place-items-center rounded-lg border border-red-100 text-red-700" disabled={workingId === item.id} onClick={() => onDelete(item)} type="button">{workingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button> : null}</div>)}</div> : <p className="p-6 text-sm text-[#76777d]">{empty}</p>}</div>; }
 function EmptyPanel({ children, icon: Icon, text, title }: { children?: React.ReactNode; icon: React.ElementType; text: string; title: string }) { return <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-[#e5e7eb] bg-white p-8 text-center shadow-stitch"><div className="max-w-lg"><span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f3f4f5]"><Icon className="h-7 w-7" /></span><h3 className="mt-5 font-display text-2xl font-semibold">{title}</h3><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#6b7280]">{text}</p>{children ? <div className="mt-6">{children}</div> : null}</div></div>; }
-function LoadingState({ label }: { label: string }) { return <div className="grid min-h-[560px] place-items-center text-center"><div><Loader2 className="mx-auto h-7 w-7 animate-spin" /><p className="mt-4 text-sm font-medium text-[#6b7280]">{label}</p></div></div>; }
+function DashboardSkeleton() {
+  return <div aria-label="Loading" className="animate-pulse"><div className="h-10 w-64 rounded-lg bg-[#e8eaed]" /><div className="mt-3 h-4 w-96 max-w-full rounded bg-[#eceef0]" /><div className="mt-10 grid gap-4 xl:grid-cols-3"><div className="h-40 rounded-xl bg-white" /><div className="h-40 rounded-xl bg-white" /><div className="grid grid-cols-2 gap-4"><div className="rounded-xl bg-white" /><div className="rounded-xl bg-white" /><div className="rounded-xl bg-white" /><div className="rounded-xl bg-white" /></div></div><div className="mt-6 h-28 rounded-2xl bg-[#e6e8eb]" /></div>;
+}
 function Notice({ onClose, text, title, tone }: { onClose: () => void; text: string; title: string; tone: "error" | "success" }) { return <div className={`mb-5 flex items-start gap-3 rounded-xl border p-4 ${tone === "error" ? "border-red-200 bg-red-50 text-red-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{tone === "error" ? <XCircle className="mt-0.5 h-5 w-5 shrink-0" /> : <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />}<div className="flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-sm leading-6">{text}</p></div><button aria-label="Close" onClick={onClose} type="button"><XCircle className="h-4 w-4" /></button></div>; }
 function formatDate(value: string | null | undefined, locale: Locale) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat(localeTags[locale], { day: "2-digit", month: "short", year: "numeric" }).format(date); }
 function formatMoney(item: Subscription, locale: Locale) { try { return new Intl.NumberFormat(localeTags[locale], { style: "currency", currency: item.currency || "KZT", maximumFractionDigits: 0 }).format(item.cost); } catch { return `${item.cost.toLocaleString(localeTags[locale])} ${item.currency}`; } }
