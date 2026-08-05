@@ -178,7 +178,7 @@ export default function HomePage() {
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
             <ShieldCheck className="h-4 w-4" /> {t.badge}
           </span>
-          <h1 className="mx-auto mt-6 max-w-3xl font-display text-[42px] font-bold leading-[1.08] tracking-[-0.03em] sm:text-[64px]">{t.title}</h1>
+          <h1 className="font-editorial-italic mx-auto mt-6 max-w-3xl text-[44px] font-semibold leading-[1.04] sm:text-[68px]">{t.title}</h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[#5f6368] sm:text-lg">{t.subtitle}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <form action="/api/device-mode" method="GET">
@@ -233,7 +233,7 @@ export default function HomePage() {
       <section className="px-4 py-20 sm:px-6" id="how">
         <div className="mx-auto max-w-[1280px]">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#76777d]">{t.stepsLabel}</p>
-          <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">{t.stepsTitle}</h2>
+          <h2 className="mt-3 max-w-2xl font-display text-4xl font-semibold leading-tight sm:text-5xl">{t.stepsTitle}</h2>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[SearchCheck, Landmark, BellRing].map((Icon, index) => (
               <article className="rounded-xl border border-[#e5e7eb] bg-white p-6" key={t.steps[index][0]}>
@@ -251,7 +251,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#76777d]">{t.pricingLabel}</p>
-            <h2 className="mt-3 font-display text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">{t.pricingTitle}</h2>
+            <h2 className="mt-3 font-display text-4xl font-semibold leading-tight sm:text-5xl">{t.pricingTitle}</h2>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             <PricingCard features={t.trialFeatures} name={t.trial} price={t.trialPrice} text={t.trialText} action={t.start} plan="free" />
@@ -277,7 +277,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" />
       </span>
-      <span className="font-display text-base font-bold tracking-[-0.02em]">TengeGuard</span>
+      <span className="font-display text-xl font-bold leading-none">TengeGuard</span>
     </Link>
   );
 }
@@ -286,7 +286,7 @@ function PricingCard({ action, dark = false, features, name, plan, price, second
   return (
     <article className={`rounded-xl border p-7 ${dark ? "border-black bg-black text-white" : "border-[#e5e7eb] bg-white"}`}>
       <div className="flex items-center justify-between gap-4"><h3 className="font-display text-xl font-semibold">{name}</h3><CircleDollarSign className="h-5 w-5 opacity-60" /></div>
-      <p className="mt-7 font-display text-3xl font-semibold">{price}</p>
+      <p className="mt-7 font-body-md text-3xl font-semibold tabular-nums">{price}</p>
       {secondary ? <p className="mt-1 text-xs text-white/60">{secondary}</p> : null}
       <p className={`mt-4 text-sm ${dark ? "text-white/65" : "text-[#6b7280]"}`}>{text}</p>
       <ul className="mt-6 space-y-3">

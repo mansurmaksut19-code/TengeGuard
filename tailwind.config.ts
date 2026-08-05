@@ -40,16 +40,16 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"],
-        "body-md": ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"],
-        "label-sm": ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"],
-        "mono-data": ["Golos Text", "ui-sans-serif", "system-ui", "sans-serif"]
+        display: ["Cormorant Garamond", "Georgia", "serif"],
+        "body-md": ["Onest", "ui-sans-serif", "system-ui", "sans-serif"],
+        "label-sm": ["Onest", "ui-sans-serif", "system-ui", "sans-serif"],
+        "mono-data": ["Onest", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       fontSize: {
-        display: ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
-        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
-        "headline-lg-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }],
-        "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        display: ["48px", { lineHeight: "56px", letterSpacing: "0", fontWeight: "700" }],
+        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "0", fontWeight: "600" }],
+        "headline-lg-mobile": ["28px", { lineHeight: "36px", letterSpacing: "0", fontWeight: "600" }],
+        "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "0", fontWeight: "600" }],
         "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
         "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }],
         "label-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "600" }],
