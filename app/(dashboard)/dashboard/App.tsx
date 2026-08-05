@@ -1,122 +1,59 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
-  BellRing,
+  ArrowRight,
   Bot,
   CalendarDays,
+  Check,
   CheckCircle2,
+  ChevronRight,
+  CircleDollarSign,
+  Clock3,
   Database,
-  HardDrive,
-  ExternalLink,
-  Globe2,
-  KeyRound,
-  Laptop,
+  FileCheck2,
+  History,
+  Landmark,
+  LayoutDashboard,
   Loader2,
   LogOut,
-  LockKeyhole,
-  MailCheck,
   MessageCircle,
-  PlugZap,
-  Radar,
   RefreshCw,
   Search,
   Send,
+  Settings,
   ShieldCheck,
-  Smartphone,
   Trash2,
-  UserCog,
   UserCircle2,
-  WalletCards
+  WalletCards,
+  XCircle
 } from "lucide-react";
 
 type Locale = "ru" | "en" | "kk";
-type BillingCycle = "monthly" | "yearly" | "weekly" | "unknown";
-type SubscriptionStatus = "active" | "cancelled" | "trial" | "review";
-type SubscriptionType = "paid" | "free_trial" | "free" | "unknown";
-type DashboardFilter = "all" | "paid" | "free" | "trial" | "review";
 type DashboardView = "dashboard" | "subscriptions" | "evidence" | "access" | "history" | "ai" | "account";
 type DeviceMode = "mobile" | "desktop";
 type BillingPlan = "free" | "pro_monthly" | "pro_yearly";
+type SubscriptionStatus = "active" | "cancelled" | "trial" | "review";
+type BillingCycle = "monthly" | "yearly" | "weekly" | "unknown";
+type Filter = "all" | "paid" | "review";
 
-type AiMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-type SessionUser = {
-  id: string;
-  email: string;
-  name: string;
-  avatar_url?: string;
-};
-
-type SubscriptionEvidence = {
-  source: "gmail" | "bank" | "google_takeout" | "apple_export" | "open_banking";
-  message_id?: string;
-  subject?: string;
-  from?: string;
-  date?: string;
-  snippet?: string;
-  matched_signals: string[];
-};
-
-type Subscription = {
-  id: string;
-  user_id: string;
-  provider_name: string;
-  cost: number;
-  currency: string;
-  billing_cycle: BillingCycle;
-  next_billing_date: string | null;
-  status: SubscriptionStatus;
-  type: SubscriptionType;
-  trial_ends_at?: string | null;
-  cancellation_path: string;
-  confidence: number;
-  evidence: SubscriptionEvidence[];
-  last_seen_at: string;
-  cancellation_confirmed_at?: string | null;
-};
-
-type GmailStatus = {
-  ok: boolean;
-  configured: boolean;
-  identityConfigured: boolean;
-  gisClientId: string | null;
+type User = { id: string; email: string; name: string; avatar_url?: string };
+type AuthStatus = {
   connected: boolean;
-  connectUrl: string | null;
-  user: SessionUser | null;
-  scope: string | null;
-  report: {
-    ok: boolean;
-    scanned_at: string;
-    messages_scanned: number;
-    subscriptions_found: number;
-    query_count: number;
-    user_email?: string;
-    error?: string;
-  } | null;
+  user: User | null;
+  report?: { scanned_at?: string; messages_scanned?: number; subscriptions_found?: number } | null;
 };
-
 type TelegramStatus = {
-  ok: boolean;
   configured: boolean;
-  botName: string;
-  botUsername: string;
   connected: boolean;
-  notificationsEnabled: boolean;
-  connectUrl: string | null;
-  chat: {
-    username?: string;
-    first_name?: string;
-    linked_at: string;
-  } | null;
+  botUsername?: string;
+  connectUrl?: string | null;
+  chat?: { username?: string; first_name?: string } | null;
 };
-
-type ConnectorStatus = {
+type Connector = {
   id: "bank";
   name: string;
   status: "connected" | "ready" | "setup_required" | "not_available";
@@ -124,588 +61,186 @@ type ConnectorStatus = {
   action: string;
   setup?: string;
 };
-
-type CancellationResult = {
+type Readiness = { paymentConfigured: boolean; persistentStoreConfigured: boolean };
+type Evidence = {
+  source: string;
+  message_id?: string;
+  subject?: string;
+  from?: string;
+  date?: string;
+  snippet?: string;
+  matched_signals: string[];
+};
+type Subscription = {
   id: string;
   provider_name: string;
-  status: "auto_cancelled" | "needs_user_action" | "unsupported";
+  cost: number;
+  currency: string;
+  billing_cycle: BillingCycle;
+  next_billing_date: string | null;
+  status: SubscriptionStatus;
+  type: string;
+  trial_ends_at?: string | null;
   cancellation_path: string;
-  reason: string;
+  confidence: number;
+  evidence: Evidence[];
+  last_seen_at: string;
 };
+type AiMessage = { role: "user" | "assistant"; content: string };
 
-type CancelSubscriptionResponse = {
-  ok: boolean;
-  result: CancellationResult;
-};
-
-type SystemReadiness = {
-  ok: boolean;
-  gmailConfigured: boolean;
-  paymentConfigured: boolean;
-  persistentStoreConfigured: boolean;
-};
-
-type RefundResult = {
-  id: string;
-  provider_name: string;
-  status: "needs_user_action" | "unsupported";
-  refund_path: string;
-  reason: string;
-};
-
-type RefundSubscriptionResponse = {
-  ok: boolean;
-  result: RefundResult;
-};
-
-type AiChatResponse = {
-  ok: boolean;
-  answer: string;
-  model?: string;
-};
-
-const localeLabels: Record<Locale, string> = {
-  ru: "Русский",
-  en: "English",
-  kk: "Қазақша"
-};
-
-const localeTags: Record<Locale, string> = {
-  ru: "ru-RU",
-  en: "en-US",
-  kk: "kk-KZ"
-};
+const languageNames: Record<Locale, string> = { ru: "Русский", en: "English", kk: "Қазақша" };
+const localeTags: Record<Locale, string> = { ru: "ru-RU", en: "en-US", kk: "kk-KZ" };
 
 const copy = {
   ru: {
     overview: "Обзор",
-    subscriptionsNav: "Подписки",
-    evidenceNav: "Доказательства",
-    accessNav: "Доступ",
-    historyNav: "История",
-    aiNav: "ИИ-чат",
-    accountNav: "Аккаунт",
-    activeProtection: "Активная защита",
-    totalMonthlySpend: "Сумма в месяц",
-    nextBilling: "Следующее списание",
-    googleConnected: "Google-аккаунт подключён",
-    googleDisconnected: "Google-аккаунт не подключён",
-    activeConnection: "Активное подключение",
-    lastScan: "Последний scan",
-    scanNow: "Сканировать Gmail",
-    scanning: "Идет анализ Gmail",
-    continueGoogle: "Подключить Gmail",
-    reconnectGoogle: "Переподключить Gmail",
-    serverMissing: "Google OAuth не настроен",
-    activeSubscriptions: "Активные подписки",
-    endingSoon: "Скоро заканчивается",
-    needsReview: "Нужно проверить",
-    savingsScore: "Потенциал экономии",
-    quickReport: "Отчёт за минуту",
-    protectedNow: "Сейчас под контролем",
-    topRisk: "Главный риск",
-    noRisk: "Критичных рисков не видно",
-    realEvidenceOnly: "Только реальные доказательства",
-    readOnly: "Банк read-only",
-    telegramTitle: "Telegram Bot",
-    telegramText: "Уведомления перед прогнозируемыми списаниями по платным подпискам.",
-    telegramConnect: "Подключить Telegram",
-    telegramTest: "Отправить тест",
-    telegramSent: "Тестовое сообщение отправлено в Telegram.",
-    subscriptionsTitle: "Ваши подписки",
-    subscriptionsText: "Платные подписки, подтверждённые повторяющимися банковскими транзакциями.",
-    allFilter: "Все",
-    paidFilter: "Платные",
-    freeFilter: "Бесплатные",
-    trialFilter: "Trial",
-    reviewFilter: "Проверить",
-    search: "Поиск по подписке или банковской операции",
-    showing: "Показано",
-    paid: "Платные",
-    free: "Бесплатные",
-    trials: "Trial",
+    subscriptions: "Подписки",
     evidence: "Доказательства",
-    confidence: "Достоверность",
-    trustScore: "Trust score",
-    cancel: "Отменить подписку",
-    cancelling: "Открываем отмену...",
-    markCancelled: "Я отменил",
-    markingCancelled: "Сохраняем...",
-    cancelConfirmed: "Подписка перенесена в историю отмененных.",
-    needsUserActionCancel: "Нужен вход в сервис",
-    unsupportedCancel: "Нет канала отмены",
-    autoCancelled: "Автоотменено",
-    systemCancelNote: "TengeGuard не будет фейково помечать подписку отмененной. Если сервис требует вход, 2FA или подтверждение, система покажет официальный путь.",
-    refund: "Попробовать вернуть деньги",
-    refunding: "Проверяем возврат...",
-    refundNeedsUserAction: "Открыл официальный путь возврата",
-    refundUnsupported: "Автовозврат невозможен",
-    paymentPendingTitle: "Оплата почти готова",
-    paymentPendingText: "Freedom Pay ещё не выдал merchant-ключи. Как только добавим MERCHANT_ID и SECRET_KEY в Vercel, кнопка Pro начнёт открывать настоящую страницу оплаты.",
-    trialActiveTitle: "Free Trial активен",
-    trialExpiredTitle: "Free Trial закончился",
-    trialActiveText: "У вас есть 14 дней, чтобы проверить поиск платных подписок по банковским операциям.",
-    trialExpiredText: "Чтобы продолжить мониторинг подписок, подключите Pro: 200 тг в месяц или 2000 тг в год.",
-    upgradeMonthly: "Pro за 200 тг/мес",
-    upgradeYearly: "Pro за 2000 тг/год",
-    proActiveTitle: "Pro активен",
-    proActiveText: "Полный доступ: мониторинг, Telegram-напоминания, история и помощь с отменой.",
-    proExpiredTitle: "Подписка Pro закончилась",
-    proExpiredText: "Продлите Pro, чтобы снова открыть мониторинг, историю, банковские данные и уведомления.",
-    remove: "Убрать",
-    noSubsTitle: "Реальные подписки пока не найдены",
-    noSubsText: "Подключите банк и запустите анализ. Если повторяющихся платных списаний нет, TengeGuard честно покажет пусто.",
-    evidenceTitle: "Банковские доказательства",
-    evidenceText: "Аудит-лог писем, на основе которых TengeGuard нашел подписки.",
-    verifiedData: "Подтверждено банковскими транзакциями",
-    sourceLocked: "Источник защищен",
-    accessTitle: "Доступ и интеграции",
-    accessText: "Управляйте подключениями Google, Telegram и будущими источниками данных.",
-    privacy: "Банковское подключение работает только на чтение счетов и транзакций. Переводы и платежи недоступны TengeGuard.",
+    integrations: "Интеграции",
+    history: "История",
+    ai: "AI-помощник",
+    account: "Аккаунт",
     connectBank: "Подключить банк",
-    syncAll: "Найти автоматически",
-    syncingAll: "Ищем...",
-    currentSubscriptions: "Текущие подписки",
-    cancelledSubscriptions: "Отмененные подписки",
-    cancelledEmpty: "Отмененных подписок пока нет.",
-    found: "Найдено",
-    messages: "Писем проверено",
-    billing: "Цикл",
-    renewal: "Продление",
-    periodEnds: "Окончание периода",
-    dateMissing: "дата не найдена",
-    queries: "запросов",
-    error: "Ошибка",
-    loadingTitle: "TengeGuard готовит дашборд",
-    loadingText: "Проверяем доступ, квитанции и регулярные списания.",
-    aiTitle: "ИИ-чат TengeGuard",
-    aiText: "Спросите что угодно: про подписки, расходы, отмену, trial-периоды или любые идеи по продукту.",
-    aiPlaceholder: "Например: какие подписки стоит проверить в первую очередь?",
-    aiSend: "Отправить",
+    dashboardTitle: "Обзор подписок",
+    dashboardText: "Реальные регулярные списания из подключённого банка.",
+    monthlySpend: "Расходы в месяц",
+    nextPayment: "Следующее списание",
+    active: "Активные подписки",
+    dueSoon: "Скоро списание",
+    review: "Нужно проверить",
+    confidence: "Средняя точность",
+    noDataTitle: "Подключите банк, чтобы найти подписки",
+    noDataText: "TengeGuard запросит только чтение истории транзакций. Переводы и управление счётом недоступны.",
+    bankOnly: "Доступ только для чтения",
+    telegramReady: "Telegram подключён",
+    telegramMissing: "Подключите Telegram",
+    trial: "Пробный период",
+    days: "дн.",
+    pro: "Pro активен",
+    sync: "Обновить данные",
+    syncing: "Обновляем",
+    subscriptionsTitle: "Активные подписки",
+    subscriptionsText: "Подтверждённые повторяющимися банковскими операциями.",
+    search: "Найти подписку...",
+    all: "Все",
+    paid: "Платные",
+    reviewFilter: "Проверить",
+    provider: "Сервис",
+    amount: "Сумма",
+    cycle: "Период",
+    nextDate: "Следующая дата",
+    status: "Статус",
+    action: "Действие",
+    cancel: "Отменить",
+    markCancelled: "Отметить отменённой",
+    refund: "Попробовать вернуть",
+    delete: "Удалить запись",
+    empty: "Реальные подписки пока не найдены.",
+    evidenceTitle: "Доказательства обнаружения",
+    evidenceText: "Каждая запись показывает банковскую операцию, на которой основано обнаружение.",
+    securityNote: "TengeGuard показывает только данные, полученные из разрешённой истории операций. Неподтверждённые подписки не создаются.",
+    transaction: "Операция",
+    date: "Дата",
+    pattern: "Сигналы",
+    source: "Источник",
+    integrationsTitle: "Интеграции",
+    integrationsText: "Только подключения, необходимые для поиска и уведомлений.",
+    connected: "Подключено",
+    ready: "Готово",
+    unavailable: "Недоступно",
+    bank: "Банк",
+    bankText: "Salt Edge открывает защищённый экран выбора банка и запрашивает историю только для чтения.",
+    telegram: "Telegram",
+    telegramText: "Напоминания за неделю и за день до прогнозируемого списания.",
+    connectTelegram: "Подключить Telegram",
+    testTelegram: "Отправить тест",
+    google: "Google-аккаунт",
+    googleText: "Используется только для входа. Доступ к Gmail не запрашивается.",
+    historyTitle: "История подписок",
+    current: "Текущие",
+    cancelled: "Отменённые",
+    aiTitle: "AI-помощник",
+    aiText: "Задавайте вопросы о найденных подписках и расходах.",
+    aiPlaceholder: "Например: какое списание будет следующим?",
+    send: "Отправить",
     accountTitle: "Аккаунт",
-    accountText: "Управляйте Google-аккаунтом, режимом интерфейса и подключениями.",
     changeAccount: "Сменить Google-аккаунт",
-    changeMode: "Сменить режим",
-    logout: "Выйти"
+    logout: "Выйти",
+    plan: "Тариф",
+    storage: "Хранилище",
+    payment: "Оплата",
+    error: "Не удалось выполнить действие",
+    loading: "Загружаем ваши данные",
+    expiredTitle: "Доступ закончился",
+    expiredText: "Выберите Pro, чтобы продолжить мониторинг подписок.",
+    choosePro: "Подключить Pro"
   },
   en: {
-    overview: "Overview",
-    subscriptionsNav: "Subscriptions",
-    evidenceNav: "Evidence",
-    accessNav: "Access",
-    historyNav: "History",
-    aiNav: "AI Chat",
-    accountNav: "Account",
-    activeProtection: "Active Protection",
-    totalMonthlySpend: "Total Monthly Spend",
-    nextBilling: "Next Billing",
-    googleConnected: "Google account connected",
-    googleDisconnected: "Google account not connected",
-    activeConnection: "Active connection",
-    lastScan: "Last scan",
-    scanNow: "Scan Gmail",
-    scanning: "Analyzing Gmail",
-    continueGoogle: "Connect Gmail",
-    reconnectGoogle: "Reconnect Gmail",
-    serverMissing: "Google OAuth is not configured",
-    activeSubscriptions: "Active subscriptions",
-    endingSoon: "Ending soon",
-    needsReview: "Needs review",
-    savingsScore: "Savings potential",
-    quickReport: "1-minute report",
-    protectedNow: "Protected now",
-    topRisk: "Top risk",
-    noRisk: "No critical risk visible",
-    realEvidenceOnly: "Real evidence only",
-    readOnly: "Bank read-only",
-    telegramTitle: "Telegram Bot",
-    telegramText: "Alerts before predicted paid-subscription charges.",
-    telegramConnect: "Connect Telegram",
-    telegramTest: "Send test",
-    telegramSent: "Test message sent to Telegram.",
-    subscriptionsTitle: "Your subscriptions",
-    subscriptionsText: "Paid subscriptions confirmed by recurring bank transactions.",
-    allFilter: "All",
-    paidFilter: "Paid",
-    freeFilter: "Free",
-    trialFilter: "Trial",
-    reviewFilter: "Review",
-    search: "Search by subscription or bank transaction",
-    showing: "Showing",
-    paid: "Paid",
-    free: "Free",
-    trials: "Trial",
-    evidence: "Evidence",
-    confidence: "Confidence",
-    trustScore: "Trust score",
-    cancel: "Cancel subscription",
-    cancelling: "Opening cancellation...",
-    markCancelled: "I cancelled it",
-    markingCancelled: "Saving...",
-    cancelConfirmed: "Subscription moved to cancelled history.",
-    needsUserActionCancel: "Provider sign-in needed",
-    unsupportedCancel: "No cancellation channel",
-    autoCancelled: "Auto-cancelled",
-    systemCancelNote: "TengeGuard will not falsely mark a subscription as cancelled. If a provider requires sign-in, 2FA, or confirmation, the system shows the official path.",
-    refund: "Try to get a refund",
-    refunding: "Checking refund...",
-    refundNeedsUserAction: "Official refund path opened",
-    refundUnsupported: "Automatic refund is unavailable",
-    paymentPendingTitle: "Payment is almost ready",
-    paymentPendingText: "Freedom Pay merchant keys are not configured yet. Once MERCHANT_ID and SECRET_KEY are added in Vercel, the Pro button will open the real checkout page.",
-    trialActiveTitle: "Free Trial active",
-    trialExpiredTitle: "Free Trial ended",
-    trialActiveText: "You have 14 days to test paid-subscription detection from bank transactions.",
-    trialExpiredText: "To keep monitoring subscriptions, upgrade to Pro: 200 KZT monthly or 2000 KZT yearly.",
-    upgradeMonthly: "Pro for 200 KZT/mo",
-    upgradeYearly: "Pro for 2000 KZT/yr",
-    proActiveTitle: "Pro active",
-    proActiveText: "Full access: monitoring, Telegram reminders, history, and cancellation assistance.",
-    proExpiredTitle: "Pro subscription ended",
-    proExpiredText: "Renew Pro to restore monitoring, history, bank data, and reminders.",
-    remove: "Remove",
-    noSubsTitle: "No real subscriptions found yet",
-    noSubsText: "Connect your bank and run analysis. If no recurring paid charges exist, TengeGuard shows empty results.",
-    evidenceTitle: "Bank evidence",
-    evidenceText: "Audit trail of bank transactions used to detect paid subscriptions.",
-    verifiedData: "Verified bank transaction data",
-    sourceLocked: "Source locked",
-    accessTitle: "Access and integrations",
-    accessText: "Manage Google, Telegram, and future data sources.",
-    privacy: "Bank connections are read-only for accounts and transactions. TengeGuard cannot initiate transfers or payments.",
-    connectBank: "Connect bank",
-    syncAll: "Find automatically",
-    syncingAll: "Finding...",
-    currentSubscriptions: "Current subscriptions",
-    cancelledSubscriptions: "Cancelled subscriptions",
-    cancelledEmpty: "No cancelled subscriptions yet.",
-    found: "Found",
-    messages: "Messages scanned",
-    billing: "Cycle",
-    renewal: "Renewal",
-    periodEnds: "Period ends",
-    dateMissing: "date missing",
-    queries: "queries",
-    error: "Error",
-    loadingTitle: "TengeGuard is preparing dashboard",
-    loadingText: "Checking access, receipts, and recurring charges.",
-    aiTitle: "TengeGuard AI Chat",
-    aiText: "Ask anything about subscriptions, spending, cancellation, trials, or product ideas.",
-    aiPlaceholder: "Example: which subscriptions should I review first?",
-    aiSend: "Send",
-    accountTitle: "Account",
-    accountText: "Manage your Google account, interface mode, and connections.",
-    changeAccount: "Change Google account",
-    changeMode: "Change mode",
-    logout: "Sign out"
+    overview: "Overview", subscriptions: "Subscriptions", evidence: "Evidence", integrations: "Integrations", history: "History", ai: "AI Assistant", account: "Account",
+    connectBank: "Connect bank", dashboardTitle: "Subscription overview", dashboardText: "Real recurring charges from your connected bank.",
+    monthlySpend: "Monthly spend", nextPayment: "Next charge", active: "Active subscriptions", dueSoon: "Due soon", review: "Needs review", confidence: "Average confidence",
+    noDataTitle: "Connect a bank to find subscriptions", noDataText: "TengeGuard requests read-only transaction history. It cannot transfer funds or manage your account.",
+    bankOnly: "Read-only access", telegramReady: "Telegram connected", telegramMissing: "Connect Telegram", trial: "Free trial", days: "days", pro: "Pro active",
+    sync: "Refresh data", syncing: "Refreshing", subscriptionsTitle: "Active subscriptions", subscriptionsText: "Confirmed by recurring bank transactions.",
+    search: "Find a subscription...", all: "All", paid: "Paid", reviewFilter: "Review", provider: "Service", amount: "Amount", cycle: "Cycle", nextDate: "Next date",
+    status: "Status", action: "Action", cancel: "Cancel", markCancelled: "Mark cancelled", refund: "Try refund", delete: "Delete record", empty: "No real subscriptions found yet.",
+    evidenceTitle: "Detection evidence", evidenceText: "Each record shows the bank transaction behind the detection.",
+    securityNote: "TengeGuard shows only data received from authorized transaction history. Unverified subscriptions are never created.",
+    transaction: "Transaction", date: "Date", pattern: "Signals", source: "Source", integrationsTitle: "Integrations", integrationsText: "Only the connections required for detection and reminders.",
+    connected: "Connected", ready: "Ready", unavailable: "Unavailable", bank: "Bank", bankText: "Salt Edge opens a secure bank selection flow and requests read-only history.",
+    telegram: "Telegram", telegramText: "Reminders one week and one day before a predicted charge.", connectTelegram: "Connect Telegram", testTelegram: "Send test",
+    google: "Google account", googleText: "Used only for sign-in. Gmail access is not requested.", historyTitle: "Subscription history", current: "Current", cancelled: "Cancelled",
+    aiTitle: "AI Assistant", aiText: "Ask questions about detected subscriptions and spending.", aiPlaceholder: "For example: what is the next charge?", send: "Send",
+    accountTitle: "Account", changeAccount: "Change Google account", logout: "Sign out", plan: "Plan", storage: "Storage", payment: "Payments",
+    error: "Action failed", loading: "Loading your data", expiredTitle: "Access expired", expiredText: "Choose Pro to continue monitoring subscriptions.", choosePro: "Choose Pro"
   },
   kk: {
-    overview: "Шолу",
-    subscriptionsNav: "Жазылымдар",
-    evidenceNav: "Дәлелдер",
-    accessNav: "Рұқсат",
-    historyNav: "Тарих",
-    aiNav: "AI чат",
-    accountNav: "Аккаунт",
-    activeProtection: "Белсенді қорғаныс",
-    totalMonthlySpend: "Айлық шығын",
-    nextBilling: "Келесі төлем",
-    googleConnected: "Google аккаунты қосылды",
-    googleDisconnected: "Google аккаунты қосылмаған",
-    activeConnection: "Белсенді қосылым",
-    lastScan: "Соңғы scan",
-    scanNow: "Gmail сканерлеу",
-    scanning: "Gmail талдануда",
-    continueGoogle: "Gmail қосу",
-    reconnectGoogle: "Gmail қайта қосу",
-    serverMissing: "Google OAuth бапталмаған",
-    activeSubscriptions: "Белсенді жазылымдар",
-    endingSoon: "Жақында аяқталады",
-    needsReview: "Тексеру керек",
-    savingsScore: "Үнемдеу әлеуеті",
-    quickReport: "1 минуттық есеп",
-    protectedNow: "Қазір бақылауда",
-    topRisk: "Негізгі қауіп",
-    noRisk: "Маңызды қауіп көрінбейді",
-    realEvidenceOnly: "Тек нақты дәлелдер",
-    readOnly: "Банк тек оқу",
-    telegramTitle: "Telegram Bot",
-    telegramText: "Ақылы жазылымның болжамды төлеміне дейінгі хабарламалар.",
-    telegramConnect: "Telegram қосу",
-    telegramTest: "Тест жіберу",
-    telegramSent: "Telegram-ға тест хабарлама жіберілді.",
-    subscriptionsTitle: "Сіздің жазылымдар",
-    subscriptionsText: "Қайталанатын банк операцияларымен расталған ақылы жазылымдар.",
-    allFilter: "Барлығы",
-    paidFilter: "Ақылы",
-    freeFilter: "Тегін",
-    trialFilter: "Trial",
-    reviewFilter: "Тексеру",
-    search: "Жазылым немесе банк операциясы бойынша іздеу",
-    showing: "Көрсетілді",
-    paid: "Ақылы",
-    free: "Тегін",
-    trials: "Trial",
-    evidence: "Дәлелдер",
-    confidence: "Сенімділік",
-    trustScore: "Trust score",
-    cancel: "Жазылымды тоқтату",
-    cancelling: "Тоқтату ашылуда...",
-    markCancelled: "Мен тоқтаттым",
-    markingCancelled: "Сақталуда...",
-    cancelConfirmed: "Жазылым тоқтатылғандар тарихына көшірілді.",
-    needsUserActionCancel: "Сервиске кіру керек",
-    unsupportedCancel: "Тоқтату арнасы жоқ",
-    autoCancelled: "Автоматты тоқтатылды",
-    systemCancelNote: "TengeGuard жазылымды жалған түрде тоқтатылды деп белгілемейді. Егер сервис кіруді, 2FA немесе растауды талап етсе, жүйе ресми жолды көрсетеді.",
-    refund: "Ақшаны қайтаруға тырысу",
-    refunding: "Қайтару тексерілуде...",
-    refundNeedsUserAction: "Ресми қайтару жолы ашылды",
-    refundUnsupported: "Автоқайтару мүмкін емес",
-    paymentPendingTitle: "Төлем дерлік дайын",
-    paymentPendingText: "Freedom Pay merchant кілттері әлі қосылмаған. MERCHANT_ID және SECRET_KEY Vercel-ге енгізілгеннен кейін Pro батырмасы нақты төлем бетіне апарады.",
-    trialActiveTitle: "Free Trial белсенді",
-    trialExpiredTitle: "Free Trial аяқталды",
-    trialActiveText: "Банк операциялары арқылы ақылы жазылымдарды іздеуді тексеруге 14 күн бар.",
-    trialExpiredText: "Жазылым мониторингін жалғастыру үшін Pro қосыңыз: айына 200 тг немесе жылына 2000 тг.",
-    upgradeMonthly: "Pro 200 тг/ай",
-    upgradeYearly: "Pro 2000 тг/жыл",
-    proActiveTitle: "Pro белсенді",
-    proActiveText: "Толық қолжетімділік: мониторинг, Telegram ескертулері, тарих және тоқтатуға көмек.",
-    proExpiredTitle: "Pro жазылымы аяқталды",
-    proExpiredText: "Мониторингті, тарихты, банк деректерін және ескертулерді қайта ашу үшін Pro-ны ұзартыңыз.",
-    remove: "Өшіру",
-    noSubsTitle: "Әзірге нақты жазылым табылмады",
-    noSubsText: "Банкті қосып, талдауды бастаңыз. Қайталанатын ақылы төлемдер болмаса, TengeGuard бос нәтиже көрсетеді.",
-    evidenceTitle: "Банк дәлелдері",
-    evidenceText: "Ақылы жазылымдарды анықтауға қолданылған банк операцияларының аудиті.",
-    verifiedData: "Банк операцияларымен расталған дерек",
-    sourceLocked: "Дереккөзі қорғалған",
-    accessTitle: "Рұқсат және интеграциялар",
-    accessText: "Google, Telegram және болашақ дерек көздерін басқарыңыз.",
-    privacy: "Банк рұқсаты тек шоттар мен операцияларды оқуға арналған. TengeGuard ақша аудара алмайды.",
-    connectBank: "Банк қосу",
-    syncAll: "Автоматты табу",
-    syncingAll: "Ізделуде...",
-    currentSubscriptions: "Қазіргі жазылымдар",
-    cancelledSubscriptions: "Тоқтатылған жазылымдар",
-    cancelledEmpty: "Әзірге тоқтатылған жазылым жоқ.",
-    found: "Табылды",
-    messages: "Хат тексерілді",
-    billing: "Цикл",
-    renewal: "Ұзарту",
-    periodEnds: "Кезең аяқталады",
-    dateMissing: "күн табылмады",
-    queries: "сұраныс",
-    error: "Қате",
-    loadingTitle: "TengeGuard дашборд дайындауда",
-    loadingText: "Рұқсат, чектер және тұрақты төлемдер тексерілуде.",
-    aiTitle: "TengeGuard AI чат",
-    aiText: "Жазылымдар, шығындар, тоқтату, trial кезеңдері немесе өнім идеялары туралы сұраңыз.",
-    aiPlaceholder: "Мысалы: қай жазылымдарды алдымен тексеру керек?",
-    aiSend: "Жіберу",
-    accountTitle: "Аккаунт",
-    accountText: "Google аккаунтын, интерфейс режимін және қосылымдарды басқарыңыз.",
-    changeAccount: "Google аккаунтын ауыстыру",
-    changeMode: "Режимді ауыстыру",
-    logout: "Шығу"
+    overview: "Шолу", subscriptions: "Жазылымдар", evidence: "Дәлелдер", integrations: "Интеграциялар", history: "Тарих", ai: "AI көмекші", account: "Аккаунт",
+    connectBank: "Банкті қосу", dashboardTitle: "Жазылымдарға шолу", dashboardText: "Қосылған банктен алынған нақты қайталанатын төлемдер.",
+    monthlySpend: "Айлық шығын", nextPayment: "Келесі төлем", active: "Белсенді жазылымдар", dueSoon: "Жақын төлем", review: "Тексеру керек", confidence: "Орташа дәлдік",
+    noDataTitle: "Жазылымдарды табу үшін банкті қосыңыз", noDataText: "TengeGuard операциялар тарихын тек оқуға рұқсат сұрайды. Ақша аудару мүмкін емес.",
+    bankOnly: "Тек оқуға рұқсат", telegramReady: "Telegram қосылған", telegramMissing: "Telegram қосу", trial: "Тегін кезең", days: "күн", pro: "Pro белсенді",
+    sync: "Деректерді жаңарту", syncing: "Жаңартылуда", subscriptionsTitle: "Белсенді жазылымдар", subscriptionsText: "Қайталанатын банк операцияларымен расталған.",
+    search: "Жазылымды табу...", all: "Барлығы", paid: "Ақылы", reviewFilter: "Тексеру", provider: "Сервис", amount: "Сома", cycle: "Кезең", nextDate: "Келесі күн",
+    status: "Күй", action: "Әрекет", cancel: "Бас тарту", markCancelled: "Бас тартылды деп белгілеу", refund: "Қайтаруға тырысу", delete: "Жазбаны жою", empty: "Нақты жазылымдар әлі табылмады.",
+    evidenceTitle: "Анықтау дәлелдері", evidenceText: "Әр жазба анықтауға негіз болған банк операциясын көрсетеді.",
+    securityNote: "TengeGuard тек рұқсат етілген операциялар тарихынан алынған деректерді көрсетеді. Расталмаған жазылымдар жасалмайды.",
+    transaction: "Операция", date: "Күні", pattern: "Белгілер", source: "Дереккөз", integrationsTitle: "Интеграциялар", integrationsText: "Тек іздеу мен ескертулерге қажетті қосылымдар.",
+    connected: "Қосылған", ready: "Дайын", unavailable: "Қолжетімсіз", bank: "Банк", bankText: "Salt Edge қауіпсіз банк таңдау терезесін ашып, тарихты тек оқуға сұрайды.",
+    telegram: "Telegram", telegramText: "Болжамды төлемге бір апта және бір күн қалғанда ескерту.", connectTelegram: "Telegram қосу", testTelegram: "Тест жіберу",
+    google: "Google аккаунты", googleText: "Тек кіру үшін. Gmail рұқсаты сұралмайды.", historyTitle: "Жазылымдар тарихы", current: "Ағымдағы", cancelled: "Тоқтатылған",
+    aiTitle: "AI көмекші", aiText: "Табылған жазылымдар мен шығындар туралы сұраңыз.", aiPlaceholder: "Мысалы: келесі төлем қандай?", send: "Жіберу",
+    accountTitle: "Аккаунт", changeAccount: "Google аккаунтын ауыстыру", logout: "Шығу", plan: "Тариф", storage: "Сақтау", payment: "Төлем",
+    error: "Әрекет орындалмады", loading: "Деректеріңіз жүктелуде", expiredTitle: "Қолжетімділік аяқталды", expiredText: "Бақылауды жалғастыру үшін Pro таңдаңыз.", choosePro: "Pro қосу"
   }
 };
 
-const subscriptionTypeLabels: Record<Locale, Record<SubscriptionType, string>> = {
-  ru: { paid: "Платная", free_trial: "Trial", free: "Бесплатная", unknown: "Проверить" },
-  en: { paid: "Paid", free_trial: "Trial", free: "Free", unknown: "Review" },
-  kk: { paid: "Ақылы", free_trial: "Trial", free: "Тегін", unknown: "Тексеру" }
+const routes: Record<DashboardView, string> = {
+  dashboard: "/dashboard",
+  subscriptions: "/dashboard/subscriptions",
+  evidence: "/dashboard/evidence",
+  access: "/dashboard/access",
+  history: "/dashboard/history",
+  ai: "/dashboard/ai",
+  account: "/dashboard/account"
 };
 
-const billingCycleLabels: Record<Locale, Record<BillingCycle, string>> = {
-  ru: { monthly: "ежемесячно", yearly: "ежегодно", weekly: "еженедельно", unknown: "цикл не найден" },
-  en: { monthly: "monthly", yearly: "yearly", weekly: "weekly", unknown: "cycle missing" },
-  kk: { monthly: "ай сайын", yearly: "жыл сайын", weekly: "апта сайын", unknown: "цикл табылмады" }
-};
-
-const signalLabels: Record<Locale, Record<string, string>> = {
-  ru: {
-    receipt: "чек",
-    invoice: "счет",
-    renewal: "продление",
-    billing_date: "дата списания",
-    trial: "trial",
-    payment: "оплата",
-    free_plan: "free plan",
-    membership: "подписка",
-    cycle_estimate: "расчет по циклу",
-    welcome: "регистрация"
-  },
-  en: {
-    receipt: "receipt",
-    invoice: "invoice",
-    renewal: "renewal",
-    billing_date: "billing date",
-    trial: "trial",
-    payment: "payment",
-    free_plan: "free plan",
-    membership: "membership",
-    cycle_estimate: "cycle estimate",
-    welcome: "signup"
-  },
-  kk: {
-    receipt: "чек",
-    invoice: "шот",
-    renewal: "ұзарту",
-    billing_date: "төлем күні",
-    trial: "trial",
-    payment: "төлем",
-    free_plan: "free plan",
-    membership: "жазылым",
-    cycle_estimate: "цикл бойынша есеп",
-    welcome: "тіркелу"
-  }
-};
-
-const dashboardProgressSteps = [
-  "Подключаемся к аккаунту...",
-  "Ищем квитанции Apple и Google Play...",
-  "Анализируем ежемесячные траты..."
-];
-
-
-function typeLabel(type: SubscriptionType, locale: Locale) {
-  return subscriptionTypeLabels[locale][type];
+async function readJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) }, cache: "no-store" });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || payload.detail || "Request failed");
+  return payload as T;
 }
 
-function cycleLabel(cycle: BillingCycle, locale: Locale) {
-  return billingCycleLabels[locale][cycle];
+function daysUntil(value?: string | null) {
+  if (!value) return null;
+  return Math.ceil((new Date(value).getTime() - Date.now()) / 86_400_000);
 }
 
-function signalLabel(signal: string, locale: Locale) {
-  return signalLabels[locale][signal] || signal.replace(/_/g, " ");
-}
-
-function evidenceSourceLabel(source: SubscriptionEvidence["source"]) {
-  return {
-    gmail: "Gmail",
-    bank: "Bank",
-    google_takeout: "Google Takeout",
-    apple_export: "Apple",
-    open_banking: "Open Banking"
-  }[source];
-}
-
-function filterLabel(filter: DashboardFilter, locale: Locale) {
-  const t = copy[locale];
-  return {
-    all: t.allFilter,
-    paid: t.paidFilter,
-    free: t.freeFilter,
-    trial: t.trialFilter,
-    review: t.reviewFilter
-  }[filter];
-}
-
-function needsHumanReview(subscription: Subscription) {
-  return subscription.status === "review" || subscription.type === "unknown" || subscription.billing_cycle === "unknown" || subscription.confidence < 0.72;
-}
-
-function daysUntil(date: string | null | undefined) {
-  if (!date) return null;
-  const target = new Date(date).getTime();
-  if (Number.isNaN(target)) return null;
-  return Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24));
-}
-
-function daysUntilPast(date: string | null | undefined) {
-  if (!date) return 0;
-  const started = new Date(date).getTime();
-  if (Number.isNaN(started)) return 0;
-  return Math.floor((Date.now() - started) / (1000 * 60 * 60 * 24));
-}
-
-function isDueSoon(subscription: Subscription) {
-  const due = daysUntil(subscription.trial_ends_at || subscription.next_billing_date);
-  return due !== null && due >= 0 && due <= 14;
-}
-
-function monthlyEquivalent(subscription: Subscription) {
-  if (subscription.billing_cycle === "yearly") return subscription.cost / 12;
-  if (subscription.billing_cycle === "weekly") return subscription.cost * 4.345;
-  return subscription.cost;
-}
-
-function currencyTotals(subscriptions: Subscription[]) {
-  const totals = new Map<string, number>();
-  subscriptions
-    .filter((item) => item.cost > 0 && (item.status === "active" || item.status === "trial"))
-    .forEach((item) => {
-      totals.set(item.currency, (totals.get(item.currency) || 0) + monthlyEquivalent(item));
-    });
-
-  return Array.from(totals.entries())
-    .map(([currency, amount]) => `${amount.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ${currency}`)
-    .join(" + ");
-}
-
-function priceLabel(subscription: Subscription, locale: Locale) {
-  if (subscription.cost > 0) {
-    return `${subscription.cost.toLocaleString(localeTags[locale], { maximumFractionDigits: 2 })} ${subscription.currency}`;
-  }
-  return typeLabel(subscription.type, locale);
-}
-
-function formatDate(date: string | null | undefined, locale: Locale) {
-  if (!date) return "—";
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return new Intl.DateTimeFormat(localeTags[locale], { day: "2-digit", month: "short", year: "numeric" }).format(parsed);
-}
-
-function dateLabel(date: string | null | undefined, locale: Locale) {
-  if (!date) return copy[locale].dateMissing;
-  const diff = daysUntil(date);
-  if (diff === null) return formatDate(date, locale);
-  if (diff === 0) return locale === "en" ? "today" : locale === "kk" ? "бүгін" : "сегодня";
-  if (diff === 1) return locale === "en" ? "tomorrow" : locale === "kk" ? "ертең" : "завтра";
-  if (diff < 0) return locale === "en" ? "expired" : locale === "kk" ? "аяқталды" : "закончилось";
-  return `${formatDate(date, locale)} · ${diff} ${locale === "en" ? "d" : locale === "kk" ? "күн" : "дн."}`;
-}
-
-async function readJson<T>(url: string, options?: RequestInit) {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers || {})
-    }
-  });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || data.error || `Request failed with status ${response.status}`);
-  }
-  return data as T;
-}
-
-function subscriptionCacheKey(user?: SessionUser | null) {
-  const owner = user?.id || user?.email;
-  return owner ? `tengeguard:subscriptions:${owner}` : null;
-}
-
-function readCachedSubscriptions(user?: SessionUser | null) {
-  const key = subscriptionCacheKey(user);
-  if (!key || typeof window === "undefined") return [];
-
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(key) || "[]") as Subscription[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCachedSubscriptions(user: SessionUser | null | undefined, nextSubscriptions: Subscription[]) {
-  const key = subscriptionCacheKey(user);
-  if (!key || typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(nextSubscriptions));
+function monthlyCost(item: Subscription) {
+  if (item.billing_cycle === "yearly") return item.cost / 12;
+  if (item.billing_cycle === "weekly") return item.cost * 4.345;
+  return item.cost;
 }
 
 export default function App({
@@ -722,1783 +257,408 @@ export default function App({
   initialView?: DashboardView;
 } = {}) {
   const [locale, setLocale] = useState<Locale>("ru");
-  const [status, setStatus] = useState<GmailStatus | null>(null);
-  const [telegramStatus, setTelegramStatus] = useState<TelegramStatus | null>(null);
-  const [readiness, setReadiness] = useState<SystemReadiness | null>(null);
-  const [connectors, setConnectors] = useState<ConnectorStatus[]>([]);
+  const [auth, setAuth] = useState<AuthStatus | null>(null);
+  const [telegram, setTelegram] = useState<TelegramStatus | null>(null);
+  const [connectors, setConnectors] = useState<Connector[]>([]);
+  const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<DashboardFilter>("all");
-  const [activeView, setActiveView] = useState<DashboardView>(initialView);
   const [loading, setLoading] = useState(true);
-  const [syncingAll, setSyncingAll] = useState(false);
-  const [telegramTesting, setTelegramTesting] = useState(false);
-  const [aiMessages, setAiMessages] = useState<AiMessage[]>([
-    {
-      role: "assistant",
-      content: "Я ИИ-помощник TengeGuard. Могу помочь разобраться с подписками, trial-периодами, отменой, расходами и идеями по продукту."
-    }
-  ]);
-  const [aiInput, setAiInput] = useState("");
-  const [aiSending, setAiSending] = useState(false);
-  const [cancellingSubscriptionId, setCancellingSubscriptionId] = useState<string | null>(null);
-  const [markingCancelledId, setMarkingCancelledId] = useState<string | null>(null);
-  const [refundingSubscriptionId, setRefundingSubscriptionId] = useState<string | null>(null);
-  const [progressStep, setProgressStep] = useState(0);
-  const [paymentSetupNeeded, setPaymentSetupNeeded] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [workingId, setWorkingId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const telegramPollTimerRef = useRef<number | null>(null);
+  const [aiInput, setAiInput] = useState("");
+  const [aiSending, setAiSending] = useState(false);
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>([]);
+  const telegramTimer = useRef<number | null>(null);
   const t = copy[locale];
-  const isMobileMode = initialDeviceMode === "mobile";
-  const trialStartedAt = initialTrialStartedAt || new Date().toISOString();
-  const calculatedTrialDaysLeft = Math.max(0, 14 - Math.max(0, daysUntilPast(trialStartedAt)));
-  const accessDaysLeft = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : initialBillingPlan === "free" ? calculatedTrialDaysLeft : 0;
-  const accessExpired = accessDaysLeft === 0;
-  const isPreparingDashboard = loading;
 
   const load = useCallback(async () => {
-    const [gmailStatus, telegram, connectorData, systemReadiness] = await Promise.all([
-      readJson<GmailStatus>("/api/subcut/gmail/status"),
+    const [authData, telegramData, connectorData, readinessData, subscriptionData] = await Promise.all([
+      readJson<AuthStatus>("/api/subcut/gmail/status"),
       readJson<TelegramStatus>("/api/telegram/status"),
-      readJson<{ connectors: ConnectorStatus[] }>("/api/connectors/status"),
-      readJson<SystemReadiness>("/api/system/readiness")
+      readJson<{ connectors: Connector[] }>("/api/connectors/status"),
+      readJson<Readiness>("/api/system/readiness"),
+      readJson<{ subscriptions: Subscription[] }>("/api/subscriptions")
     ]);
-    setStatus(gmailStatus);
-    setTelegramStatus(telegram);
-    setConnectors(connectorData.connectors);
-    setReadiness(systemReadiness);
-
-    if (gmailStatus.connected) {
-      const cachedSubscriptions = readCachedSubscriptions(gmailStatus.user);
-      if (cachedSubscriptions.length > 0) setSubscriptions(cachedSubscriptions);
-
-      const subscriptionData = await readJson<{ subscriptions: Subscription[] }>("/api/subscriptions").catch(() => ({
-        subscriptions: cachedSubscriptions
-      }));
-      const nextSubscriptions =
-        subscriptionData.subscriptions.length > 0 || cachedSubscriptions.length === 0
-          ? subscriptionData.subscriptions
-          : cachedSubscriptions;
-
-      setSubscriptions(nextSubscriptions);
-      if (nextSubscriptions.length > 0) writeCachedSubscriptions(gmailStatus.user, nextSubscriptions);
-    } else {
-      setSubscriptions([]);
-    }
+    setAuth(authData);
+    setTelegram(telegramData);
+    setConnectors(connectorData.connectors || []);
+    setReadiness(readinessData);
+    setSubscriptions(subscriptionData.subscriptions || []);
   }, []);
 
   useEffect(() => {
-    load()
-      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : t.error))
-      .finally(() => setLoading(false));
+    load().catch((requestError) => setError(requestError instanceof Error ? requestError.message : t.error)).finally(() => setLoading(false));
   }, [load, t.error]);
 
-  useEffect(() => {
-    return () => {
-      if (telegramPollTimerRef.current) window.clearInterval(telegramPollTimerRef.current);
-    };
+  useEffect(() => () => {
+    if (telegramTimer.current) window.clearInterval(telegramTimer.current);
   }, []);
 
-  useEffect(() => {
-    if (!isPreparingDashboard) {
-      setProgressStep(0);
-      return;
-    }
+  const active = useMemo(() => subscriptions.filter((item) => item.status !== "cancelled"), [subscriptions]);
+  const cancelled = useMemo(() => subscriptions.filter((item) => item.status === "cancelled"), [subscriptions]);
+  const evidence = useMemo(() => subscriptions.flatMap((subscription) => subscription.evidence.map((item, index) => ({ item, subscription, key: `${subscription.id}-${item.message_id || index}` }))), [subscriptions]);
+  const filtered = useMemo(() => {
+    const search = query.trim().toLowerCase();
+    return active
+      .filter((item) => filter === "all" || (filter === "paid" ? item.cost > 0 : item.status === "review" || item.confidence < 0.75))
+      .filter((item) => !search || `${item.provider_name} ${item.currency} ${item.evidence.map((entry) => entry.subject || entry.snippet || "").join(" ")}`.toLowerCase().includes(search))
+      .sort((a, b) => (new Date(a.next_billing_date || "9999-12-31").getTime() - new Date(b.next_billing_date || "9999-12-31").getTime()));
+  }, [active, filter, query]);
 
-    const timer = window.setInterval(() => {
-      setProgressStep((current) => Math.min(current + 1, dashboardProgressSteps.length - 1));
-    }, 1400);
+  const monthlyByCurrency = useMemo(() => {
+    const totals = new Map<string, number>();
+    active.forEach((item) => totals.set(item.currency || "KZT", (totals.get(item.currency || "KZT") || 0) + monthlyCost(item)));
+  return Array.from(totals.entries()).map(([currency, value]) => `${Math.round(value).toLocaleString(localeTags[locale])} ${currency}`).join(" + ") || "—";
+  }, [active, locale]);
 
-    return () => window.clearInterval(timer);
-  }, [isPreparingDashboard]);
+  const nextSubscription = useMemo(() => active.filter((item) => item.next_billing_date).sort((a, b) => String(a.next_billing_date).localeCompare(String(b.next_billing_date)))[0], [active]);
+  const dueSoon = active.filter((item) => {
+    const days = daysUntil(item.next_billing_date);
+    return days !== null && days >= 0 && days <= 7;
+  }).length;
+  const reviewCount = active.filter((item) => item.status === "review" || item.confidence < 0.75).length;
+  const averageConfidence = active.length ? Math.round(active.reduce((sum, item) => sum + item.confidence, 0) / active.length * 100) : 0;
+  const trialStarted = initialTrialStartedAt ? new Date(initialTrialStartedAt).getTime() : Date.now();
+  const trialDays = Math.max(0, 14 - Math.floor((Date.now() - trialStarted) / 86_400_000));
+  const paidDays = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : 0;
+  const accessDays = initialBillingPlan === "free" ? trialDays : paidDays;
+  const expired = accessDays <= 0;
+  const bank = connectors.find((item) => item.id === "bank");
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("bank") === "connected") {
-      setNotice("Банк подключён. TengeGuard завершил анализ подтверждённых платных списаний.");
-      window.history.replaceState(null, "", window.location.pathname);
-      return;
-    }
-    if (params.get("bank") === "sync_failed") {
-      setError("Банк подключён, но первая синхронизация не завершилась. Нажмите «Найти автоматически» ещё раз.");
-      window.history.replaceState(null, "", window.location.pathname);
-      return;
-    }
-    if (params.get("payment") === "not_configured") {
-      setPaymentSetupNeeded(true);
-      setNotice(t.paymentPendingText);
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  }, [t.paymentPendingText]);
-
-  const activeSubscriptions = useMemo(() => subscriptions.filter((item) => item.status !== "cancelled"), [subscriptions]);
-  const cancelledSubscriptions = useMemo(() => subscriptions.filter((item) => item.status === "cancelled"), [subscriptions]);
-
-  const sortedSubscriptions = useMemo(() => {
-    return [...activeSubscriptions].sort((a, b) => {
-      const aReview = needsHumanReview(a) ? 0 : 1;
-      const bReview = needsHumanReview(b) ? 0 : 1;
-      if (aReview !== bReview) return aReview - bReview;
-
-      const aDue = a.next_billing_date ? new Date(a.next_billing_date).getTime() : Number.POSITIVE_INFINITY;
-      const bDue = b.next_billing_date ? new Date(b.next_billing_date).getTime() : Number.POSITIVE_INFINITY;
-      if (aDue !== bDue) return aDue - bDue;
-
-      return b.confidence - a.confidence;
-    });
-  }, [activeSubscriptions]);
-
-  const filteredSubscriptions = useMemo(() => {
-    const value = query.trim().toLowerCase();
-
-    return sortedSubscriptions.filter((item) => {
-      const filterMatch =
-        filter === "all" ||
-        (filter === "paid" && (item.type === "paid" || item.cost > 0)) ||
-        (filter === "free" && item.type === "free") ||
-        (filter === "trial" && (item.type === "free_trial" || item.status === "trial")) ||
-        (filter === "review" && needsHumanReview(item));
-
-      if (!filterMatch) return false;
-      if (!value) return true;
-
-      const evidenceText = item.evidence
-        .map((evidence) => `${evidence.subject || ""} ${evidence.from || ""} ${evidence.snippet || ""} ${evidence.matched_signals.join(" ")}`)
-        .join(" ");
-      return `${item.provider_name} ${typeLabel(item.type, locale)} ${cycleLabel(item.billing_cycle, locale)} ${evidenceText}`.toLowerCase().includes(value);
-    });
-  }, [filter, locale, query, sortedSubscriptions]);
-
-  const allEvidence = useMemo(() => {
-    return subscriptions.flatMap((subscription) =>
-      subscription.evidence.map((evidence, index) => ({
-        evidence,
-        key: `${subscription.id}-${evidence.message_id || evidence.subject || index}`,
-        subscription
-      }))
-    );
-  }, [subscriptions]);
-
-  const paidCount = activeSubscriptions.filter((item) => item.type === "paid" || item.cost > 0).length;
-  const freeCount = activeSubscriptions.filter((item) => item.type === "free").length;
-  const trialCount = activeSubscriptions.filter((item) => item.type === "free_trial" || item.status === "trial").length;
-  const dueSoonCount = activeSubscriptions.filter(isDueSoon).length;
-  const reviewCount = activeSubscriptions.filter(needsHumanReview).length;
-  const evidenceCount = allEvidence.length;
-  const savingsOpportunity = currencyTotals(activeSubscriptions.filter((item) => item.cost > 0 && (isDueSoon(item) || needsHumanReview(item)))) || "0";
-  const averageConfidence = activeSubscriptions.length
-    ? Math.round((activeSubscriptions.reduce((total, item) => total + item.confidence, 0) / activeSubscriptions.length) * 100)
-    : 0;
-  const nextSubscription = activeSubscriptions
-    .filter((item) => item.next_billing_date || item.trial_ends_at)
-    .sort((a, b) => String(a.trial_ends_at || a.next_billing_date).localeCompare(String(b.trial_ends_at || b.next_billing_date)))[0];
-  const topRiskSubscription = sortedSubscriptions.find((item) => isDueSoon(item) || needsHumanReview(item));
-
-  async function refreshAfter(action: () => Promise<unknown>) {
+  async function refresh() {
+    setSyncing(true);
     setError(null);
-    await action();
-    await load();
-  }
-
-  async function handleSyncAll() {
-    setSyncingAll(true);
-    setError(null);
-    setNotice(null);
-
     try {
-      await readJson<{ ok: true }>("/api/connectors/sync-all", { method: "POST" });
+      await readJson("/api/connectors/sync-all", { method: "POST" });
       await load();
-      setNotice("Автоматический поиск завершен.");
+      setNotice(t.sync);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Не удалось запустить автоматический поиск.");
+      setError(requestError instanceof Error ? requestError.message : t.error);
     } finally {
-      setSyncingAll(false);
+      setSyncing(false);
     }
   }
 
-  async function handleConnectBank() {
-    setError(null);
+  function connectBank() {
     window.location.href = "/api/connectors/bank/start";
   }
 
-  async function handleDelete(id: string) {
-    try {
-      await refreshAfter(() => readJson<{ ok: true }>(`/api/subscriptions/${id}`, { method: "DELETE" }));
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t.error);
-    }
-  }
-
-  async function handleCancelSubscription(subscription: Subscription) {
-    setCancellingSubscriptionId(subscription.id);
-    setError(null);
-    setNotice(null);
-
-    try {
-      const response = await readJson<CancelSubscriptionResponse>(`/api/subscriptions/${subscription.id}/cancel`, { method: "POST" });
-      if (response.result.status === "needs_user_action") {
-        window.open(response.result.cancellation_path, "_blank", "noopener,noreferrer");
-        setNotice(`${subscription.provider_name}: ${t.needsUserActionCancel}. ${t.systemCancelNote}`);
-      } else if (response.result.status === "auto_cancelled") {
-        setNotice(`${subscription.provider_name}: ${t.autoCancelled}.`);
-        await load();
-      } else {
-        setNotice(`${subscription.provider_name}: ${t.unsupportedCancel}. ${response.result.reason}`);
-      }
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t.error);
-    } finally {
-      setCancellingSubscriptionId(null);
-    }
-  }
-
-  async function handleMarkCancelled(subscription: Subscription) {
-    setMarkingCancelledId(subscription.id);
-    setError(null);
-    setNotice(null);
-
-    try {
-      await readJson<{ ok: true; subscription: Subscription }>(`/api/subscriptions/${subscription.id}/cancelled`, { method: "POST" });
-      await load();
-      setNotice(`${subscription.provider_name}: ${t.cancelConfirmed}`);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t.error);
-    } finally {
-      setMarkingCancelledId(null);
-    }
-  }
-
-  function handlePaymentSetup() {
-    if (readiness?.paymentConfigured) {
-      window.location.href = "/api/billing/checkout?plan=pro_monthly";
-      return;
-    }
-    setNotice("Оплата ожидает merchant ID и secret key от Freedom Pay. Заявка провайдеру должна быть одобрена до запуска реальных платежей.");
-  }
-
-  function handleStorageSetup() {
-    window.open("https://vercel.com/marketplace/upstash", "_blank", "noopener,noreferrer");
-  }
-
-  async function handleRefundSubscription(subscription: Subscription) {
-    setRefundingSubscriptionId(subscription.id);
-    setError(null);
-    setNotice(null);
-
-    try {
-      const response = await readJson<RefundSubscriptionResponse>(`/api/subscriptions/${subscription.id}/refund`, { method: "POST" });
-      if (response.result.status === "needs_user_action") {
-        window.open(response.result.refund_path, "_blank", "noopener,noreferrer");
-        setNotice(`${subscription.provider_name}: ${t.refundNeedsUserAction}. ${response.result.reason}`);
-      } else {
-        setNotice(`${subscription.provider_name}: ${t.refundUnsupported}. ${response.result.reason}`);
-      }
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t.error);
-    } finally {
-      setRefundingSubscriptionId(null);
-    }
-  }
-
-  async function handleTelegramTest() {
-    setTelegramTesting(true);
-    setError(null);
-    setNotice(null);
-
-    try {
-      await readJson<{ ok: true }>("/api/telegram/test", { method: "POST" });
-      await load();
-      setNotice(t.telegramSent);
-    } catch (requestError) {
-      const message = requestError instanceof Error ? requestError.message : t.error;
-      setError(message === "Telegram is not connected yet" ? "Сначала нажмите «Подключить Telegram», откройте бота и нажмите Start." : message);
-    } finally {
-      setTelegramTesting(false);
-    }
-  }
-
-  function stopTelegramPolling() {
-    if (telegramPollTimerRef.current) {
-      window.clearInterval(telegramPollTimerRef.current);
-      telegramPollTimerRef.current = null;
-    }
-  }
-
-  function handleTelegramConnect() {
-    setError(null);
-    setNotice("Открыл Telegram. Нажмите Start в TengeGuardbot, а сайт сам проверит подключение.");
-
-    const opened = window.open("/api/telegram/connect", "_blank", "noopener,noreferrer");
-    if (!opened) {
+  function connectTelegram() {
+    const popup = window.open("/api/telegram/connect", "_blank", "noopener,noreferrer");
+    if (!popup) {
       window.location.href = "/api/telegram/connect";
       return;
     }
-
-    stopTelegramPolling();
-    let attempts = 0;
-
-    const checkConnection = async () => {
-      attempts += 1;
-      try {
-        const telegram = await readJson<TelegramStatus>("/api/telegram/status");
-        setTelegramStatus(telegram);
-        if (telegram.connected) {
-          stopTelegramPolling();
-          setNotice("Telegram подключён. Теперь бот сможет присылать уведомления по подпискам.");
-        }
-      } catch {
-        // The next polling tick will retry. The visible flow should stay calm.
+    setNotice(t.telegramText);
+    let checks = 0;
+    telegramTimer.current = window.setInterval(async () => {
+      checks += 1;
+      const next = await readJson<TelegramStatus>("/api/telegram/status").catch(() => null);
+      if (next) setTelegram(next);
+      if (next?.connected || checks >= 40) {
+        if (telegramTimer.current) window.clearInterval(telegramTimer.current);
+        telegramTimer.current = null;
       }
-
-      if (attempts >= 60) {
-        stopTelegramPolling();
-      }
-    };
-
-    window.setTimeout(checkConnection, 1500);
-    telegramPollTimerRef.current = window.setInterval(checkConnection, 3000);
+    }, 3000);
   }
 
-  async function handleAiSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function testTelegram() {
+    setError(null);
+    try {
+      await readJson("/api/telegram/test", { method: "POST" });
+      setNotice(t.testTelegram);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t.error);
+    }
+  }
+
+  async function subscriptionAction(item: Subscription, action: "cancel" | "cancelled" | "refund" | "delete") {
+    setWorkingId(item.id);
+    setError(null);
+    try {
+      if (action === "delete") {
+        await readJson(`/api/subscriptions/${item.id}`, { method: "DELETE" });
+      } else {
+        const result = await readJson<{ result?: { cancellation_path?: string; refund_path?: string; reason?: string } }>(`/api/subscriptions/${item.id}/${action}`, { method: "POST" });
+        const path = result.result?.cancellation_path || result.result?.refund_path;
+        if (path) window.open(path, "_blank", "noopener,noreferrer");
+        if (result.result?.reason) setNotice(result.result.reason);
+      }
+      await load();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : t.error);
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function submitAi(event: React.FormEvent) {
     event.preventDefault();
     const question = aiInput.trim();
     if (!question || aiSending) return;
-
-    const nextMessages: AiMessage[] = [...aiMessages, { role: "user", content: question }];
-    setAiMessages(nextMessages);
+    const messages = [...aiMessages, { role: "user" as const, content: question }];
+    setAiMessages(messages);
     setAiInput("");
     setAiSending(true);
-    setError(null);
-
     try {
-      const response = await readJson<AiChatResponse>("/api/ai-chat", {
-        method: "POST",
-        body: JSON.stringify({
-          messages: nextMessages.slice(-10)
-        })
-      });
+      const response = await readJson<{ answer: string }>("/api/ai-chat", { method: "POST", body: JSON.stringify({ messages: messages.slice(-10) }) });
       setAiMessages((current) => [...current, { role: "assistant", content: response.answer }]);
     } catch (requestError) {
-      const message = requestError instanceof Error ? requestError.message : t.error;
-      setAiMessages((current) => [
-        ...current,
-        {
-          role: "assistant",
-          content: message
-        }
-      ]);
+      setAiMessages((current) => [...current, { role: "assistant", content: requestError instanceof Error ? requestError.message : t.error }]);
     } finally {
       setAiSending(false);
     }
   }
 
-  async function handleChangeAccount() {
-    setError(null);
-    await readJson<{ ok: true }>("/api/subcut/gmail/logout", { method: "POST" }).catch(() => null);
-    window.location.href = "/api/auth/google";
+  async function logout(changeAccount = false) {
+    await readJson("/api/subcut/gmail/logout", { method: "POST" }).catch(() => null);
+    window.location.href = changeAccount ? "/api/auth/google" : "/";
   }
 
-  async function handleLogout() {
-    setError(null);
-    await readJson<{ ok: true }>("/api/subcut/gmail/logout", { method: "POST" }).catch(() => null);
-    window.location.href = "/";
-  }
-
-  function navigateView(view: DashboardView) {
-    setActiveView(view);
-    window.location.href =
-      view === "subscriptions"
-        ? "/dashboard/subscriptions"
-        : view === "evidence"
-          ? "/dashboard/evidence"
-          : view === "access"
-            ? "/dashboard/access"
-            : view === "history"
-              ? "/dashboard/history"
-              : view === "ai"
-                ? "/dashboard/ai"
-                : view === "account"
-                  ? "/dashboard/account"
-              : "/dashboard";
-  }
-
-  const navItems: Array<{ view: DashboardView; label: string; icon: React.ElementType }> = [
-    { view: "dashboard", label: t.overview, icon: Radar },
-    { view: "subscriptions", label: t.subscriptionsNav, icon: Database },
-    { view: "access", label: t.accessNav, icon: KeyRound },
-    { view: "history", label: t.historyNav, icon: CalendarDays }
-  ];
+  const nav = [
+    ["dashboard", t.overview, LayoutDashboard],
+    ["subscriptions", t.subscriptions, WalletCards],
+    ["evidence", t.evidence, FileCheck2],
+    ["access", t.integrations, Landmark],
+    ["history", t.history, History],
+    ["ai", t.ai, Bot]
+  ] as const;
 
   return (
-    <main className={`${isMobileMode ? "bg-slate-100" : "tg-shell-grid bg-background"} min-h-screen text-on-surface antialiased`}>
-      <div className={isMobileMode ? "mx-auto min-h-screen max-w-md border-x border-outline-variant bg-background pb-24 shadow-2xl shadow-slate-200/70" : "min-h-screen pb-24 lg:flex lg:pb-0"}>
-        {!isMobileMode ? (
-          <aside className="hidden min-h-screen w-72 shrink-0 flex-col border-r border-outline-variant bg-white/95 px-4 py-6 shadow-[12px_0_40px_-36px_rgb(15_23_42_/_0.55)] backdrop-blur-xl lg:flex">
-            <button className="mb-8 flex min-w-0 items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest p-3 text-left shadow-stitch transition hover:border-primary/35 hover:shadow-soft" onClick={() => navigateView("dashboard")} type="button">
-              <BrandMark />
-              <div className="min-w-0">
-                <h1 className="whitespace-nowrap font-display text-headline-md font-extrabold leading-7 text-on-surface">TengeGuard</h1>
-                <p className="whitespace-nowrap text-label-sm font-semibold leading-5 text-on-surface-variant">Fintech Security</p>
-              </div>
-            </button>
-            <nav className="flex-1 space-y-1">
-              {navItems.map((item) => (
-                <button
-                  className={`flex w-full min-w-0 items-center gap-3 rounded-xl px-4 py-3 text-left text-label-sm font-bold leading-5 transition active:scale-[0.98] ${
-                    activeView === item.view ? "bg-primary text-on-primary shadow-stitch" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
-                  }`}
-                  key={item.view}
-                  onClick={() => navigateView(item.view)}
-                  type="button"
-                >
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  <span className="min-w-0 truncate">{item.label}</span>
-                </button>
-              ))}
-            </nav>
-            <div className="mt-6 rounded-2xl border border-outline-variant bg-surface-container-lowest p-4 shadow-stitch">
-              <div className="flex items-center gap-3 text-label-sm font-bold text-on-surface">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10">
-                  <Laptop className="h-4 w-4 text-primary" />
-                </div>
-                <span className="break-words">Режим ноутбука</span>
-              </div>
-              <p className="mt-3 text-[12px] leading-5 text-on-surface-variant">Широкий dashboard с аналитикой и быстрым доступом к разделам.</p>
-              <Link className="mt-3 inline-flex text-label-sm font-bold text-primary hover:underline" href="/">
-                Сменить режим
+    <main className="min-h-screen bg-[#f8f9fa] text-[#191c1d]">
+      <div className="min-h-screen md:flex">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-[#e5e7eb] bg-white px-4 py-6 md:flex">
+          <Brand />
+          <nav className="mt-10 flex-1 space-y-1">
+            {nav.map(([view, label, Icon]) => (
+              <Link className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${initialView === view ? "bg-[#f3f4f5] font-semibold text-black" : "text-[#5f6368] hover:bg-[#f8f9fa] hover:text-black"}`} href={routes[view]} key={view}>
+                <Icon className="h-[18px] w-[18px]" />{label}
               </Link>
-            </div>
-          </aside>
-        ) : null}
+            ))}
+          </nav>
+          <div className="space-y-2 border-t border-[#e5e7eb] pt-4">
+            <Link className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${initialView === "account" ? "bg-[#f3f4f5] text-black" : "text-[#5f6368]"}`} href="/dashboard/account"><Settings className="h-[18px] w-[18px]" />{t.account}</Link>
+            <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white disabled:opacity-45" disabled={bank?.status === "connected" || bank?.status === "setup_required" || bank?.status === "not_available"} onClick={connectBank} type="button">
+              <Landmark className="h-4 w-4" />{bank?.status === "connected" ? t.connected : t.connectBank}
+            </button>
+          </div>
+        </aside>
 
         <div className="min-w-0 flex-1">
-      <header className="sticky top-0 z-50 border-b border-outline-variant bg-surface/90 backdrop-blur-xl">
-        <div className={`mx-auto flex h-16 items-center gap-4 px-4 ${isMobileMode ? "max-w-md justify-between" : "max-w-[1280px] justify-end sm:px-6 lg:px-10"}`}>
-          <button className="flex shrink-0 items-center gap-3 lg:hidden" onClick={() => navigateView("dashboard")} type="button">
-            <BrandMark />
-            <div className="min-w-0 text-left">
-              <h1 className="whitespace-nowrap font-display text-headline-md font-bold leading-7 text-primary">TengeGuard</h1>
-              <p className="hidden text-[11px] font-semibold text-on-surface-variant sm:block">{t.activeProtection}</p>
+          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#e5e7eb] bg-white px-4 sm:px-6 lg:px-10">
+            <div className="md:hidden"><Brand compact /></div>
+            <div className="hidden md:block">
+              <h1 className="font-display text-lg font-semibold">{nav.find(([view]) => view === initialView)?.[1] || t.account}</h1>
             </div>
-          </button>
-
-          {!isMobileMode ? (
-            <label className="relative hidden max-w-xl flex-1 lg:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
-              <input
-                className="h-10 w-full rounded-full border border-outline-variant bg-surface-container-low pl-10 pr-4 text-body-md font-medium outline-none transition placeholder:text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/10"
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={t.search}
-                value={query}
-              />
-            </label>
-          ) : null}
-
-          <div className="flex shrink-0 items-center gap-3">
-            {isMobileMode ? (
-              <Link className="grid h-10 w-10 place-items-center rounded-full border border-outline-variant bg-surface-container-low text-primary" href="/" aria-label="Сменить режим">
-                <Smartphone className="h-5 w-5" />
-              </Link>
-            ) : null}
-            <span
-              className={`hidden whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-bold sm:inline-flex ${
-                status?.connected ? "border-emerald-200 bg-emerald-soft text-emerald-dark" : "border-amber-200 bg-amber-soft text-amber-dark"
-              }`}
-            >
-              {status?.connected ? t.googleConnected : t.googleDisconnected}
-            </span>
-            <label className="relative">
-              <Globe2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
-              <select
-                className="h-10 appearance-none rounded-lg border border-outline-variant bg-surface pl-9 pr-8 text-label-sm font-bold text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                onChange={(event) => setLocale(event.target.value as Locale)}
-                value={locale}
-              >
-                {(["ru", "en", "kk"] as Locale[]).map((item) => (
-                  <option key={item} value={item}>
-                    {localeLabels[item]}
-                  </option>
-                ))}
+            <div className="flex items-center gap-2">
+              <span className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold lg:flex ${initialBillingPlan === "free" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+                <Clock3 className="h-3.5 w-3.5" />{initialBillingPlan === "free" ? `${t.trial}: ${accessDays} ${t.days}` : `${t.pro}: ${accessDays} ${t.days}`}
+              </span>
+              <select aria-label="Language" className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-2 text-xs font-semibold outline-none" onChange={(event) => setLocale(event.target.value as Locale)} value={locale}>
+                {(Object.keys(languageNames) as Locale[]).map((item) => <option key={item} value={item}>{languageNames[item]}</option>)}
               </select>
-            </label>
-            <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-outline-variant bg-surface-container-high">
-              {status?.user?.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img alt="" className="h-full w-full object-cover" src={status.user.avatar_url} />
-              ) : (
-                <UserCircle2 className="h-5 w-5 text-primary" />
-              )}
+              <Link className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-[#e5e7eb] bg-[#f3f4f5]" href="/dashboard/account">
+                {auth?.user?.avatar_url ? (
+                  <img alt={auth.user.name} className="h-full w-full object-cover" src={auth.user.avatar_url} />
+                ) : <UserCircle2 className="h-5 w-5 text-[#76777d]" />}
+              </Link>
             </div>
+          </header>
+
+          <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+            {error ? <Notice tone="error" text={error} title={t.error} onClose={() => setError(null)} /> : null}
+            {notice ? <Notice tone="success" text={notice} title="TengeGuard" onClose={() => setNotice(null)} /> : null}
+
+            {loading ? <LoadingState label={t.loading} /> : expired ? (
+              <EmptyPanel icon={Clock3} title={t.expiredTitle} text={t.expiredText}>
+                <Link className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white" href="/api/billing/checkout?plan=pro_monthly">{t.choosePro}<ArrowRight className="h-4 w-4" /></Link>
+              </EmptyPanel>
+            ) : (
+              <>
+                {initialView === "dashboard" ? (
+                  <Dashboard
+                    active={active}
+                    averageConfidence={averageConfidence}
+                    bankConnected={bank?.status === "connected"}
+                    dueSoon={dueSoon}
+                    locale={locale}
+                    monthly={monthlyByCurrency}
+                    next={nextSubscription}
+                    onBank={connectBank}
+                    onRefresh={refresh}
+                    onTelegram={connectTelegram}
+                    review={reviewCount}
+                    syncing={syncing}
+                    t={t}
+                    telegramConnected={Boolean(telegram?.connected)}
+                  />
+                ) : null}
+                {initialView === "subscriptions" ? (
+                  <SubscriptionsView filter={filter} items={filtered} locale={locale} onAction={subscriptionAction} query={query} setFilter={setFilter} setQuery={setQuery} t={t} workingId={workingId} />
+                ) : null}
+                {initialView === "evidence" ? <EvidenceView entries={evidence} locale={locale} t={t} /> : null}
+                {initialView === "access" ? (
+                  <IntegrationsView auth={auth} bank={bank} onBank={connectBank} onTelegram={connectTelegram} onTestTelegram={testTelegram} readiness={readiness} t={t} telegram={telegram} />
+                ) : null}
+                {initialView === "history" ? <HistoryView active={active} cancelled={cancelled} locale={locale} onAction={subscriptionAction} t={t} workingId={workingId} /> : null}
+                {initialView === "ai" ? <AiView input={aiInput} messages={aiMessages} onChange={setAiInput} onSubmit={submitAi} sending={aiSending} t={t} /> : null}
+                {initialView === "account" ? <AccountView auth={auth} initialBillingPlan={initialBillingPlan} onChange={() => logout(true)} onLogout={() => logout(false)} readiness={readiness} t={t} telegram={telegram} bank={bank} /> : null}
+              </>
+            )}
           </div>
         </div>
-      </header>
-
-      <div className={`mx-auto px-4 py-8 ${isMobileMode ? "max-w-md" : "max-w-[1280px] sm:px-6 lg:px-10"}`}>
-        {error ? (
-          <NoticeCard tone="error" title={t.error} body={error} />
-        ) : null}
-        {notice ? (
-          <NoticeCard tone="success" title="TengeGuard" body={notice} />
-        ) : null}
-        {paymentSetupNeeded ? <PaymentSetupCard t={t} /> : null}
-        <TrialAccessCard billingPlan={initialBillingPlan} daysLeft={accessDaysLeft} expired={accessExpired} t={t} />
-
-        {accessExpired ? (
-          <ExpiredAccessPanel billingPlan={initialBillingPlan} t={t} />
-        ) : isPreparingDashboard ? (
-          <MagicProgress locale={locale} stepIndex={progressStep} />
-        ) : (
-          <>
-            {activeView === "dashboard" ? (
-              <section className={isMobileMode ? "space-y-6" : "grid gap-6 lg:grid-cols-[1.15fr_0.85fr]"}>
-                <div className="space-y-6">
-                  <FinancialSummary
-                    locale={locale}
-                    monthlyTotal={currencyTotals(activeSubscriptions) || "0"}
-                    nextLabel={nextSubscription ? `${nextSubscription.provider_name} · ${dateLabel(nextSubscription.trial_ends_at || nextSubscription.next_billing_date, locale)}` : "—"}
-                  />
-
-                  {!activeSubscriptions.length ? (
-                    <DashboardActivationPanel
-                      bankStatus={connectors.find((connector) => connector.id === "bank")?.status}
-                      onConnectBank={handleConnectBank}
-                      onTelegram={handleTelegramConnect}
-                      telegramReady={Boolean(telegramStatus?.configured)}
-                    />
-                  ) : null}
-                </div>
-
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-3">
-                    <MetricTile icon={Database} label={t.activeSubscriptions} value={String(activeSubscriptions.length)} />
-                    <MetricTile icon={CalendarDays} label={t.endingSoon} value={String(dueSoonCount)} tone="amber" />
-                    <MetricTile icon={AlertTriangle} label={t.needsReview} value={String(reviewCount)} tone="rose" />
-                    <MetricTile icon={CheckCircle2} label={t.confidence} value={`${averageConfidence}%`} tone="emerald" />
-                  </div>
-
-                  <SavingsReportCard
-                    activeCount={activeSubscriptions.length}
-                    dueSoonCount={dueSoonCount}
-                    evidenceCount={evidenceCount}
-                    savingsOpportunity={savingsOpportunity}
-                    t={t}
-                    topRiskLabel={topRiskSubscription ? `${topRiskSubscription.provider_name} · ${dateLabel(topRiskSubscription.trial_ends_at || topRiskSubscription.next_billing_date, locale)}` : t.noRisk}
-                  />
-
-                  <TelegramCard
-                    connected={Boolean(telegramStatus?.connected)}
-                    configured={Boolean(telegramStatus?.configured)}
-                    onConnect={handleTelegramConnect}
-                    onTest={handleTelegramTest}
-                    testing={telegramTesting}
-                    t={t}
-                  />
-
-                  <button
-                    className="flex w-full min-w-0 items-start justify-between gap-4 rounded-xl border border-outline-variant bg-white p-5 text-left shadow-stitch transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"
-                    onClick={() => navigateView("subscriptions")}
-                    type="button"
-                  >
-                    <div className="min-w-0">
-                      <p className="break-words font-headline-md text-headline-md leading-7">{t.subscriptionsNav}</p>
-                      <p className="mt-1 break-words text-body-md leading-6 text-on-surface-variant">{t.subscriptionsText}</p>
-                    </div>
-                    <ExternalLink className="mt-1 h-5 w-5 shrink-0 text-primary" />
-                  </button>
-                </div>
-              </section>
-            ) : null}
-
-            {activeView === "subscriptions" ? (
-              <section className="space-y-6">
-                <PageHeading eyebrow={t.subscriptionsNav} title={t.subscriptionsTitle} body={t.subscriptionsText} />
-                <SubscriptionGraph subscriptions={filteredSubscriptions} locale={locale} />
-
-                <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-stitch">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <label className="relative w-full lg:max-w-xl">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
-                      <input
-                        className="h-12 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-10 pr-3 text-body-md font-medium outline-none transition placeholder:text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/10"
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder={t.search}
-                        value={query}
-                      />
-                    </label>
-                    <p className="text-label-sm font-semibold text-on-surface-variant">
-                      {t.showing}: {filteredSubscriptions.length}/{activeSubscriptions.length} · {status?.report?.query_count || 0} {t.queries}
-                    </p>
-                  </div>
-                  <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                    {(["all", "paid", "review"] as DashboardFilter[]).map((item) => (
-                      <button
-                        className={`shrink-0 rounded-full px-5 py-2 text-label-sm font-bold transition ${
-                          filter === item
-                            ? "bg-primary text-on-primary shadow-stitch"
-                            : "border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container"
-                        }`}
-                        key={item}
-                        onClick={() => setFilter(item)}
-                        type="button"
-                      >
-                        {filterLabel(item, locale)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid gap-4 lg:grid-cols-2">
-                  {filteredSubscriptions.length ? (
-                    filteredSubscriptions.map((item) => (
-                      <SubscriptionCard
-                        cancelling={cancellingSubscriptionId === item.id}
-                        item={item}
-                        key={item.id}
-                        locale={locale}
-                        markingCancelled={markingCancelledId === item.id}
-                        onCancel={() => handleCancelSubscription(item)}
-                        onDelete={() => handleDelete(item.id)}
-                        onMarkCancelled={() => handleMarkCancelled(item)}
-                        onRefund={() => handleRefundSubscription(item)}
-                        refunding={refundingSubscriptionId === item.id}
-                        t={t}
-                      />
-                    ))
-                  ) : (
-                    <EmptyState icon={PlugZap} title={t.noSubsTitle} body={t.noSubsText} />
-                  )}
-                </div>
-              </section>
-            ) : null}
-
-            {activeView === "evidence" ? (
-              <section className="space-y-6">
-                <PageHeading eyebrow={t.evidenceNav} title={t.evidenceTitle} body={t.evidenceText} />
-                <div className="grid gap-4 md:grid-cols-3">
-                  <MetricTile icon={WalletCards} label={t.evidence} value={String(evidenceCount)} tone="emerald" />
-                  <MetricTile icon={CheckCircle2} label={t.confidence} value={`${averageConfidence}%`} />
-                  <MetricTile icon={LockKeyhole} label={t.readOnly} value="Bank" tone="amber" />
-                </div>
-                <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-stitch">
-                  <div className="flex items-start gap-4">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10">
-                      <ShieldCheck className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-label-sm font-bold text-primary">{t.verifiedData}</h3>
-                      <p className="mt-1 text-body-md text-on-surface-variant">{t.privacy}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  {allEvidence.length ? (
-                    allEvidence.map(({ evidence, key, subscription }) => (
-                      <EvidenceCard evidence={evidence} item={subscription} key={key} locale={locale} t={t} />
-                    ))
-                  ) : (
-                    <EmptyState icon={MailCheck} title={t.evidenceTitle} body={t.noSubsText} />
-                  )}
-                </div>
-              </section>
-            ) : null}
-
-            {activeView === "access" ? (
-              <section className="space-y-6">
-                <PageHeading eyebrow={t.accessNav} title={t.accessTitle} body={t.accessText} />
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <AccessCard
-                    action={t.changeAccount}
-                    body="Google используется только для входа в TengeGuard. Приложение не запрашивает доступ к письмам Gmail."
-                    disabled={loading}
-                    icon={UserCircle2}
-                    meta={status?.user?.email || "Google Account"}
-                    onAction={handleChangeAccount}
-                    status={status?.user ? "Google-аккаунт подключен" : "Google-аккаунт не найден"}
-                    title="Google Account"
-                    tone={status?.user ? "emerald" : "amber"}
-                  />
-                  <AccessCard
-                    action={telegramStatus?.connected ? t.telegramTest : t.telegramConnect}
-                    body={t.telegramText}
-                    disabled={!telegramStatus?.configured || telegramTesting}
-                    icon={BellRing}
-                    meta={telegramStatus?.botUsername ? `@${telegramStatus.botUsername}` : "TengeGuard Bot"}
-                    onAction={telegramStatus?.connected ? handleTelegramTest : handleTelegramConnect}
-                    status={telegramStatus?.connected ? "connected" : "not connected"}
-                    title={t.telegramTitle}
-                    tone={telegramStatus?.connected ? "emerald" : "sky"}
-                  />
-                  <AccessCard
-                    action={readiness?.paymentConfigured ? "Открыть оплату Pro" : "Ожидает Freedom Pay"}
-                    body="Реальная оплата Pro: 200 ₸ в месяц или 2 000 ₸ в год. Доступ включается только после подписанного подтверждения Freedom Pay."
-                    disabled={loading}
-                    icon={WalletCards}
-                    meta="Freedom Pay · KZT"
-                    onAction={handlePaymentSetup}
-                    status={readiness?.paymentConfigured ? "готово" : "нужны merchant-ключи"}
-                    title="Оплата TengeGuard Pro"
-                    tone={readiness?.paymentConfigured ? "emerald" : "amber"}
-                  />
-                  <AccessCard
-                    action={readiness?.persistentStoreConfigured ? "Хранилище подключено" : "Подключить Redis в Vercel"}
-                    body="Постоянная база нужна, чтобы подписки, банковские подключения и платежные заказы не исчезали между запусками Vercel и были доступны на разных устройствах."
-                    disabled={Boolean(readiness?.persistentStoreConfigured)}
-                    icon={HardDrive}
-                    meta="Upstash Redis / Vercel Marketplace"
-                    onAction={handleStorageSetup}
-                    status={readiness?.persistentStoreConfigured ? "готово" : "обязательно для production"}
-                    title="Постоянное хранение"
-                    tone={readiness?.persistentStoreConfigured ? "emerald" : "amber"}
-                  />
-                </div>
-
-                <div className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                      <h3 className="font-headline-md text-headline-md">{t.syncAll}</h3>
-                      <p className="mt-1 text-body-md text-on-surface-variant">{t.accessText}</p>
-                    </div>
-                    <button
-                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={syncingAll}
-                      onClick={handleSyncAll}
-                      type="button"
-                    >
-                      {syncingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4" />}
-                      {syncingAll ? t.syncingAll : t.syncAll}
-                    </button>
-                  </div>
-                  <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    {connectors.map((connector) => (
-                      <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4 transition hover:-translate-y-0.5 hover:shadow-soft" key={connector.id}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-bold text-on-surface">{connector.name}</p>
-                            <p className="mt-2 text-[12px] leading-5 text-on-surface-variant">{connector.coverage}</p>
-                          </div>
-                          <StatusBadge status={connector.status} />
-                        </div>
-                        {connector.id === "bank" ? (
-                          <button
-                            className="mt-4 w-full rounded-lg bg-inverse-surface px-3 py-2 text-label-sm font-bold text-inverse-on-surface transition hover:bg-on-surface disabled:cursor-not-allowed disabled:opacity-50"
-                            disabled={connector.status === "setup_required" || connector.status === "not_available" || connector.status === "connected"}
-                            onClick={handleConnectBank}
-                            type="button"
-                          >
-                            {connector.action || t.connectBank}
-                          </button>
-                        ) : (
-                          <p className="mt-4 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-[12px] font-semibold text-on-surface-variant">
-                            {connector.setup || connector.action}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            ) : null}
-
-            {activeView === "history" ? (
-              <section className="space-y-6">
-                <PageHeading eyebrow={t.historyNav} title={`${t.currentSubscriptions} / ${t.cancelledSubscriptions}`} body={t.systemCancelNote} />
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <HistoryColumn empty={t.noSubsText} items={activeSubscriptions} locale={locale} title={t.currentSubscriptions} />
-                  <HistoryColumn empty={t.cancelledEmpty} items={cancelledSubscriptions} locale={locale} title={t.cancelledSubscriptions} cancelled />
-                </div>
-              </section>
-            ) : null}
-
-            {activeView === "ai" ? (
-              <section className="space-y-6">
-                <PageHeading eyebrow={t.aiNav} title={t.aiTitle} body={t.aiText} />
-                <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
-                  <section className="flex min-h-[620px] flex-col rounded-xl border border-outline-variant bg-white shadow-stitch">
-                    <div className="flex items-center justify-between border-b border-outline-variant px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-on-primary">
-                          <Bot className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-headline-md text-headline-md">{t.aiTitle}</h3>
-                          <p className="text-label-sm text-on-surface-variant">Bank transaction context + subscription intelligence</p>
-                        </div>
-                      </div>
-                      {aiSending ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : null}
-                    </div>
-
-                    <div className="flex-1 space-y-4 overflow-y-auto p-4">
-                      {aiMessages.map((message, index) => (
-                        <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`} key={`${message.role}-${index}`}>
-                          <div
-                            className={`max-w-[85%] rounded-2xl px-4 py-3 text-body-md leading-6 ${
-                              message.role === "user"
-                                ? "bg-primary text-on-primary"
-                                : "border border-outline-variant bg-surface-container-low text-on-surface"
-                            }`}
-                          >
-                            {message.content}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <form className="border-t border-outline-variant p-4" onSubmit={handleAiSubmit}>
-                      <div className="flex gap-3">
-                        <input
-                          className="min-h-12 flex-1 rounded-xl border border-outline-variant bg-surface-container-lowest px-4 text-body-md outline-none transition placeholder:text-on-surface-variant focus:border-primary focus:ring-2 focus:ring-primary/10"
-                          disabled={aiSending}
-                          onChange={(event) => setAiInput(event.target.value)}
-                          placeholder={t.aiPlaceholder}
-                          value={aiInput}
-                        />
-                        <button
-                          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-label-sm font-bold text-on-primary transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                          disabled={aiSending || !aiInput.trim()}
-                          type="submit"
-                        >
-                          {aiSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                          <span className="hidden sm:inline">{t.aiSend}</span>
-                        </button>
-                      </div>
-                    </form>
-                  </section>
-
-                  <aside className="space-y-4">
-                    <MetricTile icon={Database} label={t.activeSubscriptions} value={String(activeSubscriptions.length)} />
-                    <MetricTile icon={CalendarDays} label={t.endingSoon} value={String(dueSoonCount)} tone="amber" />
-                    <div className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch">
-                      <h4 className="text-label-sm font-bold uppercase text-on-surface-variant">Что можно спросить</h4>
-                      <div className="mt-4 space-y-2">
-                        {[
-                          "Какие подписки выглядят рискованно?",
-                          "Что скоро закончится?",
-                          "Как улучшить стартап TengeGuard?",
-                          "Как объяснить пользователю free trial?"
-                        ].map((prompt) => (
-                          <button
-                            className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-3 py-2 text-left text-label-sm font-semibold text-on-surface-variant transition hover:border-primary hover:text-primary"
-                            key={prompt}
-                            onClick={() => setAiInput(prompt)}
-                            type="button"
-                          >
-                            {prompt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </aside>
-                </div>
-              </section>
-            ) : null}
-
-            {activeView === "account" ? (
-              <section className="space-y-6">
-                <PageHeading eyebrow={t.accountNav} title={t.accountTitle} body={t.accountText} />
-                <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-                  <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-stitch">
-                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                      <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-xl border border-outline-variant bg-surface-container-high">
-                        {status?.user?.avatar_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img alt="" className="h-full w-full object-cover" src={status.user.avatar_url} />
-                        ) : (
-                          <UserCircle2 className="h-10 w-10 text-primary" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-display text-headline-lg-mobile font-bold text-on-surface">{status?.user?.name || "TengeGuard user"}</h3>
-                        <p className="mt-1 text-body-md text-on-surface-variant">{status?.user?.email || "Google account"}</p>
-                        <span
-                          className={`mt-3 inline-flex rounded-full border px-3 py-1 text-label-sm font-bold ${
-                            status?.connected ? "border-emerald-200 bg-emerald-soft text-emerald-dark" : "border-amber-200 bg-amber-soft text-amber-dark"
-                          }`}
-                        >
-                          {status?.connected ? t.googleConnected : t.googleDisconnected}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                      <AccountAction icon={UserCog} label={t.changeAccount} onClick={handleChangeAccount} />
-                      <AccountAction icon={Smartphone} label={t.changeMode} onClick={() => (window.location.href = "/")} />
-                      <AccountAction danger icon={LogOut} label={t.logout} onClick={handleLogout} />
-                    </div>
-                  </section>
-
-                  <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-stitch">
-                    <h3 className="font-headline-md text-headline-md">{t.accessTitle}</h3>
-                    <div className="mt-5 space-y-3">
-                      <AccountStatus label="Google" value={status?.user?.email || "not connected"} tone={status?.user ? "emerald" : "amber"} />
-                      <AccountStatus label="Telegram" value={telegramStatus?.connected ? "connected" : "not connected"} tone={telegramStatus?.connected ? "emerald" : "amber"} />
-                      <AccountStatus label="Interface" value={isMobileMode ? "mobile" : "desktop"} tone="primary" />
-                      <AccountStatus label="Bank source" value={connectors.find((connector) => connector.id === "bank")?.status || "not connected"} tone="primary" />
-                    </div>
-                  </section>
-                </div>
-              </section>
-            ) : null}
-          </>
-        )}
       </div>
 
-      <nav
-        className={`fixed bottom-0 z-50 flex h-16 items-center gap-1 overflow-x-auto border-t border-outline-variant bg-surface px-2 ${
-          isMobileMode ? "left-1/2 w-full max-w-md -translate-x-1/2" : "left-0 w-full md:hidden"
-        }`}
-      >
-        {navItems.map((item) => (
-          <button
-            className={`flex h-full min-w-[72px] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-bold leading-3 transition active:scale-95 ${
-              activeView === item.view ? "text-primary" : "text-on-surface-variant"
-            }`}
-            key={item.view}
-            onClick={() => navigateView(item.view)}
-            type="button"
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="max-w-full whitespace-normal break-words text-center">{item.label}</span>
-          </button>
-        ))}
+      <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center overflow-x-auto border-t border-[#e5e7eb] bg-white px-2 md:hidden">
+        {nav.slice(0, 5).map(([view, label, Icon]) => <Link className={`flex min-w-[72px] flex-1 flex-col items-center gap-1 text-[10px] font-semibold ${initialView === view ? "text-black" : "text-[#76777d]"}`} href={routes[view]} key={view}><Icon className="h-5 w-5" />{label}</Link>)}
       </nav>
-        </div>
-      </div>
     </main>
   );
 }
 
-function BrandMark() {
-  return (
-    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-outline-variant bg-white shadow-stitch">
-      <BrandAvatar />
-    </div>
-  );
+type T = (typeof copy)["ru"];
+
+function Brand({ compact = false }: { compact?: boolean }) {
+  return <Link className="flex items-center gap-2.5" href="/dashboard"><span className={`${compact ? "h-8 w-8" : "h-9 w-9"} overflow-hidden rounded-lg border border-[#e5e7eb] bg-white`}><img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" /></span><span className="font-display text-base font-bold tracking-[-0.02em]">TengeGuard</span></Link>;
 }
 
-function BrandAvatar({ className = "h-full w-full" }: { className?: string }) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img alt="TengeGuard" className={`${className} object-cover`} src="/tengeguard-mark.jpg" />
-  );
+function PageTitle({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {
+  return <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="font-display text-[32px] font-semibold leading-10 tracking-[-0.02em] sm:text-[40px] sm:leading-[48px]">{title}</h2><p className="mt-2 text-sm leading-6 text-[#6b7280]">{text}</p></div>{action}</div>;
 }
 
-function NoticeCard({ tone, title, body }: { tone: "success" | "error"; title: string; body: string }) {
-  const toneClass =
-    tone === "success"
-      ? "border-emerald-200 bg-emerald-soft text-emerald-dark"
-      : "border-red-200 bg-red-50 text-red-700";
+function Dashboard({ active, averageConfidence, bankConnected, dueSoon, locale, monthly, next, onBank, onRefresh, onTelegram, review, syncing, t, telegramConnected }: { active: Subscription[]; averageConfidence: number; bankConnected: boolean; dueSoon: number; locale: Locale; monthly: string; next?: Subscription; onBank: () => void; onRefresh: () => void; onTelegram: () => void; review: number; syncing: boolean; t: T; telegramConnected: boolean }) {
   return (
-    <div className={`mb-4 rounded-xl border p-4 text-body-md font-semibold ${toneClass}`}>
-      <p className="font-bold">{title}</p>
-      <p className="mt-1">{body}</p>
-    </div>
-  );
-}
-
-function AccountAction({
-  danger = false,
-  icon: Icon,
-  label,
-  onClick
-}: {
-  danger?: boolean;
-  icon: React.ElementType;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-label-sm font-bold transition ${
-        danger
-          ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-          : "border-outline-variant bg-surface-container-low text-on-surface hover:border-primary hover:text-primary"
-      }`}
-      onClick={onClick}
-      type="button"
-    >
-      <Icon className="h-4 w-4" />
-      {label}
-    </button>
-  );
-}
-
-function AccountStatus({ label, tone, value }: { label: string; tone: "primary" | "emerald" | "amber"; value: string }) {
-  const tones = {
-    primary: "bg-primary/10 text-primary",
-    emerald: "bg-emerald-soft text-emerald-dark",
-    amber: "bg-amber-soft text-amber-dark"
-  };
-
-  return (
-    <div className="flex min-w-0 items-start justify-between gap-4 rounded-xl border border-outline-variant bg-surface px-4 py-3">
-      <span className="min-w-0 break-words text-label-sm font-bold leading-5 text-on-surface-variant">{label}</span>
-      <span className={`shrink-0 rounded-full px-3 py-1 text-label-sm font-bold leading-5 ${tones[tone]}`}>{value}</span>
-    </div>
-  );
-}
-
-function PaymentSetupCard({ t }: { t: (typeof copy)["ru"] }) {
-  return (
-    <section className="mb-6 rounded-xl border border-amber-200 bg-white p-5 shadow-stitch">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-soft text-amber-dark">
-            <WalletCards className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="break-words font-display text-xl font-extrabold text-on-surface">{t.paymentPendingTitle}</h3>
-            <p className="mt-1 max-w-2xl break-words text-body-md leading-6 text-on-surface-variant">{t.paymentPendingText}</p>
-          </div>
+    <section>
+      <PageTitle action={<button className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50" disabled={syncing || !bankConnected} onClick={onRefresh} type="button">{syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}{syncing ? t.syncing : t.sync}</button>} text={t.dashboardText} title={t.dashboardTitle} />
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr]">
+        <StatCard icon={CircleDollarSign} label={t.monthlySpend} large value={monthly} />
+        <StatCard icon={CalendarDays} label={t.nextPayment} large value={next ? `${next.provider_name} · ${formatDate(next.next_billing_date, locale)}` : "—"} warning={Boolean(next && (daysUntil(next.next_billing_date) || 99) <= 7)} />
+        <div className="grid grid-cols-2 gap-4">
+          <MiniStat label={t.active} value={active.length} />
+          <MiniStat label={t.dueSoon} value={dueSoon} />
+          <MiniStat label={t.review} value={review} />
+          <MiniStat label={t.confidence} value={`${averageConfidence}%`} />
         </div>
-        <a
-          className="inline-flex items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container"
-          href="https://my.freedompay.kz"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Freedom Pay
-        </a>
       </div>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <StatusChip active={bankConnected} label={bankConnected ? t.bankOnly : t.connectBank} onClick={bankConnected ? undefined : onBank} />
+        <StatusChip active={telegramConnected} label={telegramConnected ? t.telegramReady : t.telegramMissing} onClick={telegramConnected ? undefined : onTelegram} />
+      </div>
+      {!active.length ? (
+        <div className="mt-8"><EmptyPanel icon={Landmark} title={t.noDataTitle} text={t.noDataText}><button className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white disabled:opacity-45" disabled={bankConnected} onClick={onBank} type="button"><Landmark className="h-4 w-4" />{bankConnected ? t.sync : t.connectBank}</button></EmptyPanel></div>
+      ) : (
+        <div className="mt-8 overflow-hidden rounded-xl border border-[#e5e7eb] bg-white">
+          <div className="flex items-center justify-between border-b border-[#e5e7eb] px-5 py-4"><h3 className="font-display text-lg font-semibold">{t.nextPayment}</h3><Link className="flex items-center gap-1 text-xs font-semibold" href="/dashboard/subscriptions">{t.subscriptions}<ChevronRight className="h-4 w-4" /></Link></div>
+          <div className="divide-y divide-[#e5e7eb]">{active.slice(0, 4).map((item) => <SubscriptionRow item={item} key={item.id} locale={locale} />)}</div>
+        </div>
+      )}
     </section>
   );
 }
 
-function TrialAccessCard({
-  billingPlan,
-  daysLeft,
-  expired,
-  t
-}: {
-  billingPlan: BillingPlan;
-  daysLeft: number | null;
-  expired: boolean;
-  t: (typeof copy)["ru"];
-}) {
-  const proActive = billingPlan !== "free" && !expired;
-  const paidPlan = billingPlan !== "free";
-  const title = proActive ? t.proActiveTitle : expired && paidPlan ? t.proExpiredTitle : expired ? t.trialExpiredTitle : t.trialActiveTitle;
-  const body = proActive ? t.proActiveText : expired && paidPlan ? t.proExpiredText : expired ? t.trialExpiredText : t.trialActiveText;
-
+function SubscriptionsView({ filter, items, locale, onAction, query, setFilter, setQuery, t, workingId }: { filter: Filter; items: Subscription[]; locale: Locale; onAction: (item: Subscription, action: "cancel" | "cancelled" | "refund" | "delete") => void; query: string; setFilter: (value: Filter) => void; setQuery: (value: string) => void; t: T; workingId: string | null }) {
   return (
-    <section className={`mb-6 overflow-hidden rounded-xl border p-5 shadow-stitch ${expired ? "border-amber-200 bg-amber-soft" : "border-emerald-200 bg-white"}`}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${expired ? "bg-white text-amber-dark" : "bg-emerald-soft text-emerald-dark"}`}>
-            {expired ? <AlertTriangle className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
-          </div>
-          <div className="min-w-0">
-            <h3 className="break-words font-display text-xl font-extrabold text-on-surface">{title}</h3>
-            <p className="mt-1 max-w-2xl break-words text-body-md leading-6 text-on-surface-variant">
-              {body}
-              {!expired && daysLeft !== null ? ` Осталось: ${daysLeft} дн.` : ""}
-            </p>
-          </div>
+    <section>
+      <PageTitle text={t.subscriptionsText} title={t.subscriptionsTitle} />
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <label className="relative w-full lg:max-w-md"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#76777d]" /><input className="h-11 w-full rounded-lg border border-[#e5e7eb] bg-white pl-10 pr-4 text-sm outline-none focus:border-black focus:ring-2 focus:ring-black/10" onChange={(event) => setQuery(event.target.value)} placeholder={t.search} value={query} /></label>
+        <div className="flex overflow-hidden rounded-lg border border-[#e5e7eb] bg-white">
+          {([["all", t.all], ["paid", t.paid], ["review", t.reviewFilter]] as const).map(([value, label]) => <button className={`border-r border-[#e5e7eb] px-5 py-2.5 text-xs font-semibold last:border-0 ${filter === value ? "bg-[#f3f4f5] text-black" : "text-[#6b7280]"}`} key={value} onClick={() => setFilter(value)} type="button">{label}</button>)}
         </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <a className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90" href="/api/billing/checkout?plan=pro_monthly">
-            {t.upgradeMonthly}
-          </a>
-          <a className="inline-flex items-center justify-center rounded-lg border border-outline-variant bg-white px-4 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container" href="/api/billing/checkout?plan=pro_yearly">
-            {t.upgradeYearly}
-          </a>
+      </div>
+      {!items.length ? <EmptyPanel icon={WalletCards} text={t.noDataText} title={t.empty} /> : (
+        <div className="overflow-x-auto rounded-xl border border-[#e5e7eb] bg-white shadow-stitch">
+          <table className="w-full min-w-[920px] text-left">
+            <thead className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-xs font-semibold text-[#6b7280]"><tr><th className="px-5 py-4">{t.provider}</th><th className="px-5 py-4">{t.amount}</th><th className="px-5 py-4">{t.cycle}</th><th className="px-5 py-4">{t.nextDate}</th><th className="px-5 py-4">{t.confidence}</th><th className="px-5 py-4">{t.action}</th></tr></thead>
+            <tbody className="divide-y divide-[#e5e7eb]">{items.map((item) => <SubscriptionTableRow item={item} key={item.id} locale={locale} onAction={onAction} t={t} working={workingId === item.id} />)}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function EvidenceView({ entries, locale, t }: { entries: Array<{ item: Evidence; subscription: Subscription; key: string }>; locale: Locale; t: T }) {
+  return (
+    <section>
+      <PageTitle text={t.evidenceText} title={t.evidenceTitle} />
+      <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" /><span>{t.securityNote}</span></div>
+      {!entries.length ? <EmptyPanel icon={FileCheck2} text={t.noDataText} title={t.empty} /> : (
+        <div className="overflow-x-auto rounded-xl border border-[#e5e7eb] bg-white shadow-stitch">
+          <table className="w-full min-w-[900px] text-left"><thead className="border-b border-[#e5e7eb] bg-[#f8f9fa] text-xs font-semibold text-[#6b7280]"><tr><th className="px-5 py-4">{t.provider}</th><th className="px-5 py-4">{t.transaction}</th><th className="px-5 py-4">{t.date}</th><th className="px-5 py-4">{t.pattern}</th><th className="px-5 py-4">{t.confidence}</th></tr></thead>
+          <tbody className="divide-y divide-[#e5e7eb]">{entries.map(({ item, subscription, key }) => <tr className="hover:bg-[#f8f9fa]" key={key}><td className="px-5 py-4 font-semibold">{subscription.provider_name}</td><td className="max-w-sm px-5 py-4 text-sm text-[#45464c]"><p className="font-medium text-black">{item.subject || item.from || t.transaction}</p><p className="mt-1 line-clamp-2 text-xs text-[#76777d]">{item.snippet || "—"}</p></td><td className="px-5 py-4 text-sm tabular-nums">{formatDate(item.date || subscription.last_seen_at, locale)}</td><td className="px-5 py-4"><div className="flex flex-wrap gap-1">{item.matched_signals.slice(0, 3).map((signal) => <span className="rounded bg-[#f3f4f5] px-2 py-1 text-xs text-[#5f6368]" key={signal}>{signal}</span>)}</div></td><td className="px-5 py-4"><Confidence value={subscription.confidence} /></td></tr>)}</tbody></table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function IntegrationsView({ auth, bank, onBank, onTelegram, onTestTelegram, readiness, t, telegram }: { auth: AuthStatus | null; bank?: Connector; onBank: () => void; onTelegram: () => void; onTestTelegram: () => void; readiness: Readiness | null; t: T; telegram: TelegramStatus | null }) {
+  return (
+    <section>
+      <PageTitle text={t.integrationsText} title={t.integrationsTitle} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <IntegrationCard action={bank?.status === "connected" ? undefined : onBank} actionLabel={t.connectBank} connected={bank?.status === "connected"} icon={Landmark} text={t.bankText} title={t.bank} />
+        <IntegrationCard action={telegram?.connected ? onTestTelegram : onTelegram} actionLabel={telegram?.connected ? t.testTelegram : t.connectTelegram} connected={Boolean(telegram?.connected)} icon={MessageCircle} text={t.telegramText} title={t.telegram} />
+        <IntegrationCard connected={Boolean(auth?.connected)} icon={UserCircle2} text={t.googleText} title={t.google} />
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6">
+          <div className="flex items-center gap-3"><Database className="h-5 w-5" /><h3 className="font-display text-lg font-semibold">Production</h3></div>
+          <div className="mt-6 space-y-3"><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /><StatusLine label={t.payment} ready={Boolean(readiness?.paymentConfigured)} /></div>
         </div>
       </div>
     </section>
   );
 }
 
-function ExpiredAccessPanel({ billingPlan, t }: { billingPlan: BillingPlan; t: (typeof copy)["ru"] }) {
-  const paidPlan = billingPlan !== "free";
+function HistoryView({ active, cancelled, locale, onAction, t, workingId }: { active: Subscription[]; cancelled: Subscription[]; locale: Locale; onAction: (item: Subscription, action: "cancel" | "cancelled" | "refund" | "delete") => void; t: T; workingId: string | null }) {
+  return <section><PageTitle text={t.subscriptionsText} title={t.historyTitle} /><div className="grid gap-5 xl:grid-cols-2"><HistoryColumn items={active} locale={locale} title={t.current} empty={t.empty} /><HistoryColumn items={cancelled} locale={locale} title={t.cancelled} empty={t.empty} onDelete={(item) => onAction(item, "delete")} workingId={workingId} /></div></section>;
+}
+
+function AiView({ input, messages, onChange, onSubmit, sending, t }: { input: string; messages: AiMessage[]; onChange: (value: string) => void; onSubmit: (event: React.FormEvent) => void; sending: boolean; t: T }) {
   return (
-    <section className="rounded-xl border border-amber-200 bg-white p-8 text-center shadow-stitch">
-      <div className="mx-auto grid h-14 w-14 place-items-center rounded-xl bg-amber-soft text-amber-dark">
-        <LockKeyhole className="h-6 w-6" />
-      </div>
-      <h2 className="mt-5 font-display text-2xl font-extrabold text-on-surface">{paidPlan ? t.proExpiredTitle : t.trialExpiredTitle}</h2>
-      <p className="mx-auto mt-3 max-w-xl text-body-md leading-7 text-on-surface-variant">{paidPlan ? t.proExpiredText : t.trialExpiredText}</p>
-      <div className="mx-auto mt-6 grid max-w-lg gap-3 sm:grid-cols-2">
-        <a className="rounded-lg bg-primary px-5 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90" href="/api/billing/checkout?plan=pro_monthly">{t.upgradeMonthly}</a>
-        <a className="rounded-lg border border-outline-variant bg-white px-5 py-3 text-label-sm font-bold text-primary transition hover:bg-surface-container" href="/api/billing/checkout?plan=pro_yearly">{t.upgradeYearly}</a>
+    <section><PageTitle text={t.aiText} title={t.aiTitle} />
+      <div className="flex min-h-[560px] flex-col rounded-xl border border-[#e5e7eb] bg-white shadow-stitch">
+        <div className="flex items-center gap-3 border-b border-[#e5e7eb] px-5 py-4"><span className="grid h-9 w-9 place-items-center rounded-lg bg-black text-white"><Bot className="h-4 w-4" /></span><div><p className="font-display font-semibold">TengeGuard AI</p><p className="text-xs text-[#76777d]">{t.aiText}</p></div></div>
+        <div className="flex-1 space-y-4 p-5">{messages.length ? messages.map((message, index) => <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`} key={index}><p className={`max-w-[80%] rounded-xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "bg-black text-white" : "bg-[#f3f4f5]"}`}>{message.content}</p></div>) : <div className="grid h-full min-h-80 place-items-center text-center"><div><Bot className="mx-auto h-7 w-7 text-[#76777d]" /><p className="mt-3 text-sm text-[#6b7280]">{t.aiText}</p></div></div>}</div>
+        <form className="flex gap-3 border-t border-[#e5e7eb] p-4" onSubmit={onSubmit}><input className="h-12 flex-1 rounded-lg border border-[#e5e7eb] px-4 text-sm outline-none focus:border-black focus:ring-2 focus:ring-black/10" disabled={sending} onChange={(event) => onChange(event.target.value)} placeholder={t.aiPlaceholder} value={input} /><button className="inline-flex h-12 items-center gap-2 rounded-lg bg-black px-5 text-sm font-semibold text-white disabled:opacity-40" disabled={sending || !input.trim()} type="submit">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}<span className="hidden sm:inline">{t.send}</span></button></form>
       </div>
     </section>
   );
 }
 
-function PageHeading({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
+function AccountView({ auth, bank, initialBillingPlan, onChange, onLogout, readiness, t, telegram }: { auth: AuthStatus | null; bank?: Connector; initialBillingPlan: BillingPlan; onChange: () => void; onLogout: () => void; readiness: Readiness | null; t: T; telegram: TelegramStatus | null }) {
   return (
-    <section className="min-w-0 space-y-3">
-      <p className="flex min-w-0 items-center gap-2 text-label-sm font-bold uppercase leading-5 tracking-wide text-on-surface-variant">
-        <span className="h-px w-8 bg-outline-variant" />
-        <span className="min-w-0 break-words">{eyebrow}</span>
-      </p>
-      <h2 className="max-w-4xl break-words font-display text-headline-lg-mobile font-bold leading-8 text-on-surface sm:text-headline-lg">{title}</h2>
-      <p className="max-w-3xl text-body-md leading-7 text-on-surface-variant">{body}</p>
-    </section>
-  );
-}
-
-function FinancialSummary({ monthlyTotal, nextLabel, locale }: { monthlyTotal: string; nextLabel: string; locale: Locale }) {
-  const t = copy[locale];
-  return (
-    <section className="relative overflow-hidden rounded-xl border border-outline-variant bg-white p-6 shadow-stitch">
-      <WalletCards className="absolute right-5 top-5 h-16 w-16 text-primary/10" />
-      <div className="relative z-10">
-        <p className="mb-1 text-label-sm font-bold uppercase tracking-wider text-on-surface-variant">{t.totalMonthlySpend}</p>
-        <h2 className="font-display text-[34px] font-bold text-primary sm:text-display">{monthlyTotal}</h2>
-        <div className="mt-4 flex w-fit max-w-full items-start gap-2 rounded-lg border border-outline-variant/60 bg-surface-container-low px-3 py-2">
-          <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-amber-dark" />
-          <span className="min-w-0 break-words text-label-sm font-semibold leading-5 text-on-surface">
-            {t.nextBilling}: <span className="font-bold">{nextLabel}</span>
-          </span>
+    <section><PageTitle text={auth?.user?.email || ""} title={t.accountTitle} />
+      <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6">
+          <div className="flex items-center gap-4"><div className="grid h-16 w-16 place-items-center overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f3f4f5]">{auth?.user?.avatar_url ? <img alt={auth.user.name} className="h-full w-full object-cover" src={auth.user.avatar_url} /> : <UserCircle2 className="h-7 w-7" />}</div><div><h3 className="font-display text-xl font-semibold">{auth?.user?.name || "TengeGuard user"}</h3><p className="mt-1 text-sm text-[#6b7280]">{auth?.user?.email}</p></div></div>
+          <div className="mt-6 flex flex-wrap gap-3"><button className="rounded-lg border border-[#e5e7eb] px-4 py-2.5 text-sm font-semibold" onClick={onChange} type="button">{t.changeAccount}</button><button className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700" onClick={onLogout} type="button"><LogOut className="h-4 w-4" />{t.logout}</button></div>
         </div>
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6"><h3 className="font-display text-lg font-semibold">{t.status}</h3><div className="mt-5 space-y-3"><StatusLine label={t.plan} ready value={initialBillingPlan === "free" ? t.trial : t.pro} /><StatusLine label={t.bank} ready={bank?.status === "connected"} /><StatusLine label={t.telegram} ready={Boolean(telegram?.connected)} /><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /></div></div>
       </div>
     </section>
   );
 }
 
-function TrustCard({ evidenceCount, messagesScanned, t }: { evidenceCount: number; messagesScanned: number; t: (typeof copy)["ru"] }) {
-  return (
-    <section className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-white p-5 shadow-stitch">
-      <div className="min-w-0">
-        <h4 className="text-label-sm font-bold text-on-surface">{t.realEvidenceOnly}</h4>
-        <p className="mt-1 break-words text-label-sm leading-5 text-on-surface-variant">
-          {messagesScanned} {t.messages.toLowerCase()} · {evidenceCount} {t.evidence.toLowerCase()}
-        </p>
-        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container px-2 py-1 text-[10px] font-bold uppercase text-on-surface-variant">
-          <LockKeyhole className="h-3.5 w-3.5" />
-          {t.readOnly}
-        </span>
-      </div>
-      <div className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-emerald-accent/30">
-        <ShieldCheck className="h-6 w-6 text-emerald-accent" />
-        <span className="absolute inset-0 animate-ping rounded-full bg-emerald-accent/10" />
-      </div>
-    </section>
-  );
+function StatCard({ icon: Icon, label, large, value, warning = false }: { icon: React.ElementType; label: string; large?: boolean; value: string; warning?: boolean }) {
+  return <div className="flex h-40 flex-col justify-between rounded-xl border border-[#e5e7eb] bg-white p-6 transition-shadow hover:shadow-soft"><div className="flex items-center justify-between"><span className="text-sm text-[#6b7280]">{label}</span><Icon className="h-5 w-5 text-[#76777d]" /></div><div><p className={`font-display font-semibold tracking-[-0.02em] ${large ? "text-2xl sm:text-3xl" : "text-xl"}`}>{value}</p>{warning ? <span className="mt-2 inline-flex rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">Soon</span> : null}</div></div>;
 }
-
-function TelegramCard({
-  connected,
-  configured,
-  onConnect,
-  onTest,
-  testing,
-  t
-}: {
-  connected: boolean;
-  configured: boolean;
-  onConnect: () => void;
-  onTest: () => void;
-  testing: boolean;
-  t: (typeof copy)["ru"];
-}) {
-  return (
-    <section className="overflow-hidden rounded-xl bg-inverse-surface p-5 text-inverse-on-surface shadow-stitch">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="flex min-w-0 items-start gap-4">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white shadow-stitch">
-          <BrandAvatar />
-        </div>
-        <div className="min-w-0">
-          <h4 className="break-words text-body-md font-extrabold leading-6">{t.telegramTitle}</h4>
-          <p className="mt-1 max-w-md break-words text-label-sm leading-5 opacity-75">{t.telegramText}</p>
-          <span className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${connected ? "bg-emerald-accent text-white" : "bg-white/10 text-inverse-on-surface"}`}>
-            {connected ? "connected" : configured ? "ready" : "not configured"}
-          </span>
-        </div>
-      </div>
-      <button
-        className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-xs font-bold leading-5 text-primary transition hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
-        disabled={!configured || testing}
-        onClick={connected ? onTest : onConnect}
-        type="button"
-      >
-        {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-        {connected ? t.telegramTest : t.telegramConnect}
-      </button>
-      </div>
-    </section>
-  );
-}
-
-function MetricTile({
-  icon: Icon,
-  label,
-  value,
-  tone = "primary"
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  tone?: "primary" | "emerald" | "amber" | "rose";
-}) {
-  const tones = {
-    primary: "text-primary",
-    emerald: "text-emerald-accent",
-    amber: "text-amber-dark",
-    rose: "text-red-600"
-  };
-  return (
-    <div className="flex aspect-square flex-col justify-between rounded-xl border border-outline-variant bg-white p-4 shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft">
-      <Icon className={`h-7 w-7 ${tones[tone]}`} />
-      <div>
-        <h4 className="font-display text-2xl font-bold text-on-surface">{value}</h4>
-        <p className="break-words text-[11px] font-bold uppercase leading-4 text-on-surface-variant">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function SavingsReportCard({
-  activeCount,
-  dueSoonCount,
-  evidenceCount,
-  savingsOpportunity,
-  t,
-  topRiskLabel
-}: {
-  activeCount: number;
-  dueSoonCount: number;
-  evidenceCount: number;
-  savingsOpportunity: string;
-  t: (typeof copy)["ru"];
-  topRiskLabel: string;
-}) {
-  return (
-    <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-label-sm font-bold uppercase text-on-surface-variant">{t.quickReport}</p>
-          <h3 className="mt-2 break-words font-display text-[28px] font-bold leading-tight text-on-surface">{savingsOpportunity}</h3>
-          <p className="mt-1 text-body-md font-semibold text-on-surface-variant">{t.savingsScore}</p>
-        </div>
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-soft text-emerald-dark">
-          <WalletCards className="h-6 w-6" />
-        </div>
-      </div>
-      <div className="mt-5 grid gap-2">
-        <ReportLine label={t.protectedNow} value={`${activeCount} ${t.subscriptionsNav.toLowerCase()} · ${evidenceCount} ${t.evidence.toLowerCase()}`} />
-        <ReportLine label={t.endingSoon} value={String(dueSoonCount)} />
-        <ReportLine label={t.topRisk} value={topRiskLabel} />
-      </div>
-    </section>
-  );
-}
-
-function ReportLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex min-w-0 items-center justify-between gap-4 rounded-lg bg-surface-container-lowest px-3 py-2">
-      <span className="min-w-0 break-words text-label-sm font-bold text-on-surface-variant">{label}</span>
-      <span className="min-w-0 break-words text-right text-label-sm font-extrabold text-on-surface">{value}</span>
-    </div>
-  );
-}
-
-function SubscriptionGraph({ subscriptions, locale }: { subscriptions: Subscription[]; locale: Locale }) {
-  const t = copy[locale];
-  const monthly = subscriptions.filter((item) => item.billing_cycle === "monthly").length;
-  const yearly = subscriptions.filter((item) => item.billing_cycle === "yearly").length;
-  const review = subscriptions.filter((item) => item.billing_cycle === "unknown" || item.status === "review").length;
-  const cycleLabels = {
-    ru: ["Ежемесячные", "Годовые", "Проверить"],
-    en: ["Monthly", "Yearly", "Review"],
-    kk: ["Ай сайын", "Жыл сайын", "Тексеру"]
-  }[locale];
-  const monthlyTotal = currencyTotals(subscriptions) || "0";
-
-  return (
-    <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-stitch">
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-label-sm font-bold uppercase text-on-surface-variant">Portfolio mix</p>
-          <h3 className="font-headline-md text-headline-md text-on-surface">{t.subscriptionsTitle}</h3>
-        </div>
-        <span className="w-fit rounded-full bg-surface-container px-3 py-1 text-label-sm font-bold text-on-surface-variant">
-          {subscriptions.length} total
-        </span>
-      </div>
-      <div className="grid gap-8 lg:grid-cols-[260px_1fr] lg:items-center">
-        <div className="relative mx-auto h-56 w-56">
-          <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" fill="transparent" r="40" stroke="hsl(var(--surface-container))" strokeWidth="12" />
-            <circle cx="50" cy="50" fill="transparent" r="40" stroke="hsl(var(--primary))" strokeDasharray="180 251.2" strokeLinecap="round" strokeWidth="12" />
-            <circle cx="50" cy="50" fill="transparent" r="40" stroke="#10b981" strokeDasharray="52 251.2" strokeDashoffset="-188" strokeLinecap="round" strokeWidth="12" />
-            <circle cx="50" cy="50" fill="transparent" r="40" stroke="#f59e0b" strokeDasharray="28 251.2" strokeDashoffset="-248" strokeLinecap="round" strokeWidth="12" />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="font-display text-headline-lg font-bold">{monthlyTotal}</span>
-            <span className="text-label-sm font-bold uppercase tracking-wider text-on-surface-variant">{t.totalMonthlySpend}</span>
-          </div>
-        </div>
-        <div className="grid w-full gap-3 sm:grid-cols-3">
-          <LegendDot color="bg-primary" label={cycleLabels[0]} value={monthly} />
-          <LegendDot color="bg-emerald-accent" label={cycleLabels[1]} value={yearly} />
-          <LegendDot color="bg-amber-400" label={cycleLabels[2]} value={review} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function LegendDot({ color, label, value }: { color: string; label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
-      <div className="flex items-center gap-2">
-        <span className={`h-3 w-3 rounded-full ${color}`} />
-        <span className="text-label-sm font-semibold text-on-surface-variant">{label}</span>
-      </div>
-      <p className="mt-2 font-display text-2xl font-bold text-on-surface">{value}</p>
-    </div>
-  );
-}
-
-function SubscriptionCard({
-  cancelling,
-  item,
-  locale,
-  markingCancelled,
-  onCancel,
-  onDelete,
-  onMarkCancelled,
-  onRefund,
-  refunding,
-  t
-}: {
-  cancelling: boolean;
-  item: Subscription;
-  locale: Locale;
-  markingCancelled: boolean;
-  onCancel: () => void;
-  onDelete: () => void;
-  onMarkCancelled: () => void;
-  onRefund: () => void;
-  refunding: boolean;
-  t: (typeof copy)["ru"];
-}) {
-  const confidence = Math.round(item.confidence * 100);
-  const review = needsHumanReview(item);
-  const badgeClass =
-    item.type === "paid" || item.cost > 0
-      ? "bg-emerald-soft text-emerald-dark"
-      : item.type === "free_trial" || item.status === "trial"
-        ? "bg-amber-soft text-amber-dark"
-        : "bg-surface-container text-on-surface-variant";
-  const barClass = review ? "bg-amber-500" : "bg-emerald-500";
-
-  return (
-    <article className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-outline-variant bg-surface-container-low">
-            <span className="font-display text-lg font-black text-primary">{item.provider_name.slice(0, 1).toUpperCase()}</span>
-          </div>
-          <div>
-            <h3 className="font-headline-md text-headline-md">{item.provider_name}</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight ${badgeClass}`}>
-                {typeLabel(item.type, locale)}
-              </span>
-              <span className={`text-label-sm ${review ? "font-semibold text-amber-dark" : "text-on-surface-variant"}`}>
-                {dateLabel(item.trial_ends_at || item.next_billing_date, locale)}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="font-mono-data text-body-lg font-bold">{priceLabel(item, locale)}</p>
-          <p className="text-[10px] font-semibold text-on-surface-variant">{cycleLabel(item.billing_cycle, locale)}</p>
-        </div>
-      </div>
-
-      <div className="mb-4 flex items-center gap-2 rounded-lg bg-surface-container-low p-2.5">
-        <CheckCircle2 className="h-4 w-4 text-on-surface-variant" />
-        <span className="text-label-sm font-semibold text-on-surface-variant">
-          {item.evidence.length} bank transaction proofs
-        </span>
-      </div>
-
-      <div className="mb-4">
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase text-on-surface-variant">{t.trustScore}</span>
-          <span className={`text-label-sm font-semibold ${review ? "text-amber-dark" : "text-emerald-dark"}`}>
-            {review ? t.needsReview : "Verified"} ({confidence}%)
-          </span>
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
-          <div className={`h-full rounded-full ${barClass}`} style={{ width: `${Math.max(8, confidence)}%` }} />
-        </div>
-      </div>
-
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2.5 text-label-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={cancelling}
-          onClick={onCancel}
-          type="button"
-        >
-          {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
-          {cancelling ? t.cancelling : t.cancel}
-        </button>
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 px-3 py-2.5 text-label-sm font-bold text-emerald-dark transition hover:bg-emerald-soft disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={markingCancelled}
-          onClick={onMarkCancelled}
-          type="button"
-        >
-          {markingCancelled ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-          {markingCancelled ? t.markingCancelled : t.markCancelled}
-        </button>
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-amber-200 px-3 py-2.5 text-label-sm font-bold text-amber-dark transition hover:bg-amber-soft disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={refunding}
-          onClick={onRefund}
-          type="button"
-        >
-          {refunding ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          {refunding ? t.refunding : t.refund}
-        </button>
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant px-3 py-2.5 text-label-sm font-bold text-on-surface-variant transition hover:bg-surface-container"
-          onClick={onDelete}
-          type="button"
-        >
-          <Trash2 className="h-4 w-4" />
-          {t.remove}
-        </button>
-      </div>
-    </article>
-  );
-}
-
-function EvidenceCard({
-  evidence,
-  item,
-  locale,
-  t
-}: {
-  evidence: SubscriptionEvidence;
-  item: Subscription;
-  locale: Locale;
-  t: (typeof copy)["ru"];
-}) {
-  return (
-    <article className="overflow-hidden rounded-xl border border-outline-variant bg-white shadow-stitch transition hover:border-primary/40">
-      <div className="p-4">
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg border border-outline-variant bg-surface-container-high">
-              <MailCheck className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-headline-md text-[16px]">{item.provider_name}</h4>
-              <p className="font-mono-data text-[12px] text-on-surface-variant">{evidence.from || evidenceSourceLabel(evidence.source)}</p>
-            </div>
-          </div>
-          <span className="text-label-sm font-semibold text-on-surface-variant">{formatDate(evidence.date, locale)}</span>
-        </div>
-        <div className="rounded-lg border border-outline-variant/60 bg-surface-container-lowest p-3">
-          <h5 className="mb-1 text-label-sm font-bold text-primary">{evidence.subject || t.evidence}</h5>
-          <p className="text-body-md italic text-on-surface">{evidence.snippet || "No snippet"}</p>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 border-t border-outline-variant bg-surface-container-high/30 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
-        <span className="flex items-center gap-1 text-label-sm font-semibold text-on-surface-variant">
-          <LockKeyhole className="h-3.5 w-3.5" />
-          {t.sourceLocked}
-        </span>
-        <span className="text-label-sm font-semibold text-primary">
-          {evidence.matched_signals.map((signal) => signalLabel(signal, locale)).join(", ")}
-        </span>
-      </div>
-    </article>
-  );
-}
-
-function AccessCard({
-  action,
-  body,
-  disabled,
-  icon: Icon,
-  meta,
-  onAction,
-  status,
-  title,
-  tone
-}: {
-  action: string;
-  body: string;
-  disabled: boolean;
-  icon: React.ElementType;
-  meta: string;
-  onAction: () => void;
-  status: string;
-  title: string;
-  tone: "emerald" | "amber" | "sky";
-}) {
-  const toneClass = {
-    emerald: "border-emerald-200 bg-emerald-soft text-emerald-dark",
-    amber: "border-amber-200 bg-amber-soft text-amber-dark",
-    sky: "border-sky-200 bg-sky-50 text-sky-700"
-  }[tone];
-  return (
-    <article className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch transition hover:-translate-y-0.5 hover:shadow-soft">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-outline-variant bg-surface-container">
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-headline-md text-headline-md">{title}</h3>
-            <p className="mt-1 text-label-sm font-semibold text-on-surface-variant">{meta}</p>
-          </div>
-        </div>
-        <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase ${toneClass}`}>{status}</span>
-      </div>
-      <p className="mt-4 text-body-md text-on-surface-variant">{body}</p>
-      <button
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-label-sm font-bold text-on-primary transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={disabled}
-        onClick={onAction}
-        type="button"
-      >
-        {action}
-      </button>
-    </article>
-  );
-}
-
-function StatusBadge({ status }: { status: ConnectorStatus["status"] }) {
-  const tone =
-    status === "connected"
-      ? "bg-emerald-soft text-emerald-dark"
-      : status === "ready"
-        ? "bg-sky-50 text-sky-700"
-        : "bg-amber-soft text-amber-dark";
-  return <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${tone}`}>{status}</span>;
-}
-
-function HistoryColumn({
-  cancelled = false,
-  empty,
-  items,
-  locale,
-  title
-}: {
-  cancelled?: boolean;
-  empty: string;
-  items: Subscription[];
-  locale: Locale;
-  title: string;
-}) {
-  return (
-    <section className="rounded-xl border border-outline-variant bg-white p-5 shadow-stitch">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-headline-md text-headline-md">{title}</h3>
-        <span className="rounded-full bg-surface-container px-2 py-1 text-label-sm font-bold text-on-surface-variant">{items.length}</span>
-      </div>
-      <div className="space-y-3">
-        {items.length ? (
-          items.map((item) => (
-            <div className={`rounded-xl border p-4 ${cancelled ? "border-emerald-200 bg-emerald-soft" : "border-outline-variant bg-surface-container-lowest"}`} key={item.id}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-bold text-on-surface">{item.provider_name}</p>
-                  <p className="mt-1 text-label-sm font-semibold text-on-surface-variant">{typeLabel(item.type, locale)} · {priceLabel(item, locale)}</p>
-                  <p className="mt-2 text-[11px] font-semibold text-on-surface-variant">
-                    {formatDate(cancelled ? item.cancellation_confirmed_at || item.last_seen_at : item.last_seen_at, locale)}
-                  </p>
-                </div>
-                <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${cancelled ? "bg-white text-emerald-dark" : "bg-surface text-primary"}`}>
-                  {item.status}
-                </span>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="rounded-xl border border-outline-variant bg-surface-container-low p-4 text-body-md text-on-surface-variant">{empty}</p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function MagicProgress({ locale, stepIndex }: { locale: Locale; stepIndex: number }) {
-  const t = copy[locale];
-  const boundedStep = Math.min(stepIndex, dashboardProgressSteps.length - 1);
-  const progress = [28, 64, 88][boundedStep];
-
-  return (
-    <section className="rounded-xl border border-outline-variant bg-white p-6 shadow-stitch">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-label-sm font-bold uppercase tracking-wider text-primary">{t.loadingTitle}</p>
-          <h3 className="mt-2 font-headline-md text-headline-md">{dashboardProgressSteps[boundedStep]}</h3>
-          <p className="mt-2 max-w-2xl text-body-md text-on-surface-variant">{t.loadingText}</p>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-low px-4 py-3 text-label-sm font-bold text-primary">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          {progress}%
-        </div>
-      </div>
-      <div className="mt-6 h-3 overflow-hidden rounded-full bg-surface-container">
-        <div className="h-full rounded-full bg-emerald-accent transition-all duration-700" style={{ width: `${progress}%` }} />
-      </div>
-    </section>
-  );
-}
-
-function EmptyState({
-  icon: Icon,
-  title,
-  body
-}: {
-  icon: React.ElementType;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-outline-variant bg-white p-8 text-center shadow-stitch lg:col-span-2">
-      <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-emerald-200 bg-emerald-soft">
-        <Icon className="h-6 w-6 text-emerald-dark" />
-      </div>
-      <h3 className="mt-4 font-display text-headline-md font-extrabold">{title}</h3>
-      <p className="mx-auto mt-2 max-w-2xl text-body-md leading-6 text-on-surface-variant">{body}</p>
-      <div className="mx-auto mt-5 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
-        <div className="rounded-xl bg-surface-container-low p-3">
-          <p className="text-[11px] font-black uppercase text-on-surface-variant">Источник</p>
-          <p className="mt-1 text-label-sm font-bold text-on-surface">Bank read-only</p>
-        </div>
-        <div className="rounded-xl bg-surface-container-low p-3">
-          <p className="text-[11px] font-black uppercase text-on-surface-variant">Типы</p>
-          <p className="mt-1 text-label-sm font-bold text-on-surface">Paid only</p>
-        </div>
-        <div className="rounded-xl bg-surface-container-low p-3">
-          <p className="text-[11px] font-black uppercase text-on-surface-variant">Режим</p>
-          <p className="mt-1 text-label-sm font-bold text-on-surface">Recurring charges</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DashboardActivationPanel({
-  bankStatus,
-  onConnectBank,
-  onTelegram,
-  telegramReady
-}: {
-  bankStatus?: ConnectorStatus["status"];
-  onConnectBank: () => void;
-  onTelegram: () => void;
-  telegramReady: boolean;
-}) {
-  const bankReady = bankStatus === "ready" || bankStatus === "connected";
-  const bankConnected = bankStatus === "connected";
-
-  return (
-    <section className="overflow-hidden rounded-2xl border border-primary/15 bg-white shadow-stitch">
-      <div className="border-b border-outline-variant bg-[linear-gradient(135deg,#ffffff_0%,#eefcf7_100%)] p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-label-sm font-black uppercase text-primary">Автоматический поиск подписок</p>
-            <h3 className="mt-2 font-display text-headline-md font-extrabold text-on-surface">
-              Подключаем источники и сразу собираем реальные данные
-            </h3>
-            <p className="mt-2 max-w-2xl text-body-md leading-6 text-on-surface-variant">
-              Подключите свой банк в защищённом окне Salt Edge. TengeGuard анализирует только историю транзакций и находит подтверждённые регулярные списания.
-            </p>
-          </div>
-          <span className="w-fit rounded-full border border-emerald-200 bg-emerald-soft px-3 py-1 text-[11px] font-black uppercase text-emerald-dark">
-            Real data only
-          </span>
-        </div>
-      </div>
-
-      <div className="grid gap-3 p-5 md:grid-cols-2">
-        <ActivationStep
-          action={bankConnected ? "Банк подключен" : bankReady ? "Подключить банк" : "Ожидает API"}
-          body="Read-only доступ к счетам и истории операций. TengeGuard не может переводить или списывать деньги."
-          disabled={!bankReady || bankConnected}
-          icon={WalletCards}
-          onClick={onConnectBank}
-          state={bankConnected ? "подключено" : bankReady ? "API готов" : "нужен доступ провайдера"}
-          title="Банковская интеграция"
-          tone="primary"
-        />
-        <ActivationStep
-          action={telegramReady ? "Подключить Telegram" : "Бот не настроен"}
-          body="Напоминания перед прогнозируемым следующим списанием."
-          disabled={!telegramReady}
-          icon={MessageCircle}
-          onClick={onTelegram}
-          state={telegramReady ? "готово" : "нужен webhook/token"}
-          title="Telegram уведомления"
-          tone="emerald"
-        />
-        <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
-          <div className="flex items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-soft text-amber-dark">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="font-bold text-on-surface">Полный охват</h4>
-              <p className="mt-1 text-body-md leading-6 text-on-surface-variant">
-                Показываются только платные подписки, подтверждённые повторяющимися банковскими операциями. Бесплатные планы и неподтверждённые догадки не добавляются.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ActivationStep({
-  action,
-  body,
-  disabled,
-  icon: Icon,
-  onClick,
-  state,
-  title,
-  tone
-}: {
-  action: string;
-  body: string;
-  disabled: boolean;
-  icon: React.ElementType;
-  onClick: () => void;
-  state: string;
-  title: string;
-  tone: "primary" | "emerald";
-}) {
-  const toneClass = tone === "emerald" ? "bg-emerald-soft text-emerald-dark" : "bg-primary/10 text-primary";
-
-  return (
-    <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-stitch">
-      <div className="flex items-start gap-3">
-        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${toneClass}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h4 className="break-words font-bold text-on-surface">{title}</h4>
-              <p className="mt-1 text-[11px] font-black uppercase text-on-surface-variant">{state}</p>
-            </div>
-            <button
-              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-3 py-2 text-label-sm font-bold text-on-primary transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-45"
-              disabled={disabled}
-              onClick={onClick}
-              type="button"
-            >
-              {action}
-            </button>
-          </div>
-          <p className="mt-3 text-body-md leading-6 text-on-surface-variant">{body}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+function MiniStat({ label, value }: { label: string; value: string | number }) { return <div className="flex min-h-[72px] items-center justify-between rounded-xl border border-[#e5e7eb] bg-white p-4"><span className="text-xs leading-5 text-[#6b7280]">{label}</span><strong className="ml-3 font-display text-xl">{value}</strong></div>; }
+function StatusChip({ active, label, onClick }: { active: boolean; label: string; onClick?: () => void }) { const Tag = onClick ? "button" : "span"; return <Tag className="flex items-center gap-2 rounded-full border border-[#e5e7eb] bg-white px-3 py-2 text-xs font-semibold" onClick={onClick}><span className={`h-2 w-2 rounded-full ${active ? "bg-emerald-500" : "bg-amber-500"}`} />{label}</Tag>; }
+function SubscriptionRow({ item, locale }: { item: Subscription; locale: Locale }) { return <div className="flex items-center justify-between gap-4 px-5 py-4"><div className="flex min-w-0 items-center gap-3"><ServiceIcon name={item.provider_name} /><div className="min-w-0"><p className="truncate text-sm font-semibold">{item.provider_name}</p><p className="mt-0.5 text-xs text-[#76777d]">{formatDate(item.next_billing_date, locale)}</p></div></div><p className="shrink-0 text-sm font-semibold tabular-nums">{formatMoney(item, locale)}</p></div>; }
+function SubscriptionTableRow({ item, locale, onAction, t, working }: { item: Subscription; locale: Locale; onAction: (item: Subscription, action: "cancel" | "cancelled" | "refund" | "delete") => void; t: T; working: boolean }) { return <tr className="hover:bg-[#f8f9fa]"><td className="px-5 py-4"><div className="flex items-center gap-3"><ServiceIcon name={item.provider_name} /><div><p className="font-semibold">{item.provider_name}</p><p className="mt-0.5 text-xs text-[#76777d]">{item.evidence.length} {t.evidence.toLowerCase()}</p></div></div></td><td className="px-5 py-4 text-sm font-semibold tabular-nums">{formatMoney(item, locale)}</td><td className="px-5 py-4 text-sm text-[#5f6368]">{cycleName(item.billing_cycle, locale)}</td><td className="px-5 py-4 text-sm tabular-nums">{formatDate(item.next_billing_date, locale)}</td><td className="px-5 py-4"><Confidence value={item.confidence} /></td><td className="px-5 py-4"><div className="flex items-center gap-2">{working ? <Loader2 className="h-4 w-4 animate-spin" /> : <><button className="rounded-lg border border-[#e5e7eb] px-3 py-2 text-xs font-semibold hover:border-black" onClick={() => onAction(item, "cancel")} type="button">{t.cancel}</button><button aria-label={t.markCancelled} className="grid h-8 w-8 place-items-center rounded-lg border border-[#e5e7eb]" onClick={() => onAction(item, "cancelled")} title={t.markCancelled} type="button"><Check className="h-4 w-4" /></button></>}</div></td></tr>; }
+function ServiceIcon({ name }: { name: string }) { return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#e5e7eb] bg-[#f3f4f5] font-display text-sm font-bold">{name.slice(0, 1).toUpperCase()}</span>; }
+function Confidence({ value }: { value: number }) { const percent = Math.round(value * 100); return <div className="flex items-center gap-2"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${percent >= 85 ? "bg-emerald-50 text-emerald-700" : percent >= 70 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>{percent}%</span><span className="h-1.5 w-12 overflow-hidden rounded-full bg-[#e5e7eb]"><span className="block h-full bg-black" style={{ width: `${percent}%` }} /></span></div>; }
+function IntegrationCard({ action, actionLabel, connected, icon: Icon, text, title }: { action?: () => void; actionLabel?: string; connected: boolean; icon: React.ElementType; text: string; title: string }) { return <article className="rounded-xl border border-[#e5e7eb] bg-white p-6"><div className="flex items-start justify-between gap-4"><span className="grid h-10 w-10 place-items-center rounded-lg bg-[#f3f4f5]"><Icon className="h-5 w-5" /></span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${connected ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{connected ? <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" /> : <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />}{connected ? "Active" : "Setup"}</span></div><h3 className="mt-5 font-display text-lg font-semibold">{title}</h3><p className="mt-2 min-h-12 text-sm leading-6 text-[#6b7280]">{text}</p>{action ? <button className={`mt-5 rounded-lg px-4 py-2.5 text-sm font-semibold ${connected ? "border border-[#e5e7eb]" : "bg-black text-white"}`} onClick={action} type="button">{actionLabel}</button> : null}</article>; }
+function StatusLine({ label, ready, value }: { label: string; ready: boolean; value?: string }) { return <div className="flex items-center justify-between gap-4 rounded-lg bg-[#f8f9fa] px-4 py-3 text-sm"><span>{label}</span><span className={`flex items-center gap-1.5 font-semibold ${ready ? "text-emerald-700" : "text-amber-700"}`}>{ready ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}{value || (ready ? "Ready" : "Setup")}</span></div>; }
+function HistoryColumn({ empty, items, locale, onDelete, title, workingId }: { empty: string; items: Subscription[]; locale: Locale; onDelete?: (item: Subscription) => void; title: string; workingId?: string | null }) { return <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white"><div className="flex items-center justify-between border-b border-[#e5e7eb] px-5 py-4"><h3 className="font-display font-semibold">{title}</h3><span className="rounded-full bg-[#f3f4f5] px-2.5 py-1 text-xs font-semibold">{items.length}</span></div>{items.length ? <div className="divide-y divide-[#e5e7eb]">{items.map((item) => <div className="flex items-center justify-between gap-4 p-4" key={item.id}><SubscriptionRow item={item} locale={locale} />{onDelete ? <button aria-label="Delete" className="grid h-8 w-8 place-items-center rounded-lg border border-red-100 text-red-700" disabled={workingId === item.id} onClick={() => onDelete(item)} type="button">{workingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button> : null}</div>)}</div> : <p className="p-6 text-sm text-[#76777d]">{empty}</p>}</div>; }
+function EmptyPanel({ children, icon: Icon, text, title }: { children?: React.ReactNode; icon: React.ElementType; text: string; title: string }) { return <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-[#e5e7eb] bg-white p-8 text-center shadow-stitch"><div className="max-w-lg"><span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f3f4f5]"><Icon className="h-7 w-7" /></span><h3 className="mt-5 font-display text-2xl font-semibold">{title}</h3><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#6b7280]">{text}</p>{children ? <div className="mt-6">{children}</div> : null}</div></div>; }
+function LoadingState({ label }: { label: string }) { return <div className="grid min-h-[560px] place-items-center text-center"><div><Loader2 className="mx-auto h-7 w-7 animate-spin" /><p className="mt-4 text-sm font-medium text-[#6b7280]">{label}</p></div></div>; }
+function Notice({ onClose, text, title, tone }: { onClose: () => void; text: string; title: string; tone: "error" | "success" }) { return <div className={`mb-5 flex items-start gap-3 rounded-xl border p-4 ${tone === "error" ? "border-red-200 bg-red-50 text-red-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>{tone === "error" ? <XCircle className="mt-0.5 h-5 w-5 shrink-0" /> : <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />}<div className="flex-1"><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-sm leading-6">{text}</p></div><button aria-label="Close" onClick={onClose} type="button"><XCircle className="h-4 w-4" /></button></div>; }
+function formatDate(value: string | null | undefined, locale: Locale) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat(localeTags[locale], { day: "2-digit", month: "short", year: "numeric" }).format(date); }
+function formatMoney(item: Subscription, locale: Locale) { try { return new Intl.NumberFormat(localeTags[locale], { style: "currency", currency: item.currency || "KZT", maximumFractionDigits: 0 }).format(item.cost); } catch { return `${item.cost.toLocaleString(localeTags[locale])} ${item.currency}`; } }
+function cycleName(cycle: BillingCycle, locale: Locale) { const names = { ru: { monthly: "Ежемесячно", yearly: "Ежегодно", weekly: "Еженедельно", unknown: "Не определено" }, en: { monthly: "Monthly", yearly: "Yearly", weekly: "Weekly", unknown: "Unknown" }, kk: { monthly: "Ай сайын", yearly: "Жыл сайын", weekly: "Апта сайын", unknown: "Белгісіз" } }; return names[locale][cycle]; }

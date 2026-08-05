@@ -40,25 +40,25 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
-        "body-md": ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
-        "label-sm": ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
-        "mono-data": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"]
+        display: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        "body-md": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        "label-sm": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        "mono-data": ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       fontSize: {
-        display: ["48px", { lineHeight: "56px", letterSpacing: "0em", fontWeight: "800" }],
-        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "0em", fontWeight: "700" }],
-        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "0em", fontWeight: "700" }],
-        "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "0em", fontWeight: "700" }],
+        display: ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-lg-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
         "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
         "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }],
         "label-sm": ["12px", { lineHeight: "16px", letterSpacing: "0em", fontWeight: "600" }],
         "mono-data": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "500" }]
       },
       boxShadow: {
-        soft: "0 18px 50px -34px rgb(15 23 42 / 0.38)",
-        stitch: "0 4px 12px rgb(15 23 42 / 0.035)",
-        float: "0 20px 65px -45px rgb(15 23 42 / 0.55)"
+        soft: "0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -1px rgb(0 0 0 / 0.03)",
+        stitch: "0 4px 6px -1px rgb(0 0 0 / 0.05)",
+        float: "0 18px 40px -24px rgb(0 0 0 / 0.22)"
       }
     }
   },

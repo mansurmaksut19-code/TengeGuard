@@ -1,15 +1,5 @@
-import App from "./App";
-import { cookies } from "next/headers";
+import DashboardScreen from "./DashboardScreen";
 
-export default async function DashboardPage() {
-  const cookieStore = await cookies();
-  const mode = cookieStore.get("tg_device_mode")?.value === "mobile" ? "mobile" : "desktop";
-  const billingPlanValue = cookieStore.get("tg_billing_plan")?.value;
-  const billingPlan =
-    billingPlanValue === "pro_monthly" || billingPlanValue === "pro_yearly" || billingPlanValue === "free"
-      ? billingPlanValue
-      : "free";
-  const trialStartedAt = cookieStore.get("tg_trial_started_at")?.value || null;
-  const billingEndsAt = cookieStore.get("tg_billing_ends_at")?.value || null;
-  return <App initialBillingEndsAt={billingEndsAt} initialBillingPlan={billingPlan} initialDeviceMode={mode} initialTrialStartedAt={trialStartedAt} />;
+export default function DashboardPage() {
+  return <DashboardScreen />;
 }
