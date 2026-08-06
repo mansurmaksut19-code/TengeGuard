@@ -5,17 +5,29 @@ import { storagePath } from "@/lib/server/storage-root";
 
 export type PaidPlan = "pro_monthly" | "pro_yearly";
 
+export type BillingState = {
+  user_id: string;
+  plan: PaidPlan | "free";
+  status: "trial" | "active" | "expired";
+  started_at: string;
+  ends_at: string;
+  provider?: PaymentOrder["provider"];
+  order_id?: string;
+};
+
 export type PaymentOrder = {
   id: string;
   user_id: string;
   plan: PaidPlan;
   amount: number;
   currency: "KZT";
-  status: "pending" | "paid" | "failed";
-  provider: "freedompay";
+  status: "pending" | "awaiting_confirmation" | "paid" | "failed";
+  provider: "freedompay" | "kaspi_pay";
   created_at: string;
+  confirmed_at?: string;
   paid_at?: string;
   provider_payment_id?: string;
+  customer_note?: string;
 };
 
 type FreedomPayConfig = {
@@ -56,7 +68,38 @@ function orderPath(orderId: string) {
   return path.join(ordersRoot(), `${orderId}.json`);
 }
 
-export async function createPaymentOrder(userId: string, plan: PaidPlan): Promise<PaymentOrder> {
+function billingPath(userId: string) {
+  return path.join(storagePath("billing"), `${userId}.json`);
+}
+
+export function billingEndDate(plan: PaidPlan, startedAt = new Date()) {
+  const endsAt = new Date(startedAt);
+  if (plan === "pro_yearly") endsAt.setUTCFullYear(endsAt.getUTCFullYear() + 1);
+  else endsAt.setUTCMonth(endsAt.getUTCMonth() + 1);
+  return endsAt;
+}
+
+export async function readBillingState(userId?: string) {
+  if (!userId) return null;
+  return readStoredJson<BillingState>(billingPath(userId));
+}
+
+export async function activatePaidBilling(order: PaymentOrder) {
+  const startedAt = order.paid_at ? new Date(order.paid_at) : new Date();
+  const billing: BillingState = {
+    user_id: order.user_id,
+    plan: order.plan,
+    status: "active",
+    started_at: startedAt.toISOString(),
+    ends_at: billingEndDate(order.plan, startedAt).toISOString(),
+    provider: order.provider,
+    order_id: order.id
+  };
+  await writeStoredJson(billingPath(order.user_id), billing);
+  return billing;
+}
+
+export async function createPaymentOrder(userId: string, plan: PaidPlan, provider: PaymentOrder["provider"] = "freedompay"): Promise<PaymentOrder> {
   const details = paidPlanDetails(plan);
   const order: PaymentOrder = {
     id: `tg-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`,
@@ -65,7 +108,7 @@ export async function createPaymentOrder(userId: string, plan: PaidPlan): Promis
     amount: details.amount,
     currency: "KZT",
     status: "pending",
-    provider: "freedompay",
+    provider,
     created_at: new Date().toISOString()
   };
 
@@ -79,6 +122,25 @@ export async function readPaymentOrder(orderId: string) {
 
 export async function updatePaymentOrder(order: PaymentOrder) {
   await writeStoredJson(orderPath(order.id), order);
+}
+
+export type KaspiPayConfig = {
+  merchantName: string;
+  phone: string;
+  paymentUrl?: string;
+  qrImageUrl?: string;
+};
+
+export function readKaspiPayConfig(): KaspiPayConfig | null {
+  const phone = process.env.KASPI_PAY_PHONE || process.env.TENGEGUARD_KASPI_PAY_PHONE;
+  if (!phone) return null;
+
+  return {
+    merchantName: process.env.KASPI_PAY_MERCHANT_NAME || process.env.TENGEGUARD_KASPI_PAY_MERCHANT_NAME || "TengeGuard",
+    phone,
+    paymentUrl: process.env.KASPI_PAY_PAYMENT_URL || process.env.TENGEGUARD_KASPI_PAY_PAYMENT_URL || undefined,
+    qrImageUrl: process.env.KASPI_PAY_QR_IMAGE_URL || process.env.TENGEGUARD_KASPI_PAY_QR_IMAGE_URL || undefined
+  };
 }
 
 function freedomPaySignature(scriptName: string, params: Record<string, string>, secretKey: string) {

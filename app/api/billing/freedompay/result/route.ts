@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  activatePaidBilling,
   freedomPayXmlResponse,
   readPaymentOrder,
   updatePaymentOrder,
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
   order.provider_payment_id = payload.pg_payment_id || order.provider_payment_id;
   if (order.status === "paid") order.paid_at = order.paid_at || new Date().toISOString();
   await updatePaymentOrder(order);
+  if (order.status === "paid") await activatePaidBilling(order);
 
   return new NextResponse(freedomPayXmlResponse(scriptName, { pg_status: "ok", pg_description: "accepted" }), {
     headers: { "Content-Type": "application/xml" }

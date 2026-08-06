@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const userId = getUserIdFromRequest(request);
   const user = await getSessionUserFromRequest(request, userId);
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  const expired = requireActiveAccess(request);
+  const expired = await requireActiveAccess(request, user.id);
   if (expired) return expired;
 
   try {

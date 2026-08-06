@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createFreedomPayCheckout, createPaymentOrder, normalizePaidPlan } from "@/lib/server/payments";
+import { createFreedomPayCheckout, createPaymentOrder, normalizePaidPlan, readFreedomPayConfig, readKaspiPayConfig } from "@/lib/server/payments";
 import { getSessionUserFromRequest, getUserIdFromRequest } from "@/lib/server/subcut-gmail";
 import { secureCookieOptions } from "@/lib/server/security";
 
@@ -21,11 +21,16 @@ export async function GET(request: Request) {
     return response;
   }
 
-  const order = await createPaymentOrder(user.id, plan);
-  const checkout = await createFreedomPayCheckout(order, appUrl(request));
-  if (!checkout.ok) {
-    return NextResponse.redirect(`${appUrl(request)}/dashboard?payment=not_configured`);
+  if (readFreedomPayConfig()) {
+    const order = await createPaymentOrder(user.id, plan, "freedompay");
+    const checkout = await createFreedomPayCheckout(order, appUrl(request));
+    if (checkout.ok) return NextResponse.redirect(checkout.redirectUrl);
   }
 
-  return NextResponse.redirect(checkout.redirectUrl);
+  if (readKaspiPayConfig()) {
+    const order = await createPaymentOrder(user.id, plan, "kaspi_pay");
+    return NextResponse.redirect(`${appUrl(request)}/billing/kaspi?order=${encodeURIComponent(order.id)}`);
+  }
+
+  return NextResponse.redirect(`${appUrl(request)}/dashboard/account?payment=not_configured`);
 }

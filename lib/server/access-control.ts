@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readBillingState } from "@/lib/server/payments";
 
 const trialDurationMs = 14 * 24 * 60 * 60 * 1000;
 
@@ -13,7 +14,16 @@ function timestamp(value: string | null) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function readAccessState(request: Request) {
+export async function readAccessState(request: Request, userId?: string) {
+  const stored = await readBillingState(userId);
+  if (stored?.status === "active") {
+    return {
+      active: new Date(stored.ends_at).getTime() > Date.now(),
+      endsAt: stored.ends_at,
+      plan: stored.plan
+    };
+  }
+
   const plan = readCookie(request, "tg_billing_plan") || "free";
   const explicitEnd = timestamp(readCookie(request, "tg_billing_ends_at"));
   const trialStart = timestamp(readCookie(request, "tg_trial_started_at"));
@@ -26,8 +36,8 @@ export function readAccessState(request: Request) {
   };
 }
 
-export function requireActiveAccess(request: Request) {
-  const access = readAccessState(request);
+export async function requireActiveAccess(request: Request, userId?: string) {
+  const access = await readAccessState(request, userId);
   if (access.active) return null;
   return NextResponse.json(
     {

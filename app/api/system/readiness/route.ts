@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isPersistentStoreConfigured } from "@/lib/server/data-store";
-import { readFreedomPayConfig } from "@/lib/server/payments";
+import { readFreedomPayConfig, readKaspiPayConfig } from "@/lib/server/payments";
 import { isGmailConfigured } from "@/lib/server/subcut-gmail";
 
 export async function GET(request: Request) {
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     {
       ok: true,
       gmailConfigured: isGmailConfigured(origin),
-      paymentConfigured: Boolean(readFreedomPayConfig()),
+      paymentConfigured: Boolean(readFreedomPayConfig() || readKaspiPayConfig()),
       persistentStoreConfigured: isPersistentStoreConfigured()
     },
     { headers: { "Cache-Control": "no-store, max-age=0" } }
