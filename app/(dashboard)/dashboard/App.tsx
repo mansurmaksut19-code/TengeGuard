@@ -166,6 +166,8 @@ const copy = {
     plan: "Тариф",
     storage: "Хранилище",
     payment: "Оплата",
+    cancelPlan: "Отменить Pro",
+    cancelPlanText: "Остановить текущий платный доступ TengeGuard для этого аккаунта.",
     error: "Не удалось выполнить действие",
     expiredTitle: "Доступ закончился",
     expiredText: "Выберите Pro, чтобы продолжить мониторинг подписок.",
@@ -187,7 +189,7 @@ const copy = {
     telegram: "Telegram", telegramText: "Reminders one week and one day before a predicted charge.", telegramOpen: "Telegram is open. Press Start in the bot and the site will connect automatically.", connectTelegram: "Connect Telegram", testTelegram: "Send test",
     google: "Google account", googleText: "Used only for sign-in. Gmail access is not requested.", historyTitle: "Subscription history", current: "Current", cancelled: "Cancelled",
     aiTitle: "AI Assistant", aiText: "Ask questions about detected subscriptions and spending.", aiPlaceholder: "For example: what is the next charge?", send: "Send",
-    accountTitle: "Account", changeAccount: "Change Google account", logout: "Sign out", plan: "Plan", storage: "Storage", payment: "Payments",
+    accountTitle: "Account", changeAccount: "Change Google account", logout: "Sign out", plan: "Plan", storage: "Storage", payment: "Payments", cancelPlan: "Cancel Pro", cancelPlanText: "Stop the current paid TengeGuard access for this account.",
     error: "Action failed", expiredTitle: "Access expired", expiredText: "Choose Pro to continue monitoring subscriptions.", choosePro: "Choose Pro"
   },
   kk: {
@@ -206,7 +208,7 @@ const copy = {
     telegram: "Telegram", telegramText: "Болжамды төлемге бір апта және бір күн қалғанда ескерту.", telegramOpen: "Telegram ашылды. Ботта Start басыңыз, сайт автоматты түрде қосылады.", connectTelegram: "Telegram қосу", testTelegram: "Тест жіберу",
     google: "Google аккаунты", googleText: "Тек кіру үшін. Gmail рұқсаты сұралмайды.", historyTitle: "Жазылымдар тарихы", current: "Ағымдағы", cancelled: "Тоқтатылған",
     aiTitle: "AI көмекші", aiText: "Табылған жазылымдар мен шығындар туралы сұраңыз.", aiPlaceholder: "Мысалы: келесі төлем қандай?", send: "Жіберу",
-    accountTitle: "Аккаунт", changeAccount: "Google аккаунтын ауыстыру", logout: "Шығу", plan: "Тариф", storage: "Сақтау", payment: "Төлем",
+    accountTitle: "Аккаунт", changeAccount: "Google аккаунтын ауыстыру", logout: "Шығу", plan: "Тариф", storage: "Сақтау", payment: "Төлем", cancelPlan: "Pro тоқтату", cancelPlanText: "Осы аккаунт үшін TengeGuard ақылы қолжетімділігін тоқтату.",
     error: "Әрекет орындалмады", expiredTitle: "Қолжетімділік аяқталды", expiredText: "Бақылауды жалғастыру үшін Pro таңдаңыз.", choosePro: "Pro қосу"
   }
 };
@@ -608,11 +610,28 @@ function AccountView({ auth, bank, initialBillingPlan, onChange, onLogout, readi
   return (
     <section><PageTitle text={auth?.user?.email || ""} title={t.accountTitle} />
       <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6">
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch">
           <div className="flex items-center gap-4"><div className="grid h-16 w-16 place-items-center overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f3f4f5]">{auth?.user?.avatar_url ? <img alt={auth.user.name} className="h-full w-full object-cover" src={auth.user.avatar_url} /> : <UserCircle2 className="h-7 w-7" />}</div><div><h3 className="font-display text-xl font-semibold">{auth?.user?.name || "TengeGuard user"}</h3><p className="mt-1 text-sm text-[#6b7280]">{auth?.user?.email}</p></div></div>
           <div className="mt-6 flex flex-wrap gap-3"><button className="rounded-lg border border-[#e5e7eb] px-4 py-2.5 text-sm font-semibold" onClick={onChange} type="button">{t.changeAccount}</button><button className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700" onClick={onLogout} type="button"><LogOut className="h-4 w-4" />{t.logout}</button></div>
         </div>
-        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6"><h3 className="font-display text-lg font-semibold">{t.status}</h3><div className="mt-5 space-y-3"><StatusLine label={t.plan} ready value={initialBillingPlan === "free" ? t.trial : t.pro} /><StatusLine label={t.bank} ready={bank?.status === "connected"} /><StatusLine label={t.telegram} ready={Boolean(telegram?.connected)} /><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /></div></div>
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch"><h3 className="font-display text-lg font-semibold">{t.status}</h3><div className="mt-5 space-y-3"><StatusLine label={t.plan} ready value={initialBillingPlan === "free" ? t.trial : t.pro} /><StatusLine label={t.bank} ready={bank?.status === "connected"} /><StatusLine label={t.telegram} ready={Boolean(telegram?.connected)} /><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /></div></div>
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch lg:col-span-2">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-display text-xl font-semibold">{t.payment}</h3>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-[#6b7280]">{initialBillingPlan === "free" ? t.expiredText : t.cancelPlanText}</p>
+            </div>
+            {initialBillingPlan === "free" ? (
+              <Link className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white" href="/api/billing/checkout?plan=pro_monthly">{t.choosePro}<ArrowRight className="h-4 w-4" /></Link>
+            ) : (
+              <form action="/api/billing/cancel" method="POST">
+                <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100" type="submit">
+                  <XCircle className="h-4 w-4" />{t.cancelPlan}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );

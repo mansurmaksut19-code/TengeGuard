@@ -152,7 +152,6 @@ export default function HomePage() {
           <nav className="hidden items-center gap-8 text-sm font-medium text-[#45464c] md:flex">
             <a href="#how">{t.how}</a>
             <a href="#pricing">{t.pricing}</a>
-            <Link href="/security">{t.security}</Link>
           </nav>
           <div className="flex items-center gap-2">
             <select
@@ -200,7 +199,7 @@ export default function HomePage() {
             </div>
             <div className="grid min-h-[340px] md:grid-cols-[220px_1fr]">
               <div className="hidden border-r border-[#e5e7eb] bg-[#f8f9fa] p-4 md:block">
-                {[t.previewTitle, t.pricing, t.security].map((label, index) => <div className={`mb-2 rounded-lg px-3 py-2 text-xs font-semibold ${index === 0 ? "bg-white text-black" : "text-[#76777d]"}`} key={label}>{label}</div>)}
+                {[t.previewTitle, t.pricing].map((label, index) => <div className={`mb-2 rounded-lg px-3 py-2 text-xs font-semibold ${index === 0 ? "bg-white text-black" : "text-[#76777d]"}`} key={label}>{label}</div>)}
               </div>
               <div className="flex items-center justify-center p-6 sm:p-10">
                 <div className="w-full max-w-xl rounded-xl border border-[#e5e7eb] bg-white p-8 text-center shadow-stitch">

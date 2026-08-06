@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import path from "node:path";
-import { readStoredJson, writeStoredJson } from "@/lib/server/data-store";
+import { deleteStoredJson, readStoredJson, writeStoredJson } from "@/lib/server/data-store";
 import { storagePath } from "@/lib/server/storage-root";
 
 export type PaidPlan = "pro_monthly" | "pro_yearly";
@@ -82,6 +82,10 @@ export function billingEndDate(plan: PaidPlan, startedAt = new Date()) {
 export async function readBillingState(userId?: string) {
   if (!userId) return null;
   return readStoredJson<BillingState>(billingPath(userId));
+}
+
+export async function cancelBillingState(userId: string) {
+  await deleteStoredJson(billingPath(userId));
 }
 
 export async function activatePaidBilling(order: PaymentOrder) {
