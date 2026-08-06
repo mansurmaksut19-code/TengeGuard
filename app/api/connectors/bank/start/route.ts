@@ -33,13 +33,9 @@ export async function GET(request: Request) {
   } catch (error) {
     const providerMessage = error instanceof Error ? error.message : "Unknown provider error";
     const waitingForAccess = /ActionNotAllowed|not enabled|pending|access/i.test(providerMessage);
-    return NextResponse.json(
-      {
-        message: waitingForAccess
-          ? "Salt Edge настроен, но аккаунту ещё не выдан Test или Live access. Откройте Salt Edge Dashboard и завершите запрос доступа."
-          : `Salt Edge не открыл подключение банка: ${providerMessage}`
-      },
-      { status: 502 }
-    );
+    const kaspiUnavailable = /Kaspi недоступен/i.test(providerMessage);
+    const destination = new URL("/dashboard/account", request.url);
+    destination.searchParams.set("bank_error", kaspiUnavailable ? "kaspi_unavailable" : waitingForAccess ? "access_pending" : "provider_error");
+    return NextResponse.redirect(destination);
   }
 }

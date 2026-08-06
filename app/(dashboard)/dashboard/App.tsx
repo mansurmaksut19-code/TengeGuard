@@ -96,6 +96,7 @@ const copy = {
     ai: "AI-помощник",
     account: "Аккаунт",
     connectBank: "Подключить банк",
+    kaspiUnavailable: "Kaspi пока не доступен вашему API-аккаунту Salt Edge. TengeGuard уже готов к прямому подключению, но Salt Edge должен сначала выдать Test/Live-доступ к Kaspi Kazakhstan.",
     dashboardTitle: "Обзор подписок",
     dashboardText: "Реальные регулярные списания из подключённого банка.",
     monthlySpend: "Расходы в месяц",
@@ -172,7 +173,7 @@ const copy = {
   },
   en: {
     overview: "Overview", subscriptions: "Subscriptions", evidence: "Evidence", integrations: "Integrations", history: "History", ai: "AI Assistant", account: "Account",
-    connectBank: "Connect bank", dashboardTitle: "Subscription overview", dashboardText: "Real recurring charges from your connected bank.",
+    connectBank: "Connect bank", kaspiUnavailable: "Kaspi is not yet available to your Salt Edge API account. TengeGuard is ready for direct connection, but Salt Edge must first grant Test/Live access to Kaspi Kazakhstan.", dashboardTitle: "Subscription overview", dashboardText: "Real recurring charges from your connected bank.",
     monthlySpend: "Monthly spend", nextPayment: "Next charge", active: "Active subscriptions", dueSoon: "Due soon", review: "Needs review", confidence: "Average confidence",
     noDataTitle: "Connect a bank to find subscriptions", noDataText: "TengeGuard requests read-only transaction history. It cannot transfer funds or manage your account.",
     bankOnly: "Read-only access", telegramReady: "Telegram connected", telegramMissing: "Connect Telegram", trial: "Free trial", days: "days", pro: "Pro active",
@@ -191,7 +192,7 @@ const copy = {
   },
   kk: {
     overview: "Шолу", subscriptions: "Жазылымдар", evidence: "Дәлелдер", integrations: "Интеграциялар", history: "Тарих", ai: "AI көмекші", account: "Аккаунт",
-    connectBank: "Банкті қосу", dashboardTitle: "Жазылымдарға шолу", dashboardText: "Қосылған банктен алынған нақты қайталанатын төлемдер.",
+    connectBank: "Банкті қосу", kaspiUnavailable: "Kaspi сіздің Salt Edge API аккаунтыңызға әзірше қолжетімсіз. TengeGuard тікелей қосылуға дайын, бірақ Salt Edge алдымен Kaspi Kazakhstan үшін Test/Live рұқсатын беруі керек.", dashboardTitle: "Жазылымдарға шолу", dashboardText: "Қосылған банктен алынған нақты қайталанатын төлемдер.",
     monthlySpend: "Айлық шығын", nextPayment: "Келесі төлем", active: "Белсенді жазылымдар", dueSoon: "Жақын төлем", review: "Тексеру керек", confidence: "Орташа дәлдік",
     noDataTitle: "Жазылымдарды табу үшін банкті қосыңыз", noDataText: "TengeGuard операциялар тарихын тек оқуға рұқсат сұрайды. Ақша аудару мүмкін емес.",
     bankOnly: "Тек оқуға рұқсат", telegramReady: "Telegram қосылған", telegramMissing: "Telegram қосу", trial: "Тегін кезең", days: "күн", pro: "Pro белсенді",
@@ -290,6 +291,15 @@ export default function App({
   useEffect(() => {
     load().catch((requestError) => setError(requestError instanceof Error ? requestError.message : t.error)).finally(() => setLoading(false));
   }, [load, t.error]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const bankError = url.searchParams.get("bank_error");
+    if (!bankError) return;
+    setError(bankError === "kaspi_unavailable" ? t.kaspiUnavailable : t.error);
+    url.searchParams.delete("bank_error");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [t.error, t.kaspiUnavailable]);
 
   useEffect(() => () => {
     if (telegramTimer.current) window.clearInterval(telegramTimer.current);
