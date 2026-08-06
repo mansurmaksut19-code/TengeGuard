@@ -8,15 +8,11 @@ import {
   Check,
   CircleDollarSign,
   Landmark,
-  Laptop,
   LockKeyhole,
-  SearchCheck,
-  ShieldCheck,
-  Smartphone
+  SearchCheck
 } from "lucide-react";
 
 type Locale = "ru" | "en" | "kk";
-type DeviceMode = "desktop" | "mobile";
 
 const languages: Record<Locale, string> = {
   ru: "Русский",
@@ -146,7 +142,6 @@ const copy = {
 
 export default function HomePage() {
   const [locale, setLocale] = useState<Locale>("ru");
-  const [mode, setMode] = useState<DeviceMode>("desktop");
   const t = copy[locale];
 
   return (
@@ -175,14 +170,11 @@ export default function HomePage() {
 
       <section className="border-b border-[#e5e7eb] bg-white px-4 pb-16 pt-20 text-center sm:px-6 sm:pt-24">
         <div className="mx-auto max-w-4xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-            <ShieldCheck className="h-4 w-4" /> {t.badge}
-          </span>
-          <h1 className="font-editorial-italic mx-auto mt-6 max-w-3xl text-[42px] font-semibold leading-[1.08] sm:text-[64px]">{t.title}</h1>
+          <h1 className="font-editorial-italic mx-auto max-w-3xl text-[42px] font-semibold leading-[1.08] sm:text-[64px]">{t.title}</h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[#5f6368] sm:text-lg">{t.subtitle}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <form action="/api/device-mode" method="GET">
-              <input name="mode" type="hidden" value={mode} />
+              <input name="mode" type="hidden" value="desktop" />
               <input name="plan" type="hidden" value="free" />
               <button className="flex h-14 w-full items-center justify-between gap-8 rounded-lg bg-black px-5 text-left text-white sm:w-auto" type="submit">
                 <span><strong className="block text-sm">{t.start}</strong><span className="text-xs text-white/65">{t.startMeta}</span></span>
@@ -196,13 +188,6 @@ export default function HomePage() {
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>
-          </div>
-          <div className="mx-auto mt-5 flex w-fit rounded-lg border border-[#e5e7eb] bg-[#f3f4f5] p-1">
-            {([["desktop", Laptop, t.desktop], ["mobile", Smartphone, t.mobile]] as const).map(([value, Icon, label]) => (
-              <button className={`flex items-center gap-2 rounded-md px-4 py-2 text-xs font-semibold ${mode === value ? "bg-white shadow-sm" : "text-[#6b7280]"}`} key={value} onClick={() => setMode(value)} type="button">
-                <Icon className="h-4 w-4" /> {label}
-              </button>
-            ))}
           </div>
           <p className="mt-5 flex items-center justify-center gap-2 text-xs text-[#6b7280]"><LockKeyhole className="h-4 w-4" />{t.privacy}</p>
         </div>
@@ -222,7 +207,7 @@ export default function HomePage() {
                   <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#f3f4f5]"><Landmark className="h-6 w-6" /></div>
                   <h2 className="mt-5 font-display text-2xl font-semibold">{t.previewTitle}</h2>
                   <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#6b7280]">{t.previewText}</p>
-                  <span className="mt-6 inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white"><Landmark className="h-4 w-4" />{t.connectBank}</span>
+                  <Link className="mt-6 inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white" href="/api/device-mode?mode=desktop&plan=free"><Landmark className="h-4 w-4" />{t.connectBank}</Link>
                 </div>
               </div>
             </div>

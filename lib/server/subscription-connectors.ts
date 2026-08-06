@@ -159,6 +159,15 @@ type SaltEdgeListResponse<T> = {
   data: T[];
 };
 
+export type BankProvider = {
+  code: string;
+  country_code: string;
+  logo_url?: string;
+  mode: "api" | "oauth" | "web" | string;
+  name: string;
+  status: "active" | "inactive" | string;
+};
+
 type SaltEdgeConnection = {
   id?: string;
   connection_id?: string;
@@ -211,9 +220,37 @@ export async function createBankConnectUrl(user: SessionUser) {
   return (await createBankConnectSession(user)).connectUrl;
 }
 
-export async function createBankConnectSession(user: SessionUser, request?: Request) {
+export async function listKazakhstanBankProviders() {
+  if (!bankReady()) return [] as BankProvider[];
+  const response = await saltedgeFetch<SaltEdgeListResponse<BankProvider>>(
+    "/providers?country_code=KZ&include_sandboxes=false&exclude_inactive=true&supported_product=ais&per_page=250"
+  );
+  return response.data;
+}
+
+export async function getKaspiProvider() {
+  const providers = await listKazakhstanBankProviders();
+  return providers.find((provider) => /kaspi/i.test(`${provider.name} ${provider.code}`)) || null;
+}
+
+export async function createBankConnectSession(
+  user: SessionUser,
+  request?: Request,
+  options?: { providerQuery?: string }
+) {
   if (!bankReady()) return { connectUrl: bankConnectUrl(user), state: await readBankState(user.id, request) };
   const customerId = await ensureSaltEdgeCustomer(user, request);
+  const providerQuery = options?.providerQuery?.trim();
+  const selectedProvider = providerQuery
+    ? (await listKazakhstanBankProviders()).find((provider) =>
+        `${provider.name} ${provider.code}`.toLowerCase().includes(providerQuery.toLowerCase())
+      )
+    : null;
+  if (providerQuery && !selectedProvider) {
+    throw new Error(
+      "Kaspi недоступен в текущем каталоге Salt Edge для вашего API-аккаунта. Проверьте Test/Live access и запросите Kaspi Kazakhstan у Salt Edge."
+    );
+  }
   const today = new Date();
   const from = new Date(today);
   from.setFullYear(today.getFullYear() - 2);
@@ -243,12 +280,13 @@ export async function createBankConnectSession(user: SessionUser, request?: Requ
           show_account_overview: true,
           show_consent_confirmation: true,
           disable_provider_search: false,
-          skip_provider_selection: false,
+          skip_provider_selection: Boolean(selectedProvider),
           skip_stages_screen: false,
           allowed_countries: ["KZ", "UZ", "KG", "TJ", "AZ", "AM", "GE", "MD", "UA"],
           popular_providers_country: "KZ"
         },
         provider: {
+          ...(selectedProvider ? { code: selectedProvider.code } : {}),
           include_sandboxes: process.env.TENGEGUARD_BANK_INCLUDE_SANDBOXES === "1"
         },
         return_connection_id: true,

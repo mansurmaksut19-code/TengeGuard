@@ -16,7 +16,8 @@ export async function GET(request: Request) {
   if (expired) return expired;
 
   try {
-    const session = await createBankConnectSession(user, request);
+    const provider = new URL(request.url).searchParams.get("provider") || undefined;
+    const session = await createBankConnectSession(user, request, { providerQuery: provider });
     if (!session.connectUrl) {
       return NextResponse.json(
         { message: "Банковский провайдер ещё не настроен для этого окружения." },
