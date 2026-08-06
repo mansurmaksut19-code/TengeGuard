@@ -178,7 +178,7 @@ export default function HomePage() {
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
             <ShieldCheck className="h-4 w-4" /> {t.badge}
           </span>
-          <h1 className="font-editorial-italic mx-auto mt-6 max-w-3xl text-[44px] font-semibold leading-[1.04] sm:text-[68px]">{t.title}</h1>
+          <h1 className="font-editorial-italic mx-auto mt-6 max-w-3xl text-[42px] font-semibold leading-[1.08] sm:text-[64px]">{t.title}</h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[#5f6368] sm:text-lg">{t.subtitle}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <form action="/api/device-mode" method="GET">

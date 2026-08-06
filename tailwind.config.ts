@@ -40,10 +40,10 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Cormorant Garamond", "Georgia", "serif"],
-        "body-md": ["Onest", "ui-sans-serif", "system-ui", "sans-serif"],
-        "label-sm": ["Onest", "ui-sans-serif", "system-ui", "sans-serif"],
-        "mono-data": ["Onest", "ui-sans-serif", "system-ui", "sans-serif"]
+        display: ["Playfair Display", "Georgia", "serif"],
+        "body-md": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        "label-sm": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        "mono-data": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       fontSize: {
         display: ["48px", { lineHeight: "56px", letterSpacing: "0", fontWeight: "700" }],
