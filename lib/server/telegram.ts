@@ -2,7 +2,8 @@ import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { deleteStoredJson, readStoredJson, writeStoredJson } from "@/lib/server/data-store";
-import { readRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
+import { prepareSubscriptionCancellation } from "@/lib/server/subscription-cancel";
+import { markRealGmailSubscriptionCancelled, readRealGmailSubscriptions } from "@/lib/server/subcut-gmail";
 import { storagePath } from "@/lib/server/storage-root";
 import type { Subscription } from "@/lib/subcut-automation";
 
@@ -257,13 +258,10 @@ function subscriptionMessage(subscription: Subscription) {
 }
 
 function reminderKeyboard(subscription: Subscription) {
-  const cancellationUrl = /^https:\/\//.test(subscription.cancellation_path || "")
-    ? subscription.cancellation_path
-    : `${appUrl()}/dashboard/subscriptions`;
   return {
     inline_keyboard: [
       [
-        { text: "Отменить у сервиса", url: cancellationUrl },
+        { text: "Отменить подписку", callback_data: `cancel:${subscription.id}` },
         { text: "Оставить активной", callback_data: `renew:${subscription.id}` }
       ],
       [{ text: "Открыть TengeGuard", url: `${appUrl()}/dashboard/subscriptions` }]
@@ -293,7 +291,7 @@ export async function sendDueTelegramReminders(userId: string, daysAhead = 3) {
   const chat = await readTelegramChat(userId);
   if (!chat?.chat_id || !chat.notifications_enabled) return { sent: 0, skipped: "telegram_not_connected" };
 
-  const subscriptions = await readRealGmailSubscriptions(userId);
+  const subscriptions = (await readRealGmailSubscriptions(userId)).filter((subscription) => subscription.status !== "cancelled");
   const reminderLog = await readTelegramReminderLog(userId);
   const today = new Date().toISOString().slice(0, 10);
   const due = subscriptions.filter((subscription) => {
@@ -318,8 +316,12 @@ export async function sendDueTelegramRemindersForAll(daysAhead = 3) {
 
   let sent = 0;
   for (const userId of userIds) {
-    const result = await sendDueTelegramReminders(userId, daysAhead);
-    sent += "sent" in result ? result.sent : 0;
+    try {
+      const result = await sendDueTelegramReminders(userId, daysAhead);
+      sent += "sent" in result ? result.sent : 0;
+    } catch {
+      // A blocked chat must not stop reminders for every other connected user.
+    }
   }
 
   return { users: userIds.length, sent };
@@ -334,36 +336,66 @@ async function answerCallbackQuery(callbackQueryId: string, text: string) {
 }
 
 async function sendSubscriptionList(chatId: number, userId: string) {
-  const subscriptions = await readRealGmailSubscriptions(userId);
-  const lines = subscriptions.map((subscription) => {
-    const date = endDate(subscription) || "дата не определена";
-    const evidence = subscription.evidence[0];
-    const evidenceLabel = evidence?.subject ? `, операция: ${evidence.subject}` : "";
-    return `• ${subscription.provider_name}: ${formatMoney(subscription)}, следующее списание: ${date}${evidenceLabel}`;
-  });
+  const subscriptions = (await readRealGmailSubscriptions(userId)).filter((subscription) => subscription.status !== "cancelled");
+  if (!subscriptions.length) {
+    await sendTelegramMessage(
+      chatId,
+      "Активные подписки пока не найдены. TengeGuard показывает только списания, подтверждённые банковской историей.",
+      { inline_keyboard: [[{ text: "Открыть TengeGuard", url: `${appUrl()}/dashboard/subscriptions` }]] }
+    );
+    return;
+  }
 
+  const visible = subscriptions.slice(0, 15);
+  await sendTelegramMessage(chatId, `Найдено активных подписок: ${subscriptions.length}. Ниже можно управлять каждой отдельно.`);
+  for (const subscription of visible) {
+    await sendSubscriptionReminder(chatId, subscription);
+  }
+  if (subscriptions.length > visible.length) {
+    await sendTelegramMessage(
+      chatId,
+      `Показаны первые ${visible.length}. Остальные доступны на сайте.`,
+      { inline_keyboard: [[{ text: "Все подписки", url: `${appUrl()}/dashboard/subscriptions` }]] }
+    );
+  }
+}
+
+async function sendBotHelp(chatId: number) {
   await sendTelegramMessage(
     chatId,
     [
-      "TengeGuard · найденные подписки",
+      "TengeGuard управляет уведомлениями о подтверждённых платных подписках.",
       "",
-      lines.length
-        ? lines.join("\n")
-        : "Подписки пока не найдены. TengeGuard показывает только списания, подтверждённые банковской историей.",
-      "",
-      `${appUrl()}/dashboard/subscriptions`
-    ].join("\n")
+      "/subscriptions — показать активные подписки",
+      "/status — проверить подключение",
+      "/notifications — настроить напоминания",
+      "/help — показать эту справку"
+    ].join("\n"),
+    { inline_keyboard: [[{ text: "Открыть TengeGuard", url: `${appUrl()}/dashboard` }]] }
   );
+}
+
+async function callbackOwner(callback: NonNullable<TelegramUpdate["callback_query"]>) {
+  const chatId = callback.message?.chat.id;
+  if (!chatId) return null;
+  const userId = await readChatOwner(chatId);
+  return userId ? { chatId, userId } : null;
 }
 
 export async function handleTelegramUpdate(update: TelegramUpdate) {
   const message = update.message;
+  const command = message?.text?.trim().split(/\s+/)[0]?.split("@")[0]?.toLowerCase();
 
-  if (message?.text?.startsWith("/start")) {
-    const payload = message.text.split(/\s+/)[1];
+  if (message && command === "/start") {
+    const payload = message.text?.split(/\s+/)[1];
     const userId = payload ? await verifyTelegramPayload(payload) : null;
 
     if (!userId) {
+      const existingUserId = await readChatOwner(message.chat.id);
+      if (existingUserId) {
+        await sendBotHelp(message.chat.id);
+        return { ok: true, linked: true, userId: existingUserId };
+      }
       await sendTelegramMessage(message.chat.id, "Откройте TengeGuard и нажмите «Подключить Telegram» ещё раз, чтобы привязать этот чат.");
       return { ok: true, linked: false };
     }
@@ -376,7 +408,7 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
       notifications_enabled: true
     });
 
-    const subscriptions = await readRealGmailSubscriptions(userId);
+    const subscriptions = (await readRealGmailSubscriptions(userId)).filter((subscription) => subscription.status !== "cancelled");
     await sendTelegramMessage(
       message.chat.id,
       [
@@ -385,7 +417,7 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
         "Бот будет предупреждать за 7 дней и за 1 день до прогнозируемого банковского списания.",
         `Сейчас найдено подписок: ${subscriptions.length}.`,
         "",
-        "Команды: /subscriptions, /status"
+        "Команды: /subscriptions, /status, /notifications, /help"
       ].join("\n"),
       {
         inline_keyboard: [[{ text: "Открыть TengeGuard", url: `${appUrl()}/dashboard` }]]
@@ -395,7 +427,7 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
     return { ok: true, linked: true, userId };
   }
 
-  if (message?.text === "/subscriptions") {
+  if (message && command === "/subscriptions") {
     const userId = await readChatOwner(message.chat.id);
     if (!userId) {
       await sendTelegramMessage(message.chat.id, "Этот Telegram-чат ещё не подключён. Подключите его на сайте TengeGuard.");
@@ -405,22 +437,115 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
     return { ok: true, action: "subscriptions" };
   }
 
-  if (message?.text === "/status") {
+  if (message && command === "/status") {
     const userId = await readChatOwner(message.chat.id);
     if (!userId) {
       await sendTelegramMessage(message.chat.id, "Telegram ещё не подключён к TengeGuard.");
       return { ok: true, linked: false };
     }
-    const subscriptions = await readRealGmailSubscriptions(userId);
+    const subscriptions = (await readRealGmailSubscriptions(userId)).filter((subscription) => subscription.status !== "cancelled");
     await sendTelegramMessage(message.chat.id, `Telegram подключён. Активных найденных подписок: ${subscriptions.length}. Напоминания включены.`);
     return { ok: true, action: "status" };
   }
 
+  if (message && command === "/notifications") {
+    const userId = await readChatOwner(message.chat.id);
+    if (!userId) {
+      await sendTelegramMessage(message.chat.id, "Сначала подключите Telegram на сайте TengeGuard.");
+      return { ok: true, linked: false };
+    }
+    const chat = await readTelegramChat(userId);
+    await sendTelegramMessage(message.chat.id, `Напоминания сейчас ${chat?.notifications_enabled ? "включены" : "выключены"}.`, {
+      inline_keyboard: [[
+        { text: "Включить", callback_data: "notifications:on" },
+        { text: "Выключить", callback_data: "notifications:off" }
+      ]]
+    });
+    return { ok: true, action: "notifications" };
+  }
+
+  if (message && command === "/help") {
+    await sendBotHelp(message.chat.id);
+    return { ok: true, action: "help" };
+  }
+
   const callback = update.callback_query;
   if (callback?.id && callback.data) {
+    const owner = await callbackOwner(callback);
+    if (!owner) {
+      await answerCallbackQuery(callback.id, "Сначала подключите бота на сайте TengeGuard.");
+      return { ok: true, linked: false };
+    }
+
+    if (callback.data === "notifications:on" || callback.data === "notifications:off") {
+      const chat = await readTelegramChat(owner.userId);
+      if (chat) await saveTelegramChat(owner.userId, { ...chat, notifications_enabled: callback.data.endsWith(":on") });
+      await answerCallbackQuery(callback.id, callback.data.endsWith(":on") ? "Напоминания включены." : "Напоминания выключены.");
+      return { ok: true, action: callback.data };
+    }
+
     if (callback.data.startsWith("renew:")) {
       await answerCallbackQuery(callback.id, "Ок, оставляем подписку активной.");
       return { ok: true, action: "renew" };
+    }
+
+    if (callback.data.startsWith("cancel:")) {
+      const subscriptionId = callback.data.slice("cancel:".length);
+      const subscription = (await readRealGmailSubscriptions(owner.userId)).find((item) => item.id === subscriptionId && item.status !== "cancelled");
+      if (!subscription) {
+        await answerCallbackQuery(callback.id, "Подписка не найдена или уже отменена.");
+        return { ok: true, action: "cancel_missing" };
+      }
+      await answerCallbackQuery(callback.id, "Проверьте и подтвердите действие.");
+      await sendTelegramMessage(owner.chatId, `Хотите отменить подписку ${subscription.provider_name}?`, {
+        inline_keyboard: [[
+          { text: "Да, продолжить", callback_data: `cancel_confirm:${subscription.id}` },
+          { text: "Нет", callback_data: `renew:${subscription.id}` }
+        ]]
+      });
+      return { ok: true, action: "cancel_confirmation" };
+    }
+
+    if (callback.data.startsWith("cancel_confirm:")) {
+      const subscriptionId = callback.data.slice("cancel_confirm:".length);
+      const subscription = (await readRealGmailSubscriptions(owner.userId)).find((item) => item.id === subscriptionId && item.status !== "cancelled");
+      if (!subscription) {
+        await answerCallbackQuery(callback.id, "Подписка не найдена или уже отменена.");
+        return { ok: true, action: "cancel_missing" };
+      }
+
+      const cancellation = prepareSubscriptionCancellation(subscription);
+      await answerCallbackQuery(callback.id, "Открываю безопасный путь отмены.");
+      if (cancellation.status !== "needs_user_action" || !/^https:\/\//.test(cancellation.cancellation_path)) {
+        await sendTelegramMessage(owner.chatId, "Для этой подписки не найден подтверждённый официальный канал отмены. Проверьте её на сайте TengeGuard.", {
+          inline_keyboard: [[{ text: "Открыть подписки", url: `${appUrl()}/dashboard/subscriptions` }]]
+        });
+        return { ok: true, action: "cancel_unsupported" };
+      }
+
+      await sendTelegramMessage(
+        owner.chatId,
+        `Для отмены ${subscription.provider_name} сервис должен подтвердить вашу сессию или 2FA. После завершения вернитесь и нажмите «Я отменил».`,
+        {
+          inline_keyboard: [
+            [{ text: "Перейти к отмене", url: cancellation.cancellation_path }],
+            [{ text: "Я отменил", callback_data: `cancelled:${subscription.id}` }]
+          ]
+        }
+      );
+      return { ok: true, action: "cancel_opened" };
+    }
+
+    if (callback.data.startsWith("cancelled:")) {
+      const subscriptionId = callback.data.slice("cancelled:".length);
+      const subscription = await markRealGmailSubscriptionCancelled(owner.userId, subscriptionId);
+      if (!subscription) {
+        await answerCallbackQuery(callback.id, "Подписка не найдена.");
+        return { ok: true, action: "cancel_missing" };
+      }
+      await answerCallbackQuery(callback.id, "Подписка отмечена отменённой.");
+      await sendTelegramMessage(owner.chatId, `${subscription.provider_name} перенесена в историю отменённых подписок.`);
+      return { ok: true, action: "cancelled" };
     }
   }
 
@@ -431,7 +556,7 @@ export async function sendTelegramDigest(userId: string) {
   const chat = await readTelegramChat(userId);
   if (!chat?.chat_id) return { sent: false, reason: "telegram_not_connected" };
   await sendSubscriptionList(chat.chat_id, userId);
-  const subscriptions = await readRealGmailSubscriptions(userId);
+  const subscriptions = (await readRealGmailSubscriptions(userId)).filter((subscription) => subscription.status !== "cancelled");
   return { sent: true, count: subscriptions.length };
 }
 
@@ -483,7 +608,9 @@ export async function ensureTelegramBotCommands() {
   await telegramApi("setMyCommands", {
     commands: [
       { command: "status", description: "Статус подключения TengeGuard" },
-      { command: "subscriptions", description: "Показать найденные подписки" }
+      { command: "subscriptions", description: "Показать найденные подписки" },
+      { command: "notifications", description: "Настроить напоминания" },
+      { command: "help", description: "Помощь по командам" }
     ]
   });
   return { ok: true };

@@ -4,10 +4,11 @@ import { readStoredJson, writeStoredJson } from "@/lib/server/data-store";
 import { storagePath } from "@/lib/server/storage-root";
 
 export type PaidPlan = "pro_monthly" | "pro_yearly";
+export type BillingPlan = PaidPlan | "pro_lifetime" | "free";
 
 export type BillingState = {
   user_id: string;
-  plan: PaidPlan | "free";
+  plan: BillingPlan;
   status: "trial" | "active" | "expired";
   started_at: string;
   ends_at: string;
@@ -121,6 +122,19 @@ export async function setTrialDaysRemaining(userId: string, days: number) {
     status: normalizedDays > 0 ? "trial" : "expired",
     started_at: startedAt.toISOString(),
     ends_at: endsAt.toISOString()
+  };
+  await writeStoredJson(billingPath(userId), billing);
+  return billing;
+}
+
+export async function activateLifetimePro(userId: string) {
+  const startedAt = new Date();
+  const billing: BillingState = {
+    user_id: userId,
+    plan: "pro_lifetime",
+    status: "active",
+    started_at: startedAt.toISOString(),
+    ends_at: "9999-12-31T23:59:59.999Z"
   };
   await writeStoredJson(billingPath(userId), billing);
   return billing;

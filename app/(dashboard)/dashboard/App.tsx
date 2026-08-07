@@ -30,7 +30,7 @@ import {
 type Locale = "ru" | "en" | "kk";
 type DashboardView = "dashboard" | "subscriptions" | "ai" | "account";
 type DeviceMode = "mobile" | "desktop";
-type BillingPlan = "free" | "pro_monthly" | "pro_yearly";
+type BillingPlan = "free" | "pro_monthly" | "pro_yearly" | "pro_lifetime";
 type SubscriptionStatus = "active" | "cancelled" | "trial" | "review";
 type BillingCycle = "monthly" | "yearly" | "weekly" | "unknown";
 type Filter = "all" | "paid" | "review";
@@ -113,6 +113,7 @@ const copy = {
     trial: "Пробный период",
     days: "дн.",
     pro: "Pro активен",
+    forever: "навсегда",
     sync: "Обновить данные",
     syncing: "Обновляем",
     subscriptionsTitle: "Активные подписки",
@@ -178,7 +179,7 @@ const copy = {
     connectBank: "Connect bank", kaspiUnavailable: "Kaspi connection is being prepared. We saved your request and will enable direct bank connection as soon as access opens.", dashboardTitle: "Subscription overview", dashboardText: "Real recurring charges from your connected bank.",
     monthlySpend: "Monthly spend", nextPayment: "Next charge", active: "Active subscriptions", dueSoon: "Due soon", review: "Needs review", confidence: "Average confidence",
     noDataTitle: "Connect a bank to find subscriptions", noDataText: "TengeGuard requests read-only transaction history. It cannot transfer funds or manage your account.",
-    bankOnly: "Read-only access", telegramReady: "Telegram connected", telegramMissing: "Connect Telegram", trial: "Free trial", days: "days", pro: "Pro active",
+    bankOnly: "Read-only access", telegramReady: "Telegram connected", telegramMissing: "Connect Telegram", trial: "Free trial", days: "days", pro: "Pro active", forever: "forever",
     sync: "Refresh data", syncing: "Refreshing", subscriptionsTitle: "Active subscriptions", subscriptionsText: "Confirmed by recurring bank transactions.",
     search: "Find a subscription...", all: "All", paid: "Paid", reviewFilter: "Review", provider: "Service", amount: "Amount", cycle: "Cycle", nextDate: "Next date",
     status: "Status", action: "Action", cancel: "Cancel", markCancelled: "Mark cancelled", refund: "Try refund", delete: "Delete record", empty: "No real subscriptions found yet.",
@@ -197,7 +198,7 @@ const copy = {
     connectBank: "Банкті қосу", kaspiUnavailable: "Kaspi қосылымы дайындалып жатыр. Біз сұрауыңызды сақтадық және банкке тікелей қосылуды қолжетімді болған сәтте қосамыз.", dashboardTitle: "Жазылымдарға шолу", dashboardText: "Қосылған банктен алынған нақты қайталанатын төлемдер.",
     monthlySpend: "Айлық шығын", nextPayment: "Келесі төлем", active: "Белсенді жазылымдар", dueSoon: "Жақын төлем", review: "Тексеру керек", confidence: "Орташа дәлдік",
     noDataTitle: "Жазылымдарды табу үшін банкті қосыңыз", noDataText: "TengeGuard операциялар тарихын тек оқуға рұқсат сұрайды. Ақша аудару мүмкін емес.",
-    bankOnly: "Тек оқуға рұқсат", telegramReady: "Telegram қосылған", telegramMissing: "Telegram қосу", trial: "Тегін кезең", days: "күн", pro: "Pro белсенді",
+    bankOnly: "Тек оқуға рұқсат", telegramReady: "Telegram қосылған", telegramMissing: "Telegram қосу", trial: "Тегін кезең", days: "күн", pro: "Pro белсенді", forever: "мәңгі",
     sync: "Деректерді жаңарту", syncing: "Жаңартылуда", subscriptionsTitle: "Белсенді жазылымдар", subscriptionsText: "Қайталанатын банк операцияларымен расталған.",
     search: "Жазылымды табу...", all: "Барлығы", paid: "Ақылы", reviewFilter: "Тексеру", provider: "Сервис", amount: "Сома", cycle: "Кезең", nextDate: "Келесі күн",
     status: "Күй", action: "Әрекет", cancel: "Бас тарту", markCancelled: "Бас тартылды деп белгілеу", refund: "Қайтаруға тырысу", delete: "Жазбаны жою", empty: "Нақты жазылымдар әлі табылмады.",
@@ -335,6 +336,7 @@ export default function App({
   const trialDays = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : trialDaysFromStart;
   const paidDays = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : 0;
   const accessDays = initialBillingPlan === "free" ? trialDays : paidDays;
+  const lifetimePro = initialBillingPlan === "pro_lifetime";
   const expired = accessDays <= 0;
   const bank = connectors.find((item) => item.id === "bank");
 
@@ -464,7 +466,7 @@ export default function App({
             </div>
             <div className="flex items-center gap-2">
               <span className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold lg:flex ${initialBillingPlan === "free" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
-                <Clock3 className="h-3.5 w-3.5" />{initialBillingPlan === "free" ? `${t.trial}: ${accessDays} ${t.days}` : `${t.pro}: ${accessDays} ${t.days}`}
+                <Clock3 className="h-3.5 w-3.5" />{initialBillingPlan === "free" ? `${t.trial}: ${accessDays} ${t.days}` : lifetimePro ? `${t.pro}: ${t.forever}` : `${t.pro}: ${accessDays} ${t.days}`}
               </span>
               <select aria-label="Language" className="h-9 rounded-lg border border-[#e5e7eb] bg-white px-2 text-xs font-semibold outline-none" onChange={(event) => setLocale(event.target.value as Locale)} value={locale}>
                 {(Object.keys(languageNames) as Locale[]).map((item) => <option key={item} value={item}>{languageNames[item]}</option>)}
@@ -616,7 +618,7 @@ function AccountView({ auth, bank, initialBillingPlan, onChange, onLogout, readi
           <div className="flex items-center gap-4"><div className="grid h-16 w-16 place-items-center overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f3f4f5]">{auth?.user?.avatar_url ? <img alt={auth.user.name} className="h-full w-full object-cover" src={auth.user.avatar_url} /> : <UserCircle2 className="h-7 w-7" />}</div><div><h3 className="font-display text-xl font-semibold">{auth?.user?.name || "TengeGuard user"}</h3><p className="mt-1 text-sm text-[#6b7280]">{auth?.user?.email}</p></div></div>
           <div className="mt-6 flex flex-wrap gap-3"><button className="rounded-lg border border-[#e5e7eb] px-4 py-2.5 text-sm font-semibold" onClick={onChange} type="button">{t.changeAccount}</button><button className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700" onClick={onLogout} type="button"><LogOut className="h-4 w-4" />{t.logout}</button></div>
         </div>
-        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch"><h3 className="font-display text-lg font-semibold">{t.status}</h3><div className="mt-5 space-y-3"><StatusLine label={t.plan} ready value={initialBillingPlan === "free" ? t.trial : t.pro} /><StatusLine label={t.bank} ready={bank?.status === "connected"} /><StatusLine label={t.telegram} ready={Boolean(telegram?.connected)} /><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /></div></div>
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch"><h3 className="font-display text-lg font-semibold">{t.status}</h3><div className="mt-5 space-y-3"><StatusLine label={t.plan} ready value={initialBillingPlan === "free" ? t.trial : initialBillingPlan === "pro_lifetime" ? `${t.pro}: ${t.forever}` : t.pro} /><StatusLine label={t.bank} ready={bank?.status === "connected"} /><StatusLine label={t.telegram} ready={Boolean(telegram?.connected)} /><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /></div></div>
         <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch lg:col-span-2">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -625,6 +627,8 @@ function AccountView({ auth, bank, initialBillingPlan, onChange, onLogout, readi
             </div>
             {initialBillingPlan === "free" ? (
               <Link className="inline-flex items-center justify-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white" href="/api/billing/checkout?plan=pro_monthly">{t.choosePro}<ArrowRight className="h-4 w-4" /></Link>
+            ) : initialBillingPlan === "pro_lifetime" ? (
+              <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700"><CheckCircle2 className="h-4 w-4" />{t.pro}: {t.forever}</span>
             ) : (
               <form action="/api/billing/cancel" method="POST">
                 <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100" type="submit">

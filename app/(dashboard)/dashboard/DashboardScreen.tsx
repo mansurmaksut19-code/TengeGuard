@@ -11,7 +11,7 @@ export default async function DashboardScreen({ view = "dashboard" }: { view?: V
   const existingBilling = await readBillingState(userId);
   const billing = userId ? existingBilling || (await ensureTrialBillingState(userId, cookieStore.get("tg_trial_started_at")?.value || null)) : null;
   const planValue = billing ? billing.plan : cookieStore.get("tg_billing_plan")?.value;
-  const plan = planValue === "pro_monthly" || planValue === "pro_yearly" || planValue === "free" ? planValue : "free";
+  const plan = planValue === "pro_monthly" || planValue === "pro_yearly" || planValue === "pro_lifetime" || planValue === "free" ? planValue : "free";
 
   return (
     <App
