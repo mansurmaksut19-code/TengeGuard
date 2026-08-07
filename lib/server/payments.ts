@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import path from "node:path";
-import { deleteStoredJson, readStoredJson, writeStoredJson } from "@/lib/server/data-store";
+import { readStoredJson, writeStoredJson } from "@/lib/server/data-store";
 import { storagePath } from "@/lib/server/storage-root";
 
 export type PaidPlan = "pro_monthly" | "pro_yearly";
@@ -79,13 +79,62 @@ export function billingEndDate(plan: PaidPlan, startedAt = new Date()) {
   return endsAt;
 }
 
+export function trialEndDate(startedAt = new Date()) {
+  const endsAt = new Date(startedAt);
+  endsAt.setUTCDate(endsAt.getUTCDate() + 14);
+  return endsAt;
+}
+
 export async function readBillingState(userId?: string) {
   if (!userId) return null;
   return readStoredJson<BillingState>(billingPath(userId));
 }
 
+export async function ensureTrialBillingState(userId: string, startedAtValue?: string | null) {
+  const existing = await readBillingState(userId);
+  if (existing) return existing;
+
+  const parsedStart = startedAtValue ? new Date(startedAtValue) : null;
+  const startedAt = parsedStart && Number.isFinite(parsedStart.getTime()) ? parsedStart : new Date();
+  const billing: BillingState = {
+    user_id: userId,
+    plan: "free",
+    status: trialEndDate(startedAt).getTime() > Date.now() ? "trial" : "expired",
+    started_at: startedAt.toISOString(),
+    ends_at: trialEndDate(startedAt).toISOString()
+  };
+  await writeStoredJson(billingPath(userId), billing);
+  return billing;
+}
+
+export async function setTrialDaysRemaining(userId: string, days: number) {
+  const normalizedDays = Math.max(0, Math.min(14, Math.floor(days)));
+  const now = new Date();
+  const endsAt = new Date(now);
+  endsAt.setUTCDate(endsAt.getUTCDate() + normalizedDays);
+  const startedAt = new Date(endsAt);
+  startedAt.setUTCDate(startedAt.getUTCDate() - 14);
+
+  const billing: BillingState = {
+    user_id: userId,
+    plan: "free",
+    status: normalizedDays > 0 ? "trial" : "expired",
+    started_at: startedAt.toISOString(),
+    ends_at: endsAt.toISOString()
+  };
+  await writeStoredJson(billingPath(userId), billing);
+  return billing;
+}
+
 export async function cancelBillingState(userId: string) {
-  await deleteStoredJson(billingPath(userId));
+  const now = new Date();
+  await writeStoredJson(billingPath(userId), {
+    user_id: userId,
+    plan: "free",
+    status: "expired",
+    started_at: now.toISOString(),
+    ends_at: now.toISOString()
+  } satisfies BillingState);
 }
 
 export async function activatePaidBilling(order: PaymentOrder) {

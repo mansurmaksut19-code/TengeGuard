@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import { getGoogleOAuthConfig } from "@/lib/server/google-oauth-config";
+import { ensureTrialBillingState } from "@/lib/server/payments";
 import {
   createEncryptedUserSession,
   getUserSessionCookieName,
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
     };
 
     await saveSessionUser(user);
+    const billing = await ensureTrialBillingState(userId);
     const tokens = await readTokens(userId);
 
     const response = NextResponse.json({
@@ -86,6 +88,9 @@ export async function POST(request: Request) {
     response.cookies.set(getUserSessionCookieName(), createEncryptedUserSession(user), {
       ...secureCookieOptions(request, 60 * 60 * 24 * 30)
     });
+    response.cookies.set("tg_billing_plan", billing.plan, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
+    response.cookies.set("tg_trial_started_at", billing.started_at, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
+    response.cookies.set("tg_billing_ends_at", billing.ends_at, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
 
     return response;
   } catch (error) {

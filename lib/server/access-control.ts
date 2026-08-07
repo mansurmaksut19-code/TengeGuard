@@ -16,9 +16,16 @@ function timestamp(value: string | null) {
 
 export async function readAccessState(request: Request, userId?: string) {
   const stored = await readBillingState(userId);
-  if (stored?.status === "active") {
+  if (stored?.status === "active" || stored?.status === "trial") {
     return {
       active: new Date(stored.ends_at).getTime() > Date.now(),
+      endsAt: stored.ends_at,
+      plan: stored.plan
+    };
+  }
+  if (stored?.status === "expired") {
+    return {
+      active: false,
       endsAt: stored.ends_at,
       plan: stored.plan
     };

@@ -331,7 +331,8 @@ export default function App({
   const reviewCount = active.filter((item) => item.status === "review" || item.confidence < 0.75).length;
   const averageConfidence = active.length ? Math.round(active.reduce((sum, item) => sum + item.confidence, 0) / active.length * 100) : 0;
   const trialStarted = initialTrialStartedAt ? new Date(initialTrialStartedAt).getTime() : Date.now();
-  const trialDays = Math.max(0, 14 - Math.floor((Date.now() - trialStarted) / 86_400_000));
+  const trialDaysFromStart = Math.max(0, 14 - Math.floor((Date.now() - trialStarted) / 86_400_000));
+  const trialDays = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : trialDaysFromStart;
   const paidDays = initialBillingEndsAt ? Math.max(0, daysUntil(initialBillingEndsAt) || 0) : 0;
   const accessDays = initialBillingPlan === "free" ? trialDays : paidDays;
   const expired = accessDays <= 0;

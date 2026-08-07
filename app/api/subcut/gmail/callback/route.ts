@@ -4,6 +4,7 @@ import {
   exchangeGoogleSignInCode,
   getUserSessionCookieName
 } from "@/lib/server/subcut-gmail";
+import { ensureTrialBillingState } from "@/lib/server/payments";
 import { secureCookieOptions } from "@/lib/server/security";
 
 function readCookie(request: Request, name: string) {
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
   try {
     if (state === "tengeguard:signin") {
       const user = await exchangeGoogleSignInCode(code, url.origin);
+      const billing = await ensureTrialBillingState(user.id, readCookie(request, "tg_trial_started_at"));
       const pendingCheckoutPlan = readCookie(request, "tg_pending_checkout_plan");
       if (pendingCheckoutPlan === "pro_monthly" || pendingCheckoutPlan === "pro_yearly") {
         url.pathname = "/api/billing/checkout";
@@ -41,6 +43,9 @@ export async function GET(request: Request) {
       response.cookies.set(getUserSessionCookieName(), createEncryptedUserSession(user), {
         ...secureCookieOptions(request, 60 * 60 * 24 * 30)
       });
+      response.cookies.set("tg_billing_plan", billing.plan, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
+      response.cookies.set("tg_trial_started_at", billing.started_at, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
+      response.cookies.set("tg_billing_ends_at", billing.ends_at, secureCookieOptions(request, 60 * 60 * 24 * 365 * 2));
       if (pendingCheckoutPlan) {
         response.cookies.set("tg_pending_checkout_plan", "", {
           ...secureCookieOptions(request, 0)
