@@ -547,7 +547,7 @@ export default function App({
 type T = (typeof copy)["ru"];
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <Link className="flex items-center gap-2.5" href="/dashboard"><span className={`${compact ? "h-8 w-8" : "h-9 w-9"} overflow-hidden rounded-lg border border-[#e5e7eb] bg-white`}><img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" /></span><span className="font-display text-xl font-bold leading-none">TengeGuard</span></Link>;
+  return <Link className="flex items-center gap-2.5" href="/dashboard"><span className={`${compact ? "h-8 w-8" : "h-9 w-9"} overflow-hidden rounded-lg border border-[#e5e7eb] bg-white`}><img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" /></span><span className="font-display text-[25px] font-bold leading-none">TengeGuard</span></Link>;
 }
 
 function PageTitle({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {

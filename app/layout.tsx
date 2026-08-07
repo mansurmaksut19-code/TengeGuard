@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geologica, Onest } from "next/font/google";
+import { Caveat, Onest } from "next/font/google";
 
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -11,11 +11,11 @@ const interfaceFont = Onest({
   fallback: ["Arial", "sans-serif"]
 });
 
-const displayFont = Geologica({
+const displayFont = Caveat({
   subsets: ["cyrillic", "latin"],
   display: "swap",
   variable: "--font-display",
-  fallback: ["Arial", "sans-serif"]
+  fallback: ["Segoe Print", "Comic Sans MS", "cursive"]
 });
 
 export const metadata: Metadata = {

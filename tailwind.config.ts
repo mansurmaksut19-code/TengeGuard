@@ -40,7 +40,7 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["var(--font-display)", "var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Segoe Print", "cursive"],
         sans: ["var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],
         "body-md": ["var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],
         "label-sm": ["var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],

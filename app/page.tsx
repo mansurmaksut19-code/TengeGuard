@@ -261,7 +261,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" />
       </span>
-      <span className="font-display text-xl font-bold leading-none">TengeGuard</span>
+      <span className="font-display text-[25px] font-bold leading-none">TengeGuard</span>
     </Link>
   );
 }

@@ -119,17 +119,18 @@ h4,
 h5,
 h6,
 .font-display {
-  font-family: var(--font-display), var(--font-interface), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-display), "Segoe Print", cursive;
   font-feature-settings: "calt" 1, "kern" 1;
   font-optical-sizing: auto;
+  font-weight: 650;
   letter-spacing: 0;
   text-wrap: balance;
 }
 
 .font-editorial-italic {
-  font-family: var(--font-display), var(--font-interface), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-display), "Segoe Print", cursive;
   font-style: normal;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: 0;
   text-wrap: balance;
 }
