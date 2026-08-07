@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserIdFromRequest, readRealGmailSubscriptions, readSyncReport } from "@/lib/server/subcut-gmail";
+import { answerLocally } from "@/lib/server/local-ai";
 import { protectMutation } from "@/lib/server/security";
 
 type ChatMessage = {
@@ -50,17 +51,6 @@ export async function POST(request: Request) {
   const blocked = protectMutation(request, { key: "ai-chat", limit: 20, windowMs: 60_000 });
   if (blocked) return blocked;
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "OPENAI_API_KEY не настроен. Добавьте ключ в .env.local и перезапустите dev-сервер."
-      },
-      { status: 503 }
-    );
-  }
-
   const userId = getUserIdFromRequest(request);
   const body = (await request.json().catch(() => ({}))) as { messages?: unknown };
   const messages = cleanMessages(body.messages);
@@ -71,6 +61,15 @@ export async function POST(request: Request) {
 
   const subscriptions = userId ? await readRealGmailSubscriptions(userId).catch(() => []) : [];
   const report = userId ? await readSyncReport(userId).catch(() => null) : null;
+  const question = messages.filter((message) => message.role === "user").at(-1)?.content || "";
+  const localAnswer = answerLocally({ question, subscriptions });
+  const apiKey = process.env.OPENAI_API_KEY;
+  const useOpenAi = Boolean(apiKey && process.env.TENGEGUARD_AI_MODE !== "local");
+
+  if (!useOpenAi) {
+    return NextResponse.json({ ok: true, answer: localAnswer, model: "tengeguard-local" });
+  }
+
   const subscriptionContext = subscriptions.slice(0, 30).map((item) => ({
     provider: item.provider_name,
     type: item.type,
@@ -104,32 +103,33 @@ export async function POST(request: Request) {
     ...messages
   ];
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      input,
-      max_output_tokens: 900
-    })
-  });
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        input,
+        max_output_tokens: 900
+      }),
+      signal: AbortSignal.timeout(12_000)
+    });
 
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message =
-      data && typeof data === "object" && "error" in data
-        ? ((data as { error?: { message?: string } }).error?.message || "OpenAI request failed")
-        : "OpenAI request failed";
-    return NextResponse.json({ ok: false, error: message }, { status: 502 });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      return NextResponse.json({ ok: true, answer: localAnswer, model: "tengeguard-local", fallback: true });
+    }
+
+    const answer = extractResponseText(data).trim();
+    return NextResponse.json({
+      ok: true,
+      answer: answer || localAnswer,
+      model: answer ? process.env.OPENAI_MODEL || "gpt-4o-mini" : "tengeguard-local"
+    });
+  } catch {
+    return NextResponse.json({ ok: true, answer: localAnswer, model: "tengeguard-local", fallback: true });
   }
-
-  const answer = extractResponseText(data).trim();
-  return NextResponse.json({
-    ok: true,
-    answer: answer || "ИИ не вернул текстовый ответ. Попробуйте ещё раз.",
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini"
-  });
 }
