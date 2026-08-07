@@ -134,5 +134,15 @@ export function answerLocally({ question, subscriptions }: LocalAssistantInput) 
     return `По данным TengeGuard: ${subscriptionLine(matching)}. Статус — ${matching.status === "cancelled" ? "отменена" : "активна"}, точность определения — ${Math.round(matching.confidence * 100)}%.`;
   }
 
-  return "Я работаю без платного AI API и специализируюсь на данных TengeGuard: подписках, расходах, датах списаний, отмене, возвратах, банке и Telegram. Задайте вопрос об одной из этих тем, и я отвечу по вашему аккаунту.";
+  if (active.length) {
+    const totals = totalsByCurrency(active).join(" + ");
+    const nearest = nearestSubscription(active);
+    return [
+      `Сейчас у вас ${active.length} активных подтверждённых подписок на сумму около ${totals} в месяц.`,
+      nearest ? `Ближайшее списание: ${subscriptionLine(nearest)}.` : "Подтверждённой даты следующего списания пока нет.",
+      "Можно уточнить название сервиса или спросить про расходы, дату, отмену либо возврат."
+    ].join(" ");
+  }
+
+  return "Я не смог определить тему вопроса. По аккаунту активные подтверждённые подписки пока не найдены. Можно спросить про подключение банка, Telegram, тариф, отмену или возврат.";
 }

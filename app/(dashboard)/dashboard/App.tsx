@@ -2,7 +2,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { answerWithBrowserAi, type BrowserAiProgress } from "./browser-ai";
 import {
   AlertTriangle,
   ArrowRight,
@@ -158,7 +160,10 @@ const copy = {
     current: "Текущие",
     cancelled: "Отменённые",
     aiTitle: "AI-помощник",
-    aiText: "Задавайте вопросы о найденных подписках и расходах.",
+    aiText: "Задавайте любые вопросы. Модель работает прямо на вашем устройстве.",
+    aiPreparing: "Загружаем локальную AI-модель",
+    aiReady: "Безлимитный AI готов",
+    aiFallback: "На этом устройстве доступен помощник по подпискам",
     aiPlaceholder: "Например: какое списание будет следующим?",
     send: "Отправить",
     accountTitle: "Аккаунт",
@@ -189,7 +194,7 @@ const copy = {
     connected: "Connected", ready: "Ready", unavailable: "Unavailable", bank: "Bank", bankText: "A secure bank screen will open. TengeGuard requests read-only transaction history.",
     telegram: "Telegram", telegramText: "Reminders one week and one day before a predicted charge.", telegramOpen: "Telegram is open. Press Start in the bot and the site will connect automatically.", connectTelegram: "Connect Telegram", testTelegram: "Send test",
     google: "Google account", googleText: "Used only for sign-in. Gmail access is not requested.", historyTitle: "Subscription history", current: "Current", cancelled: "Cancelled",
-    aiTitle: "AI Assistant", aiText: "Ask questions about detected subscriptions and spending.", aiPlaceholder: "For example: what is the next charge?", send: "Send",
+    aiTitle: "AI Assistant", aiText: "Ask anything. The model runs directly on your device.", aiPreparing: "Loading the local AI model", aiReady: "Unlimited AI is ready", aiFallback: "Subscription assistant is available on this device", aiPlaceholder: "Ask any question...", send: "Send",
     accountTitle: "Account", changeAccount: "Change Google account", logout: "Sign out", plan: "Plan", storage: "Storage", payment: "Payments", cancelPlan: "Cancel Pro", cancelPlanText: "Stop the current paid TengeGuard access for this account.",
     error: "Action failed", expiredTitle: "Access expired", expiredText: "Choose Pro to continue monitoring subscriptions.", choosePro: "Choose Pro"
   },
@@ -208,7 +213,7 @@ const copy = {
     connected: "Қосылған", ready: "Дайын", unavailable: "Қолжетімсіз", bank: "Банк", bankText: "Қауіпсіз банк экраны ашылады. TengeGuard операциялар тарихын тек оқуға сұрайды.",
     telegram: "Telegram", telegramText: "Болжамды төлемге бір апта және бір күн қалғанда ескерту.", telegramOpen: "Telegram ашылды. Ботта Start басыңыз, сайт автоматты түрде қосылады.", connectTelegram: "Telegram қосу", testTelegram: "Тест жіберу",
     google: "Google аккаунты", googleText: "Тек кіру үшін. Gmail рұқсаты сұралмайды.", historyTitle: "Жазылымдар тарихы", current: "Ағымдағы", cancelled: "Тоқтатылған",
-    aiTitle: "AI көмекші", aiText: "Табылған жазылымдар мен шығындар туралы сұраңыз.", aiPlaceholder: "Мысалы: келесі төлем қандай?", send: "Жіберу",
+    aiTitle: "AI көмекші", aiText: "Кез келген сұрақ қойыңыз. Модель құрылғыңызда жұмыс істейді.", aiPreparing: "Жергілікті AI моделі жүктелуде", aiReady: "Шексіз AI дайын", aiFallback: "Бұл құрылғыда жазылым көмекшісі қолжетімді", aiPlaceholder: "Кез келген сұрақ қойыңыз...", send: "Жіберу",
     accountTitle: "Аккаунт", changeAccount: "Google аккаунтын ауыстыру", logout: "Шығу", plan: "Тариф", storage: "Сақтау", payment: "Төлем", cancelPlan: "Pro тоқтату", cancelPlanText: "Осы аккаунт үшін TengeGuard ақылы қолжетімділігін тоқтату.",
     error: "Әрекет орындалмады", expiredTitle: "Қолжетімділік аяқталды", expiredText: "Бақылауды жалғастыру үшін Pro таңдаңыз.", choosePro: "Pro қосу"
   }
@@ -252,6 +257,7 @@ export default function App({
   initialTrialStartedAt?: string | null;
   initialView?: DashboardView;
 } = {}) {
+  const router = useRouter();
   const [locale, setLocale] = useState<Locale>("ru");
   const [auth, setAuth] = useState<AuthStatus | null>(null);
   const [telegram, setTelegram] = useState<TelegramStatus | null>(null);
@@ -268,6 +274,7 @@ export default function App({
   const [aiInput, setAiInput] = useState("");
   const [aiSending, setAiSending] = useState(false);
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([]);
+  const [browserAi, setBrowserAi] = useState<{ status: "idle" | "loading" | "ready" | "fallback"; progress: number }>({ status: "idle", progress: 0 });
   const telegramTimer = useRef<number | null>(null);
   const t = copy[locale];
 
@@ -355,13 +362,13 @@ export default function App({
   }
 
   function connectBank() {
-    window.location.href = "/api/connectors/bank/start?provider=kaspi";
+    router.push("/api/connectors/bank/start?provider=kaspi");
   }
 
   function connectTelegram() {
     const popup = window.open("/api/telegram/connect", "tengeguard-telegram");
     if (!popup) {
-      window.location.href = "/api/telegram/connect";
+      router.push("/api/telegram/connect");
       return;
     }
     popup.opener = null;
@@ -418,10 +425,20 @@ export default function App({
     setAiInput("");
     setAiSending(true);
     try {
-      const response = await readJson<{ answer: string }>("/api/ai-chat", { method: "POST", body: JSON.stringify({ messages: messages.slice(-10) }) });
-      setAiMessages((current) => [...current, { role: "assistant", content: response.answer }]);
+      setBrowserAi((current) => current.status === "ready" ? current : { status: "loading", progress: current.progress });
+      const answer = await answerWithBrowserAi(messages, subscriptions, (progress: BrowserAiProgress) => {
+        setBrowserAi({ status: "loading", progress: progress.progress });
+      });
+      setBrowserAi({ status: "ready", progress: 1 });
+      setAiMessages((current) => [...current, { role: "assistant", content: answer }]);
     } catch (requestError) {
-      setAiMessages((current) => [...current, { role: "assistant", content: requestError instanceof Error ? requestError.message : t.error }]);
+      setBrowserAi({ status: "fallback", progress: 0 });
+      try {
+        const response = await readJson<{ answer: string }>("/api/ai-chat", { method: "POST", body: JSON.stringify({ messages: messages.slice(-10) }) });
+        setAiMessages((current) => [...current, { role: "assistant", content: response.answer }]);
+      } catch {
+        setAiMessages((current) => [...current, { role: "assistant", content: requestError instanceof Error ? requestError.message : t.error }]);
+      }
     } finally {
       setAiSending(false);
     }
@@ -429,7 +446,7 @@ export default function App({
 
   async function logout(changeAccount = false) {
     await readJson("/api/subcut/gmail/logout", { method: "POST" }).catch(() => null);
-    window.location.href = changeAccount ? "/api/auth/google" : "/";
+    router.push(changeAccount ? "/api/auth/google" : "/");
   }
 
   const nav = [
@@ -511,7 +528,7 @@ export default function App({
                 {initialView === "subscriptions" ? (
                   <SubscriptionsView filter={filter} items={filtered} locale={locale} onAction={subscriptionAction} query={query} setFilter={setFilter} setQuery={setQuery} t={t} workingId={workingId} />
                 ) : null}
-                {initialView === "ai" ? <AiView input={aiInput} messages={aiMessages} onChange={setAiInput} onSubmit={submitAi} sending={aiSending} t={t} /> : null}
+                {initialView === "ai" ? <AiView aiState={browserAi} input={aiInput} messages={aiMessages} onChange={setAiInput} onSubmit={submitAi} sending={aiSending} t={t} /> : null}
                 {initialView === "account" ? <AccountView auth={auth} initialBillingPlan={initialBillingPlan} onChange={() => logout(true)} onLogout={() => logout(false)} readiness={readiness} t={t} telegram={telegram} bank={bank} /> : null}
               </>
             )}
@@ -598,11 +615,12 @@ function SubscriptionsView({ filter, items, locale, onAction, query, setFilter, 
   );
 }
 
-function AiView({ input, messages, onChange, onSubmit, sending, t }: { input: string; messages: AiMessage[]; onChange: (value: string) => void; onSubmit: (event: React.FormEvent) => void; sending: boolean; t: T }) {
+function AiView({ aiState, input, messages, onChange, onSubmit, sending, t }: { aiState: { status: "idle" | "loading" | "ready" | "fallback"; progress: number }; input: string; messages: AiMessage[]; onChange: (value: string) => void; onSubmit: (event: React.FormEvent) => void; sending: boolean; t: T }) {
+  const statusText = aiState.status === "loading" ? `${t.aiPreparing} · ${Math.round(aiState.progress * 100)}%` : aiState.status === "ready" ? t.aiReady : aiState.status === "fallback" ? t.aiFallback : t.aiText;
   return (
     <section><PageTitle text={t.aiText} title={t.aiTitle} />
       <div className="flex min-h-[560px] flex-col rounded-xl border border-[#e5e7eb] bg-white shadow-stitch">
-        <div className="flex items-center gap-3 border-b border-[#e5e7eb] px-5 py-4"><span className="grid h-9 w-9 place-items-center rounded-lg bg-black text-white"><Bot className="h-4 w-4" /></span><div><p className="font-display font-semibold">TengeGuard AI</p><p className="text-xs text-[#76777d]">{t.aiText}</p></div></div>
+        <div className="flex items-center gap-3 border-b border-[#e5e7eb] px-5 py-4"><span className="grid h-9 w-9 place-items-center rounded-lg bg-black text-white"><Bot className="h-4 w-4" /></span><div className="min-w-0 flex-1"><p className="font-display font-semibold">TengeGuard AI</p><p className="truncate text-xs text-[#76777d]">{statusText}</p>{aiState.status === "loading" ? <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eceef0]"><div className="h-full rounded-full bg-black transition-[width]" style={{ width: `${Math.max(3, aiState.progress * 100)}%` }} /></div> : null}</div></div>
         <div className="flex-1 space-y-4 p-5">{messages.length ? messages.map((message, index) => <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`} key={index}><p className={`max-w-[80%] rounded-xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "bg-black text-white" : "bg-[#f3f4f5]"}`}>{message.content}</p></div>) : <div className="grid h-full min-h-80 place-items-center text-center"><div><Bot className="mx-auto h-7 w-7 text-[#76777d]" /><p className="mt-3 text-sm text-[#6b7280]">{t.aiText}</p></div></div>}</div>
         <form className="flex gap-3 border-t border-[#e5e7eb] p-4" onSubmit={onSubmit}><input className="h-12 flex-1 rounded-lg border border-[#e5e7eb] px-4 text-sm outline-none focus:border-black focus:ring-2 focus:ring-black/10" disabled={sending} onChange={(event) => onChange(event.target.value)} placeholder={t.aiPlaceholder} value={input} /><button className="inline-flex h-12 items-center gap-2 rounded-lg bg-black px-5 text-sm font-semibold text-white disabled:opacity-40" disabled={sending || !input.trim()} type="submit">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}<span className="hidden sm:inline">{t.send}</span></button></form>
       </div>
