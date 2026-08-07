@@ -4,11 +4,22 @@ import type { InitProgressReport, MLCEngine } from "@mlc-ai/web-llm";
 
 const modelId = "Qwen3.5-0.8B-q4f16_1-MLC";
 let enginePromise: Promise<MLCEngine> | null = null;
+let cpuWorker: Worker | null = null;
+let cpuRequestId = 0;
 
 export type BrowserAiProgress = {
   progress: number;
   text: string;
 };
+
+type CpuRequest = {
+  resolve: (answer: string) => void;
+  reject: (error: Error) => void;
+  onProgress: (progress: BrowserAiProgress) => void;
+  timeout: number;
+};
+
+const cpuRequests = new Map<number, CpuRequest>();
 
 function supportsWebGpu() {
   return typeof window !== "undefined" && "gpu" in navigator;
@@ -43,7 +54,7 @@ export async function loadBrowserAi(onProgress: (progress: BrowserAiProgress) =>
 }
 
 type BrowserChatMessage = {
-  role: "user" | "assistant";
+  role: "system" | "user" | "assistant";
   content: string;
 };
 
@@ -61,7 +72,6 @@ export async function answerWithBrowserAi(
   subscriptions: SubscriptionContext[],
   onProgress: (progress: BrowserAiProgress) => void
 ) {
-  const engine = await loadBrowserAi(onProgress);
   const context = subscriptions.slice(0, 30).map((subscription) => ({
     service: subscription.provider_name,
     cost: subscription.cost,
@@ -70,22 +80,71 @@ export async function answerWithBrowserAi(
     next_charge: subscription.next_billing_date,
     status: subscription.status
   }));
+  const promptMessages: BrowserChatMessage[] = [
+    {
+      role: "system",
+      content:
+        `You are TengeGuard AI. Answer any general question in the same language as the user. Be concise, accurate and useful. For questions about the user's subscriptions, use only this local account data and never invent missing facts: ${JSON.stringify(context)}`
+    },
+    ...messages.slice(-10)
+  ];
 
-  const completion = await engine.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content:
-          `You are TengeGuard AI. Answer any general question in the same language as the user. Be concise, accurate and useful. For questions about the user's subscriptions, use only this local account data and never invent missing facts: ${JSON.stringify(context)}`
-      },
-      ...messages.slice(-10)
-    ],
-    temperature: 0.65,
-    top_p: 0.9,
-    max_tokens: 700
+  if (!supportsWebGpu()) return answerWithCpuAi(promptMessages, onProgress);
+
+  try {
+    const engine = await loadBrowserAi(onProgress);
+    const completion = await engine.chat.completions.create({
+      messages: promptMessages,
+      temperature: 0.65,
+      top_p: 0.9,
+      max_tokens: 700
+    });
+
+    const content = completion.choices[0]?.message.content;
+    if (typeof content !== "string" || !content.trim()) throw new Error("empty_browser_ai_response");
+    return content.trim();
+  } catch {
+    return answerWithCpuAi(promptMessages, onProgress);
+  }
+}
+
+function getCpuWorker() {
+  if (cpuWorker) return cpuWorker;
+  cpuWorker = new Worker("/cpu-ai.worker.js", { type: "module" });
+  cpuWorker.addEventListener("message", (event: MessageEvent<{ type: string; requestId: number; progress?: number; answer?: string; error?: string }>) => {
+    const request = cpuRequests.get(event.data.requestId);
+    if (!request) return;
+
+    if (event.data.type === "progress") {
+      request.onProgress({ progress: event.data.progress || 0, text: "Loading local CPU model" });
+      return;
+    }
+
+    window.clearTimeout(request.timeout);
+    cpuRequests.delete(event.data.requestId);
+    if (event.data.type === "complete" && event.data.answer) request.resolve(event.data.answer);
+    else request.reject(new Error(event.data.error || "cpu_ai_failed"));
   });
+  cpuWorker.addEventListener("error", () => {
+    cpuRequests.forEach((request) => {
+      window.clearTimeout(request.timeout);
+      request.reject(new Error("cpu_ai_worker_failed"));
+    });
+    cpuRequests.clear();
+    cpuWorker?.terminate();
+    cpuWorker = null;
+  });
+  return cpuWorker;
+}
 
-  const content = completion.choices[0]?.message.content;
-  if (typeof content !== "string" || !content.trim()) throw new Error("empty_browser_ai_response");
-  return content.trim();
+function answerWithCpuAi(messages: BrowserChatMessage[], onProgress: (progress: BrowserAiProgress) => void) {
+  return new Promise<string>((resolve, reject) => {
+    const requestId = ++cpuRequestId;
+    const timeout = window.setTimeout(() => {
+      cpuRequests.delete(requestId);
+      reject(new Error("cpu_ai_timeout"));
+    }, 10 * 60_000);
+    cpuRequests.set(requestId, { resolve, reject, onProgress, timeout });
+    getCpuWorker().postMessage({ requestId, messages });
+  });
 }
