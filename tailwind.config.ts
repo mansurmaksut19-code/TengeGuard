@@ -40,10 +40,11 @@ const config: Config = {
         "amber-dark": "#92400e"
       },
       fontFamily: {
-        display: ["Playfair Display", "Georgia", "serif"],
-        "body-md": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
-        "label-sm": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
-        "mono-data": ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"]
+        display: ["var(--font-display)", "var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],
+        "body-md": ["var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],
+        "label-sm": ["var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"],
+        "mono-data": ["var(--font-interface)", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       fontSize: {
         display: ["48px", { lineHeight: "56px", letterSpacing: "0", fontWeight: "700" }],

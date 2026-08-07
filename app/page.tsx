@@ -195,7 +195,7 @@ export default function HomePage() {
           <div className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white">
             <div className="flex h-14 items-center justify-between border-b border-[#e5e7eb] px-5">
               <Brand compact />
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">{t.secure}</span>
+              <span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 sm:inline-flex">{t.secure}</span>
             </div>
             <div className="grid min-h-[340px] md:grid-cols-[220px_1fr]">
               <div className="hidden border-r border-[#e5e7eb] bg-[#f8f9fa] p-4 md:block">

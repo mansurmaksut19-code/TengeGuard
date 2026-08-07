@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -100,7 +98,7 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family:
-    "Plus Jakarta Sans",
+    var(--font-interface),
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -108,10 +106,10 @@ body {
     "Segoe UI",
     sans-serif;
   font-feature-settings:
-    "cv02" 1,
-    "cv03" 1,
-    "cv04" 1,
+    "calt" 1,
+    "kern" 1,
     "tnum" 1;
+  font-optical-sizing: auto;
 }
 
 h1,
@@ -121,13 +119,19 @@ h4,
 h5,
 h6,
 .font-display {
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-feature-settings: "liga" 1, "kern" 1;
+  font-family: var(--font-display), var(--font-interface), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "calt" 1, "kern" 1;
+  font-optical-sizing: auto;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .font-editorial-italic {
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-style: italic;
+  font-family: var(--font-display), var(--font-interface), ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .tg-shell-grid { background: #f8f9fa; }
@@ -147,6 +151,21 @@ h4,
 h5,
 h6 {
   overflow-wrap: break-word;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
+input,
+select,
+textarea {
+  letter-spacing: 0;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 ::selection {

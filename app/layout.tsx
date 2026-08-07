@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
+import { Geologica, Onest } from "next/font/google";
 
 import "./globals.css";
 import { Providers } from "@/components/providers";
+
+const interfaceFont = Onest({
+  subsets: ["cyrillic", "latin"],
+  display: "swap",
+  variable: "--font-interface",
+  fallback: ["Arial", "sans-serif"]
+});
+
+const displayFont = Geologica({
+  subsets: ["cyrillic", "latin"],
+  display: "swap",
+  variable: "--font-display",
+  fallback: ["Arial", "sans-serif"]
+});
 
 export const metadata: Metadata = {
   title: "TengeGuard",
@@ -28,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body>
+      <body className={`${interfaceFont.variable} ${displayFont.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>
