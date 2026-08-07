@@ -352,7 +352,7 @@ export default function App({
   }
 
   function connectBank() {
-    window.location.href = "/api/connectors/bank/start";
+    window.location.href = "/api/connectors/bank/start?provider=kaspi";
   }
 
   function connectTelegram() {
