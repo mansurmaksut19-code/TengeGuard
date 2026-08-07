@@ -19,10 +19,9 @@ export async function GET(request: Request) {
     const provider = new URL(request.url).searchParams.get("provider") || undefined;
     const session = await createBankConnectSession(user, request, { providerQuery: provider });
     if (!session.connectUrl) {
-      return NextResponse.json(
-        { message: "Банковский провайдер ещё не настроен для этого окружения." },
-        { status: 503 }
-      );
+      const destination = new URL("/dashboard/account", request.url);
+      destination.searchParams.set("bank_error", "bank_pending");
+      return NextResponse.redirect(destination);
     }
 
     const response = NextResponse.redirect(session.connectUrl);
@@ -33,9 +32,9 @@ export async function GET(request: Request) {
   } catch (error) {
     const providerMessage = error instanceof Error ? error.message : "Unknown provider error";
     const waitingForAccess = /ActionNotAllowed|not enabled|pending|access/i.test(providerMessage);
-    const kaspiUnavailable = /Kaspi недоступен/i.test(providerMessage);
+    const kaspiUnavailable = /Kaspi|connection is not available/i.test(providerMessage);
     const destination = new URL("/dashboard/account", request.url);
-    destination.searchParams.set("bank_error", kaspiUnavailable ? "kaspi_unavailable" : waitingForAccess ? "access_pending" : "provider_error");
+    destination.searchParams.set("bank_error", kaspiUnavailable || waitingForAccess ? "bank_pending" : "provider_error");
     return NextResponse.redirect(destination);
   }
 }

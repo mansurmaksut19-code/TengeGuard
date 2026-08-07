@@ -39,7 +39,7 @@ const copy = {
     previewTitle: "Обзор подписок",
     previewText: "Подключите банк, чтобы увидеть только ваши реальные регулярные списания.",
     connectBank: "Подключить банк",
-    secure: "Salt Edge · доступ только для чтения",
+    secure: "Доступ только для чтения",
     stepsLabel: "Как это работает",
     stepsTitle: "От подключения до контроля за три шага",
     steps: [
@@ -78,7 +78,7 @@ const copy = {
     previewTitle: "Subscription overview",
     previewText: "Connect your bank to see only your real recurring charges.",
     connectBank: "Connect bank",
-    secure: "Salt Edge · read-only access",
+    secure: "Read-only access",
     stepsLabel: "How it works",
     stepsTitle: "From connection to control in three steps",
     steps: [
@@ -117,7 +117,7 @@ const copy = {
     previewTitle: "Жазылымдарға шолу",
     previewText: "Тек нақты қайталанатын төлемдерді көру үшін банкті қосыңыз.",
     connectBank: "Банкті қосу",
-    secure: "Salt Edge · тек оқуға рұқсат",
+    secure: "Тек оқуға рұқсат",
     stepsLabel: "Қалай жұмыс істейді",
     stepsTitle: "Қосудан бақылауға дейін үш қадам",
     steps: [

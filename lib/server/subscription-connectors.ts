@@ -17,7 +17,7 @@ export type AutomaticConnector = {
 };
 
 function bankProviderName() {
-  return process.env.TENGEGUARD_BANK_PROVIDER || "Salt Edge Open Banking";
+  return "Банковское подключение";
 }
 
 function saltedgeAppId() {
@@ -248,7 +248,7 @@ export async function createBankConnectSession(
     : null;
   if (providerQuery && !selectedProvider) {
     throw new Error(
-      "Kaspi недоступен в текущем каталоге Salt Edge для вашего API-аккаунта. Проверьте Test/Live access и запросите Kaspi Kazakhstan у Salt Edge."
+      "Kaspi connection is not available yet."
     );
   }
   const today = new Date();
@@ -388,8 +388,8 @@ export async function automaticConnectors(
       setup: ready
         ? bankConnected
           ? "История транзакций доступна для поиска регулярных списаний."
-          : "Откроется защищённый Salt Edge Connect: выберите банк и подтвердите read-only доступ к истории."
-        : "Salt Edge keys are missing in this deployment. Add TENGEGUARD_BANK_PROVIDER_KEY and TENGEGUARD_BANK_PROVIDER_SECRET in Vercel Environment Variables, then redeploy."
+          : "Откроется защищённый экран выбора банка. Подтвердите доступ только для чтения истории операций."
+        : "Банковское подключение готовится к запуску."
     }
   ];
 }
