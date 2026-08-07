@@ -169,7 +169,7 @@ export default function HomePage() {
 
       <section className="border-b border-[#e5e7eb] bg-white px-4 pb-16 pt-20 text-center sm:px-6 sm:pt-24">
         <div className="mx-auto max-w-4xl">
-          <h1 className="font-editorial-italic mx-auto max-w-3xl text-[42px] font-semibold leading-[1.08] sm:text-[64px]">{t.title}</h1>
+          <h1 className="font-editorial-italic mx-auto max-w-4xl text-[50px] font-semibold leading-[1.02] sm:text-[76px]">{t.title}</h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[#5f6368] sm:text-lg">{t.subtitle}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <form action="/api/device-mode" method="GET">
@@ -204,7 +204,7 @@ export default function HomePage() {
               <div className="flex items-center justify-center p-6 sm:p-10">
                 <div className="w-full max-w-xl rounded-xl border border-[#e5e7eb] bg-white p-8 text-center shadow-stitch">
                   <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#f3f4f5]"><Landmark className="h-6 w-6" /></div>
-                  <h2 className="mt-5 font-display text-2xl font-semibold">{t.previewTitle}</h2>
+                  <h2 className="mt-5 font-display text-[32px] font-semibold leading-none">{t.previewTitle}</h2>
                   <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#6b7280]">{t.previewText}</p>
                   <Link className="mt-6 inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white" href="/api/device-mode?mode=desktop&plan=free"><Landmark className="h-4 w-4" />{t.connectBank}</Link>
                 </div>
@@ -217,13 +217,13 @@ export default function HomePage() {
       <section className="px-4 py-20 sm:px-6" id="how">
         <div className="mx-auto max-w-[1280px]">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#76777d]">{t.stepsLabel}</p>
-          <h2 className="mt-3 max-w-2xl font-display text-4xl font-semibold leading-tight sm:text-5xl">{t.stepsTitle}</h2>
+          <h2 className="mt-3 max-w-3xl font-display text-[46px] font-semibold leading-[1.05] sm:text-[58px]">{t.stepsTitle}</h2>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[SearchCheck, Landmark, BellRing].map((Icon, index) => (
               <article className="rounded-xl border border-[#e5e7eb] bg-white p-6" key={t.steps[index][0]}>
                 <div className="grid h-10 w-10 place-items-center rounded-lg bg-black text-white"><Icon className="h-5 w-5" /></div>
                 <p className="mt-6 text-xs font-semibold text-[#76777d]">0{index + 1}</p>
-                <h3 className="mt-2 font-display text-xl font-semibold">{t.steps[index][0]}</h3>
+                <h3 className="mt-2 font-display text-[30px] font-semibold leading-none">{t.steps[index][0]}</h3>
                 <p className="mt-3 text-sm leading-6 text-[#5f6368]">{t.steps[index][1]}</p>
               </article>
             ))}
@@ -235,7 +235,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#76777d]">{t.pricingLabel}</p>
-            <h2 className="mt-3 font-display text-4xl font-semibold leading-tight sm:text-5xl">{t.pricingTitle}</h2>
+            <h2 className="mt-3 font-display text-[46px] font-semibold leading-[1.05] sm:text-[58px]">{t.pricingTitle}</h2>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             <PricingCard features={t.trialFeatures} name={t.trial} price={t.trialPrice} text={t.trialText} action={t.start} plan="free" />
@@ -261,7 +261,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" />
       </span>
-      <span className="font-display text-[25px] font-bold leading-none">TengeGuard</span>
+      <span className="font-display text-[30px] font-bold leading-none">TengeGuard</span>
     </Link>
   );
 }
@@ -269,7 +269,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
 function PricingCard({ action, dark = false, features, name, plan, price, secondary, text }: { action: string; dark?: boolean; features: string[]; name: string; plan: "free" | "pro_monthly"; price: string; secondary?: string; text: string }) {
   return (
     <article className={`rounded-xl border p-7 ${dark ? "border-black bg-black text-white" : "border-[#e5e7eb] bg-white"}`}>
-      <div className="flex items-center justify-between gap-4"><h3 className="font-display text-xl font-semibold">{name}</h3><CircleDollarSign className="h-5 w-5 opacity-60" /></div>
+      <div className="flex items-center justify-between gap-4"><h3 className="font-display text-[30px] font-semibold leading-none">{name}</h3><CircleDollarSign className="h-5 w-5 opacity-60" /></div>
       <p className="mt-7 font-body-md text-3xl font-semibold tabular-nums">{price}</p>
       {secondary ? <p className="mt-1 text-xs text-white/60">{secondary}</p> : null}
       <p className={`mt-4 text-sm ${dark ? "text-white/65" : "text-[#6b7280]"}`}>{text}</p>

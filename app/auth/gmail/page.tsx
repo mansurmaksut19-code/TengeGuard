@@ -56,7 +56,7 @@ export default async function GmailAuthPage() {
             <ModeIcon className="h-4 w-4" />
             Выбран {modeLabel}
           </p>
-          <h1 className="font-display text-headline-lg font-bold leading-10 text-on-surface">Войдите через Google</h1>
+          <h1 className="font-display text-[44px] font-bold leading-none text-on-surface">Войдите через Google</h1>
           <p className="mt-3 text-body-md leading-7 text-on-surface-variant">
             Google используется только для создания аккаунта и входа. TengeGuard получает имя, email и аватар, но не запрашивает доступ к письмам Gmail.
           </p>

@@ -479,7 +479,7 @@ export default function App({
           <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#e7e9ec] bg-white/95 px-4 backdrop-blur-xl sm:px-6 lg:px-10">
             <div className="md:hidden"><Brand compact /></div>
             <div className="hidden md:block">
-              <h1 className="font-display text-lg font-semibold">{nav.find(([view]) => view === initialView)?.[1] || t.account}</h1>
+              <h1 className="font-display text-2xl font-semibold leading-none">{nav.find(([view]) => view === initialView)?.[1] || t.account}</h1>
             </div>
             <div className="flex items-center gap-2">
               <span className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold lg:flex ${initialBillingPlan === "free" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
@@ -547,11 +547,11 @@ export default function App({
 type T = (typeof copy)["ru"];
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <Link className="flex items-center gap-2.5" href="/dashboard"><span className={`${compact ? "h-8 w-8" : "h-9 w-9"} overflow-hidden rounded-lg border border-[#e5e7eb] bg-white`}><img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" /></span><span className="font-display text-[25px] font-bold leading-none">TengeGuard</span></Link>;
+  return <Link className="flex items-center gap-2.5" href="/dashboard"><span className={`${compact ? "h-8 w-8" : "h-9 w-9"} overflow-hidden rounded-lg border border-[#e5e7eb] bg-white`}><img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" /></span><span className="font-display text-[30px] font-bold leading-none">TengeGuard</span></Link>;
 }
 
 function PageTitle({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {
-  return <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="font-display text-[38px] font-semibold leading-10 sm:text-[46px] sm:leading-[48px]">{title}</h2><p className="mt-2 text-sm leading-6 text-[#6b7280]">{text}</p></div>{action}</div>;
+  return <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="font-display text-[48px] font-semibold leading-none sm:text-[58px]">{title}</h2><p className="mt-2 text-sm leading-6 text-[#6b7280]">{text}</p></div>{action}</div>;
 }
 
 function Dashboard({ active, averageConfidence, bankConnected, dueSoon, locale, monthly, next, onBank, onRefresh, onTelegram, onTestTelegram, review, syncing, t, telegramConnected }: { active: Subscription[]; averageConfidence: number; bankConnected: boolean; dueSoon: number; locale: Locale; monthly: string; next?: Subscription; onBank: () => void; onRefresh: () => void; onTelegram: () => void; onTestTelegram: () => void; review: number; syncing: boolean; t: T; telegramConnected: boolean }) {
@@ -575,7 +575,7 @@ function Dashboard({ active, averageConfidence, bankConnected, dueSoon, locale, 
       <div className="mt-6 flex flex-col gap-5 rounded-2xl border border-[#dfe3e7] bg-[#111315] p-6 text-white shadow-[0_18px_50px_-32px_rgba(0,0,0,0.55)] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10"><MessageCircle className="h-5 w-5 text-[#5ee3a1]" /></span>
-          <div><h3 className="font-display text-lg font-semibold">{t.telegram}</h3><p className="mt-1 max-w-xl text-sm leading-6 text-white/60">{t.telegramText}</p></div>
+          <div><h3 className="font-display text-[28px] font-semibold leading-none">{t.telegram}</h3><p className="mt-1 max-w-xl text-sm leading-6 text-white/60">{t.telegramText}</p></div>
         </div>
         <button className={`shrink-0 rounded-lg px-5 py-3 text-sm font-semibold ${telegramConnected ? "border border-white/20 bg-white/5 text-white" : "bg-white text-black"}`} onClick={telegramConnected ? onTestTelegram : onTelegram} type="button">
           {telegramConnected ? t.testTelegram : t.connectTelegram}
@@ -585,7 +585,7 @@ function Dashboard({ active, averageConfidence, bankConnected, dueSoon, locale, 
         <div className="mt-8"><EmptyPanel icon={Landmark} title={t.noDataTitle} text={t.noDataText}><button className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white disabled:opacity-45" disabled={bankConnected} onClick={onBank} type="button"><Landmark className="h-4 w-4" />{bankConnected ? t.sync : t.connectBank}</button></EmptyPanel></div>
       ) : (
         <div className="mt-8 overflow-hidden rounded-xl border border-[#e5e7eb] bg-white">
-          <div className="flex items-center justify-between border-b border-[#e5e7eb] px-5 py-4"><h3 className="font-display text-lg font-semibold">{t.nextPayment}</h3><Link className="flex items-center gap-1 text-xs font-semibold" href="/dashboard/subscriptions">{t.subscriptions}<ChevronRight className="h-4 w-4" /></Link></div>
+          <div className="flex items-center justify-between border-b border-[#e5e7eb] px-5 py-4"><h3 className="font-display text-[28px] font-semibold leading-none">{t.nextPayment}</h3><Link className="flex items-center gap-1 text-xs font-semibold" href="/dashboard/subscriptions">{t.subscriptions}<ChevronRight className="h-4 w-4" /></Link></div>
           <div className="divide-y divide-[#e5e7eb]">{active.slice(0, 4).map((item) => <SubscriptionRow item={item} key={item.id} locale={locale} />)}</div>
         </div>
       )}
@@ -620,7 +620,7 @@ function AiView({ aiState, input, messages, onChange, onSubmit, sending, t }: { 
   return (
     <section><PageTitle text={t.aiText} title={t.aiTitle} />
       <div className="flex min-h-[560px] flex-col rounded-xl border border-[#e5e7eb] bg-white shadow-stitch">
-        <div className="flex items-center gap-3 border-b border-[#e5e7eb] px-5 py-4"><span className="grid h-9 w-9 place-items-center rounded-lg bg-black text-white"><Bot className="h-4 w-4" /></span><div className="min-w-0 flex-1"><p className="font-display font-semibold">TengeGuard AI</p><p className="truncate text-xs text-[#76777d]">{statusText}</p>{aiState.status === "loading" ? <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eceef0]"><div className="h-full rounded-full bg-black transition-[width]" style={{ width: `${Math.max(3, aiState.progress * 100)}%` }} /></div> : null}</div></div>
+        <div className="flex items-center gap-3 border-b border-[#e5e7eb] px-5 py-4"><span className="grid h-9 w-9 place-items-center rounded-lg bg-black text-white"><Bot className="h-4 w-4" /></span><div className="min-w-0 flex-1"><p className="font-display text-[28px] font-semibold leading-none">TengeGuard AI</p><p className="truncate text-xs text-[#76777d]">{statusText}</p>{aiState.status === "loading" ? <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eceef0]"><div className="h-full rounded-full bg-black transition-[width]" style={{ width: `${Math.max(3, aiState.progress * 100)}%` }} /></div> : null}</div></div>
         <div className="flex-1 space-y-4 p-5">{messages.length ? messages.map((message, index) => <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`} key={index}><p className={`max-w-[80%] rounded-xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "bg-black text-white" : "bg-[#f3f4f5]"}`}>{message.content}</p></div>) : <div className="grid h-full min-h-80 place-items-center text-center"><div><Bot className="mx-auto h-7 w-7 text-[#76777d]" /><p className="mt-3 text-sm text-[#6b7280]">{t.aiText}</p></div></div>}</div>
         <form className="flex gap-3 border-t border-[#e5e7eb] p-4" onSubmit={onSubmit}><input className="h-12 flex-1 rounded-lg border border-[#e5e7eb] px-4 text-sm outline-none focus:border-black focus:ring-2 focus:ring-black/10" disabled={sending} onChange={(event) => onChange(event.target.value)} placeholder={t.aiPlaceholder} value={input} /><button className="inline-flex h-12 items-center gap-2 rounded-lg bg-black px-5 text-sm font-semibold text-white disabled:opacity-40" disabled={sending || !input.trim()} type="submit">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}<span className="hidden sm:inline">{t.send}</span></button></form>
       </div>
@@ -633,14 +633,14 @@ function AccountView({ auth, bank, initialBillingPlan, onChange, onLogout, readi
     <section><PageTitle text={auth?.user?.email || ""} title={t.accountTitle} />
       <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch">
-          <div className="flex items-center gap-4"><div className="grid h-16 w-16 place-items-center overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f3f4f5]">{auth?.user?.avatar_url ? <img alt={auth.user.name} className="h-full w-full object-cover" src={auth.user.avatar_url} /> : <UserCircle2 className="h-7 w-7" />}</div><div><h3 className="font-display text-xl font-semibold">{auth?.user?.name || "TengeGuard user"}</h3><p className="mt-1 text-sm text-[#6b7280]">{auth?.user?.email}</p></div></div>
+          <div className="flex items-center gap-4"><div className="grid h-16 w-16 place-items-center overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f3f4f5]">{auth?.user?.avatar_url ? <img alt={auth.user.name} className="h-full w-full object-cover" src={auth.user.avatar_url} /> : <UserCircle2 className="h-7 w-7" />}</div><div><h3 className="font-display text-[30px] font-semibold leading-none">{auth?.user?.name || "TengeGuard user"}</h3><p className="mt-1 text-sm text-[#6b7280]">{auth?.user?.email}</p></div></div>
           <div className="mt-6 flex flex-wrap gap-3"><button className="rounded-lg border border-[#e5e7eb] px-4 py-2.5 text-sm font-semibold" onClick={onChange} type="button">{t.changeAccount}</button><button className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700" onClick={onLogout} type="button"><LogOut className="h-4 w-4" />{t.logout}</button></div>
         </div>
-        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch"><h3 className="font-display text-lg font-semibold">{t.status}</h3><div className="mt-5 space-y-3"><StatusLine label={t.plan} ready value={initialBillingPlan === "free" ? t.trial : initialBillingPlan === "pro_lifetime" ? `${t.pro}: ${t.forever}` : t.pro} /><StatusLine label={t.bank} ready={bank?.status === "connected"} /><StatusLine label={t.telegram} ready={Boolean(telegram?.connected)} /><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /></div></div>
+        <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch"><h3 className="font-display text-[28px] font-semibold leading-none">{t.status}</h3><div className="mt-5 space-y-3"><StatusLine label={t.plan} ready value={initialBillingPlan === "free" ? t.trial : initialBillingPlan === "pro_lifetime" ? `${t.pro}: ${t.forever}` : t.pro} /><StatusLine label={t.bank} ready={bank?.status === "connected"} /><StatusLine label={t.telegram} ready={Boolean(telegram?.connected)} /><StatusLine label={t.storage} ready={Boolean(readiness?.persistentStoreConfigured)} /></div></div>
         <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-stitch lg:col-span-2">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-display text-xl font-semibold">{t.payment}</h3>
+              <h3 className="font-display text-[30px] font-semibold leading-none">{t.payment}</h3>
               <p className="mt-1 max-w-xl text-sm leading-6 text-[#6b7280]">{initialBillingPlan === "free" ? t.expiredText : t.cancelPlanText}</p>
             </div>
             {initialBillingPlan === "free" ? (
@@ -671,7 +671,7 @@ function SubscriptionTableRow({ item, locale, onAction, t, working }: { item: Su
 function ServiceIcon({ name }: { name: string }) { return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#e5e7eb] bg-[#f3f4f5] text-sm font-bold">{name.slice(0, 1).toUpperCase()}</span>; }
 function Confidence({ value }: { value: number }) { const percent = Math.round(value * 100); return <div className="flex items-center gap-2"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${percent >= 85 ? "bg-emerald-50 text-emerald-700" : percent >= 70 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>{percent}%</span><span className="h-1.5 w-12 overflow-hidden rounded-full bg-[#e5e7eb]"><span className="block h-full bg-black" style={{ width: `${percent}%` }} /></span></div>; }
 function StatusLine({ label, ready, value }: { label: string; ready: boolean; value?: string }) { return <div className="flex items-center justify-between gap-4 rounded-lg bg-[#f8f9fa] px-4 py-3 text-sm"><span>{label}</span><span className={`flex items-center gap-1.5 font-semibold ${ready ? "text-emerald-700" : "text-amber-700"}`}>{ready ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}{value || (ready ? "Ready" : "Setup")}</span></div>; }
-function EmptyPanel({ children, icon: Icon, text, title }: { children?: React.ReactNode; icon: React.ElementType; text: string; title: string }) { return <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-[#e5e7eb] bg-white p-8 text-center shadow-stitch"><div className="max-w-lg"><span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f3f4f5]"><Icon className="h-7 w-7" /></span><h3 className="mt-5 font-display text-2xl font-semibold">{title}</h3><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#6b7280]">{text}</p>{children ? <div className="mt-6">{children}</div> : null}</div></div>; }
+function EmptyPanel({ children, icon: Icon, text, title }: { children?: React.ReactNode; icon: React.ElementType; text: string; title: string }) { return <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-[#e5e7eb] bg-white p-8 text-center shadow-stitch"><div className="max-w-lg"><span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f3f4f5]"><Icon className="h-7 w-7" /></span><h3 className="mt-5 font-display text-[36px] font-semibold leading-none">{title}</h3><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#6b7280]">{text}</p>{children ? <div className="mt-6">{children}</div> : null}</div></div>; }
 function DashboardSkeleton() {
   return <div aria-label="Loading" className="animate-pulse"><div className="h-10 w-64 rounded-lg bg-[#e8eaed]" /><div className="mt-3 h-4 w-96 max-w-full rounded bg-[#eceef0]" /><div className="mt-10 grid gap-4 xl:grid-cols-3"><div className="h-40 rounded-xl bg-white" /><div className="h-40 rounded-xl bg-white" /><div className="grid grid-cols-2 gap-4"><div className="rounded-xl bg-white" /><div className="rounded-xl bg-white" /><div className="rounded-xl bg-white" /><div className="rounded-xl bg-white" /></div></div><div className="mt-6 h-28 rounded-2xl bg-[#e6e8eb]" /></div>;
 }

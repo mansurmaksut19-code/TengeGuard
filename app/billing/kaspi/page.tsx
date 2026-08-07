@@ -40,7 +40,7 @@ export default async function KaspiPayPage({ searchParams }: PageProps) {
 
           <div className="mt-8">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#76777d]">Kaspi Pay</p>
-            <h1 className="mt-3 font-display text-4xl font-semibold leading-tight text-[#191c1d] sm:text-5xl">
+            <h1 className="mt-3 font-display text-[50px] font-semibold leading-none text-[#191c1d] sm:text-[60px]">
               Оплата TengeGuard Pro
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-[#6b7280]">
@@ -67,7 +67,7 @@ export default async function KaspiPayPage({ searchParams }: PageProps) {
           </div>
 
           <div className="mt-8 rounded-xl border border-[#e5e7eb] bg-[#f8f9fa] p-5">
-            <h2 className="font-display text-2xl font-semibold">Как оплатить</h2>
+            <h2 className="font-display text-[34px] font-semibold leading-none">Как оплатить</h2>
             <ol className="mt-4 space-y-3 text-sm leading-6 text-[#45464c]">
               <li>1. Откройте Kaspi и отправьте оплату получателю ниже.</li>
               <li>2. В комментарии к платежу укажите номер заказа: <strong>{order.id}</strong>.</li>
@@ -77,7 +77,7 @@ export default async function KaspiPayPage({ searchParams }: PageProps) {
         </section>
 
         <aside className="rounded-2xl border border-[#e5e7eb] bg-white p-6 shadow-stitch">
-          <h2 className="font-display text-2xl font-semibold">Реквизиты Kaspi</h2>
+          <h2 className="font-display text-[34px] font-semibold leading-none">Реквизиты Kaspi</h2>
           {config ? (
             <div className="mt-5 space-y-4">
               <Detail label="Получатель" value={config.merchantName} />
@@ -118,7 +118,7 @@ function KaspiShell({ children }: { children: React.ReactNode }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img alt="TengeGuard" className="h-full w-full object-cover" src="/tengeguard-mark.jpg" />
           </span>
-          <span className="font-display text-[25px] font-bold leading-none">TengeGuard</span>
+          <span className="font-display text-[30px] font-bold leading-none">TengeGuard</span>
         </Link>
         <div className="mt-8">{children}</div>
       </div>
@@ -129,7 +129,7 @@ function KaspiShell({ children }: { children: React.ReactNode }) {
 function Message({ text, title }: { text: string; title: string }) {
   return (
     <section className="rounded-2xl border border-[#e5e7eb] bg-white p-8 shadow-stitch">
-      <h1 className="font-display text-3xl font-semibold">{title}</h1>
+      <h1 className="font-display text-[42px] font-semibold leading-none">{title}</h1>
       <p className="mt-3 text-sm leading-6 text-[#6b7280]">{text}</p>
       <Link className="mt-6 inline-flex rounded-lg bg-black px-5 py-3 text-sm font-semibold text-white" href="/#pricing">
         Выбрать тариф

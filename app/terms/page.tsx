@@ -9,7 +9,7 @@ export default function TermsPage() {
         <Link className="text-label-sm font-bold text-primary hover:underline" href="/">
           TengeGuard
         </Link>
-        <h1 className="mt-5 font-display text-4xl font-bold leading-tight">Terms of Service</h1>
+        <h1 className="mt-5 font-display text-[50px] font-bold leading-none sm:text-[58px]">Terms of Service</h1>
         <p className="mt-2 text-body-md text-on-surface-variant">Last updated: {updatedAt}</p>
 
         <TermsSection title="Service">
@@ -47,7 +47,7 @@ export default function TermsPage() {
 function TermsSection({ children, title }: { children: React.ReactNode; title: string }) {
   return (
     <section className="mt-7">
-      <h2 className="font-display text-xl font-bold text-on-surface">{title}</h2>
+      <h2 className="font-display text-[30px] font-bold leading-none text-on-surface">{title}</h2>
       <p className="mt-2 text-body-md leading-7 text-on-surface-variant">{children}</p>
     </section>
   );

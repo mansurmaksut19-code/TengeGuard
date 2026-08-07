@@ -42,7 +42,7 @@ export default function SecurityPage() {
             <div className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-soft text-emerald-dark">
               <ShieldCheck className="h-7 w-7" />
             </div>
-            <h1 className="mt-5 font-display text-4xl font-bold leading-tight">Security at TengeGuard</h1>
+            <h1 className="mt-5 font-display text-[50px] font-bold leading-none sm:text-[58px]">Security at TengeGuard</h1>
             <p className="mt-3 text-body-md text-on-surface-variant">Last updated: {updatedAt}</p>
             <p className="mt-6 text-body-lg leading-8 text-on-surface-variant">
               TengeGuard is built around a simple principle: users should understand subscriptions without giving up control of their accounts.
@@ -54,7 +54,7 @@ export default function SecurityPage() {
               <section className="rounded-xl border border-outline-variant bg-surface-container-lowest p-5" key={control.title}>
                 <div className="mb-4 flex items-center gap-2 text-primary">
                   <CheckCircle2 className="h-5 w-5" />
-                  <h2 className="font-display text-xl font-bold">{control.title}</h2>
+                  <h2 className="font-display text-[30px] font-bold leading-none">{control.title}</h2>
                 </div>
                 <p className="text-body-md leading-7 text-on-surface-variant">{control.text}</p>
               </section>
